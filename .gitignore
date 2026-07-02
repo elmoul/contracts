@@ -1,0 +1,6 @@
+gen/java/.openapi-generator/
+gen/java/target/
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store

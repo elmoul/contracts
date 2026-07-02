@@ -1,0 +1,15 @@
+{
+  "name": "@platform/contracts",
+  "version": "0.1.0",
+  "description": "Generated TypeScript bindings for platform contracts. Do not edit by hand — regenerate from schemas/.",
+  "main": "dist/index.js",
+  "types": "index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.platform</groupId>
+    <artifactId>contracts</artifactId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+
+    <name>platform-contracts</name>
+    <description>
+        Generated Java bindings for platform contracts.
+        Do not edit by hand — regenerate from schemas/ using openapi-generator and jsonschema2pojo.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jackson.version>2.17.0</jackson.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>3.0.2</version>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- JSON Schema → Java: usage.event and state.event -->
+            <plugin>
+                <groupId>org.jsonschema2pojo</groupId>
+                <artifactId>jsonschema2pojo-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                    <sourcePaths>
+                        <sourcePath>${project.basedir}/../../schemas/app/usage.event.json</sourcePath>
+                        <sourcePath>${project.basedir}/../../schemas/state-feed/state.event.json</sourcePath>
+                    </sourcePaths>
+                    <targetPackage>io.platform.contracts.events</targetPackage>
+                    <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+                    <annotationStyle>jackson2</annotationStyle>
+                    <includeAdditionalProperties>false</includeAdditionalProperties>
+                    <includeConstructors>true</includeConstructors>
+                    <generateBuilders>false</generateBuilders>
+                    <useTitleAsClassname>true</useTitleAsClassname>
+                    <dateTimeType>java.time.OffsetDateTime</dateTimeType>
+                    <useJakartaValidation>true</useJakartaValidation>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
