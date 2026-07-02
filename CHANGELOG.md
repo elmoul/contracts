@@ -10,6 +10,36 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.2.2 — 2026-07-02
+
+Patch release fixing a consumption-mechanism defect found while re-verifying D031 in
+practice. No schema changes.
+
+### gen/ts (D031 amended — git-URL mechanism doesn't work, switch to `file:` + committed `dist/`)
+- The v0.2.1 fix assumed a git-URL dependency (`npm install github:...`) would run the
+  `prepare` lifecycle script to build `dist/` at install time. Verified against a real
+  install and it does not hold up: stock npm requires `package.json` at the *repo root*
+  to resolve a git dependency at all — there is no subdirectory syntax for pointing a
+  git dep at `gen/ts/`. The mechanism in v0.2.1 could never have worked for a consumer.
+- Fixed per amended **D031**: consumers depend on `contracts` via
+  `"@platform/contracts": "file:<path-to-checkout>/gen/ts"` instead of a git URL.
+  `gen/ts/dist/` is now committed (removed from `.gitignore`) and regenerated fresh as
+  part of each release, so consumers never depend on a `prepare`/lifecycle script
+  firing correctly at install time. Removed the now-unnecessary (and actively harmful)
+  `"prepare": "tsc"` script — confirmed by reproduction that npm still invokes
+  `prepare` on a `file:` install, and it fails there too (no `devDependencies` present
+  in a linked/packed install), which would have broken every consumer. `"build": "tsc"`
+  remains as a manual step for regenerating `dist/` before a release. `types` now
+  points at `dist/index.d.ts` (was `index.ts`) to match the committed-output model.
+- Verified end-to-end: built `dist/` fresh (`npx tsc`), then in a scratch directory
+  outside this repo created a throwaway `package.json` with
+  `"@platform/contracts": "file:C:/Users/moulo/Desktop/platform/contracts/gen/ts"`,
+  ran `npm install`, confirmed `require('@platform/contracts')` resolves, and
+  confirmed a `.ts` file importing `BuildCommand`/`BuildResult`/`UsageEvent` type-checks
+  clean under `tsc --noEmit --strict`. First attempt (with `prepare: tsc` still present)
+  reproduced the exact install-time failure this fix addresses; removing `prepare` and
+  relying on the committed `dist/` resolved it.
+
 ## v0.2.1 — 2026-07-02
 
 Patch release closing two gaps found in the v0.2.0 review. No schema changes.

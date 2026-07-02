@@ -1,12 +1,11 @@
 {
   "name": "@platform/contracts",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Generated TypeScript bindings for platform contracts. Do not edit by hand — regenerate from schemas/.",
   "main": "dist/index.js",
-  "types": "index.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "prepare": "tsc"
+    "build": "tsc"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

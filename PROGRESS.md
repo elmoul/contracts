@@ -34,3 +34,14 @@
 - Per new D031 (git-tag pinning, no registry), added `gen/ts/tsconfig.json` (was missing) and `"prepare": "tsc"` to `gen/ts/package.json` so `npm install github:elmoul/contracts#v0.2.1` builds `dist/` on install. Verified with a real scratch-project install against the pushed tag. `gen/ts/dist/` is now gitignored, not committed.
 
 **Next step:** None pending from this session. Java/Python consumers still install via version-pinned Maven/pip coordinates per D031 — only TS needed the `prepare` fix.
+
+## 2026-07-02 — Session 4
+
+**State:** v0.2.2 tagged and pushed (patch, no schema changes). Fixed the TS consumption mechanism per amended D031.
+
+**Decisions taken this session:**
+- Session 3's git-URL fix (`prepare: tsc` on `npm install github:...`) doesn't work in practice — stock npm requires `package.json` at the repo root to resolve a git dependency at all; there's no subdirectory syntax to point it at `gen/ts/`. D031 amended in the vault to switch consumption to `"@platform/contracts": "file:<path-to-checkout>/gen/ts"`.
+- Committed `gen/ts/dist/` (removed from `.gitignore`), regenerated fresh via `npx tsc`. Removed the `prepare` script — reproduced that npm still runs `prepare` on a `file:` install too, and it fails there (no `devDependencies` in a linked install), so relying on it was actively harmful, not just ineffective. `build: tsc` stays as a manual pre-release step. `types` now points at `dist/index.d.ts` instead of source `index.ts`.
+- Verified end-to-end in a scratch project outside this repo: `file:` install resolves, `require('@platform/contracts')` works, and a `.ts` file importing `BuildCommand`/`BuildResult`/`UsageEvent` passes `tsc --noEmit --strict`.
+
+**Next step:** None pending from this session. If control-plane or ai-gateway starts consuming `@platform/contracts` from TS, they should pin via `file:` path to a checked-out tag, not a git URL.

@@ -1,6 +1,5 @@
 gen/java/.openapi-generator/
 gen/java/target/
-gen/ts/dist/
 node_modules/
 __pycache__/
 *.pyc
