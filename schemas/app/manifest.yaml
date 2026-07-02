@@ -61,8 +61,8 @@ components:
           description: Billing plan tier the app is registered on
         class:
           type: string
-          enum: [app, connector, agent]
-          description: Hexagon class of this registration
+          enum: [low-stakes, health-class, kids-class]
+          description: Risk class tier used by the control plane for guardrail configuration (D010). Product apps only — connectors and agents do not register through app.manifest.
         routes:
           type: array
           minItems: 0

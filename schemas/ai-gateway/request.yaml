@@ -29,6 +29,10 @@ paths:
                 $ref: "#/components/schemas/AiResponse"
         "402":
           description: Cost ceiling reached — request blocked by Treasury (D023)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockedResponse"
         "503":
           description: Provider unavailable
 
@@ -98,4 +102,25 @@ components:
           type: number
           minimum: 0
           description: Cost in USD for this call, as computed by the gateway
+      additionalProperties: false
+
+    BlockedResponse:
+      type: object
+      required:
+        - reason
+      description: >
+        Returned with HTTP 402 when Treasury blocks the request (D023).
+        The reason field is always present — block state is never silent.
+      properties:
+        reason:
+          type: string
+          description: Human-readable explanation of why the request was blocked (e.g. monthly ceiling reached)
+        ceiling:
+          type: number
+          minimum: 0
+          description: Cost ceiling in USD for this app/user in the current period
+        consumed:
+          type: number
+          minimum: 0
+          description: Cost already consumed in the current period (USD)
       additionalProperties: false
