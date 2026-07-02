@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -50,8 +50,10 @@
                 <version>1.2.1</version>
                 <configuration>
                     <sourcePaths>
+                        <!-- state.event.json uses oneOf at root; jsonschema2pojo cannot generate
+                             per-variant classes from a oneOf union. State event Java classes are
+                             generated via openapi-generator from schemas/state-feed/state-event-java.yaml. -->
                         <sourcePath>${project.basedir}/../../schemas/app/usage.event.json</sourcePath>
-                        <sourcePath>${project.basedir}/../../schemas/state-feed/state.event.json</sourcePath>
                     </sourcePaths>
                     <targetPackage>io.platform.contracts.events</targetPackage>
                     <outputDirectory>${project.basedir}/src/main/java</outputDirectory>

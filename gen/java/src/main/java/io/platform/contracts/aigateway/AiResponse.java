@@ -14,77 +14,59 @@
 package io.platform.contracts.aigateway;
 
 import java.util.Objects;
-import com.google.gson.TypeAdapter;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Arrays;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import io.platform.contracts.JSON;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * AiResponse
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T04:54:38.501427300+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@JsonPropertyOrder({
+  AiResponse.JSON_PROPERTY_RESULT,
+  AiResponse.JSON_PROPERTY_MODEL,
+  AiResponse.JSON_PROPERTY_PROVIDER,
+  AiResponse.JSON_PROPERTY_TOKENS_IN,
+  AiResponse.JSON_PROPERTY_TOKENS_OUT,
+  AiResponse.JSON_PROPERTY_COMPUTED_COST
+})
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:41.969387100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AiResponse {
-  public static final String SERIALIZED_NAME_RESULT = "result";
-  @SerializedName(SERIALIZED_NAME_RESULT)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_RESULT = "result";
+  @jakarta.annotation.Nonnull
   private String result;
 
-  public static final String SERIALIZED_NAME_MODEL = "model";
-  @SerializedName(SERIALIZED_NAME_MODEL)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_MODEL = "model";
+  @jakarta.annotation.Nonnull
   private String model;
 
-  public static final String SERIALIZED_NAME_PROVIDER = "provider";
-  @SerializedName(SERIALIZED_NAME_PROVIDER)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_PROVIDER = "provider";
+  @jakarta.annotation.Nonnull
   private String provider;
 
-  public static final String SERIALIZED_NAME_TOKENS_IN = "tokensIn";
-  @SerializedName(SERIALIZED_NAME_TOKENS_IN)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_TOKENS_IN = "tokensIn";
+  @jakarta.annotation.Nonnull
   private Integer tokensIn;
 
-  public static final String SERIALIZED_NAME_TOKENS_OUT = "tokensOut";
-  @SerializedName(SERIALIZED_NAME_TOKENS_OUT)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_TOKENS_OUT = "tokensOut";
+  @jakarta.annotation.Nonnull
   private Integer tokensOut;
 
-  public static final String SERIALIZED_NAME_COMPUTED_COST = "computedCost";
-  @SerializedName(SERIALIZED_NAME_COMPUTED_COST)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_COMPUTED_COST = "computedCost";
+  @jakarta.annotation.Nonnull
   private BigDecimal computedCost;
 
   public AiResponse() {
   }
 
-  public AiResponse result(@javax.annotation.Nonnull String result) {
+  public AiResponse result(@jakarta.annotation.Nonnull String result) {
+    
     this.result = result;
     return this;
   }
@@ -93,17 +75,23 @@ public class AiResponse {
    * The AI-generated response text
    * @return result
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_RESULT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getResult() {
     return result;
   }
 
-  public void setResult(@javax.annotation.Nonnull String result) {
+
+  @JsonProperty(value = JSON_PROPERTY_RESULT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setResult(@jakarta.annotation.Nonnull String result) {
     this.result = result;
   }
 
-
-  public AiResponse model(@javax.annotation.Nonnull String model) {
+  public AiResponse model(@jakarta.annotation.Nonnull String model) {
+    
     this.model = model;
     return this;
   }
@@ -112,17 +100,23 @@ public class AiResponse {
    * Actual model used — may differ from modelHint after downshift
    * @return model
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_MODEL, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getModel() {
     return model;
   }
 
-  public void setModel(@javax.annotation.Nonnull String model) {
+
+  @JsonProperty(value = JSON_PROPERTY_MODEL, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setModel(@jakarta.annotation.Nonnull String model) {
     this.model = model;
   }
 
-
-  public AiResponse provider(@javax.annotation.Nonnull String provider) {
+  public AiResponse provider(@jakarta.annotation.Nonnull String provider) {
+    
     this.provider = provider;
     return this;
   }
@@ -131,17 +125,23 @@ public class AiResponse {
    * AI provider that handled this request
    * @return provider
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_PROVIDER, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getProvider() {
     return provider;
   }
 
-  public void setProvider(@javax.annotation.Nonnull String provider) {
+
+  @JsonProperty(value = JSON_PROPERTY_PROVIDER, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setProvider(@jakarta.annotation.Nonnull String provider) {
     this.provider = provider;
   }
 
-
-  public AiResponse tokensIn(@javax.annotation.Nonnull Integer tokensIn) {
+  public AiResponse tokensIn(@jakarta.annotation.Nonnull Integer tokensIn) {
+    
     this.tokensIn = tokensIn;
     return this;
   }
@@ -151,17 +151,23 @@ public class AiResponse {
    * minimum: 0
    * @return tokensIn
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_TOKENS_IN, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public Integer getTokensIn() {
     return tokensIn;
   }
 
-  public void setTokensIn(@javax.annotation.Nonnull Integer tokensIn) {
+
+  @JsonProperty(value = JSON_PROPERTY_TOKENS_IN, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setTokensIn(@jakarta.annotation.Nonnull Integer tokensIn) {
     this.tokensIn = tokensIn;
   }
 
-
-  public AiResponse tokensOut(@javax.annotation.Nonnull Integer tokensOut) {
+  public AiResponse tokensOut(@jakarta.annotation.Nonnull Integer tokensOut) {
+    
     this.tokensOut = tokensOut;
     return this;
   }
@@ -171,17 +177,23 @@ public class AiResponse {
    * minimum: 0
    * @return tokensOut
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_TOKENS_OUT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public Integer getTokensOut() {
     return tokensOut;
   }
 
-  public void setTokensOut(@javax.annotation.Nonnull Integer tokensOut) {
+
+  @JsonProperty(value = JSON_PROPERTY_TOKENS_OUT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setTokensOut(@jakarta.annotation.Nonnull Integer tokensOut) {
     this.tokensOut = tokensOut;
   }
 
-
-  public AiResponse computedCost(@javax.annotation.Nonnull BigDecimal computedCost) {
+  public AiResponse computedCost(@jakarta.annotation.Nonnull BigDecimal computedCost) {
+    
     this.computedCost = computedCost;
     return this;
   }
@@ -191,15 +203,20 @@ public class AiResponse {
    * minimum: 0
    * @return computedCost
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_COMPUTED_COST, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public BigDecimal getComputedCost() {
     return computedCost;
   }
 
-  public void setComputedCost(@javax.annotation.Nonnull BigDecimal computedCost) {
+
+  @JsonProperty(value = JSON_PROPERTY_COMPUTED_COST, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setComputedCost(@jakarta.annotation.Nonnull BigDecimal computedCost) {
     this.computedCost = computedCost;
   }
-
 
 
   @Override
@@ -246,104 +263,5 @@ public class AiResponse {
     return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 
-
-  public static HashSet<String> openapiFields;
-  public static HashSet<String> openapiRequiredFields;
-
-  static {
-    // a set of all properties/fields (JSON key names)
-    openapiFields = new HashSet<String>(Arrays.asList("result", "model", "provider", "tokensIn", "tokensOut", "computedCost"));
-
-    // a set of required properties/fields (JSON key names)
-    openapiRequiredFields = new HashSet<String>(Arrays.asList("result", "model", "provider", "tokensIn", "tokensOut", "computedCost"));
-  }
-
-  /**
-   * Validates the JSON Element and throws an exception if issues found
-   *
-   * @param jsonElement JSON Element
-   * @throws IOException if the JSON Element is invalid with respect to AiResponse
-   */
-  public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      if (jsonElement == null) {
-        if (!AiResponse.openapiRequiredFields.isEmpty()) { // has required fields but JSON element is null
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field(s) %s in AiResponse is not found in the empty JSON string", AiResponse.openapiRequiredFields.toString()));
-        }
-      }
-
-      Set<Map.Entry<String, JsonElement>> entries = jsonElement.getAsJsonObject().entrySet();
-      // check to see if the JSON string contains additional fields
-      for (Map.Entry<String, JsonElement> entry : entries) {
-        if (!AiResponse.openapiFields.contains(entry.getKey())) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The field `%s` in the JSON string is not defined in the `AiResponse` properties. JSON: %s", entry.getKey(), jsonElement.toString()));
-        }
-      }
-
-      // check to make sure all required properties/fields are present in the JSON string
-      for (String requiredField : AiResponse.openapiRequiredFields) {
-        if (jsonElement.getAsJsonObject().get(requiredField) == null) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field `%s` is not found in the JSON string: %s", requiredField, jsonElement.toString()));
-        }
-      }
-        JsonObject jsonObj = jsonElement.getAsJsonObject();
-      if (!jsonObj.get("result").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `result` to be a primitive type in the JSON string but got `%s`", jsonObj.get("result").toString()));
-      }
-      if (!jsonObj.get("model").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `model` to be a primitive type in the JSON string but got `%s`", jsonObj.get("model").toString()));
-      }
-      if (!jsonObj.get("provider").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `provider` to be a primitive type in the JSON string but got `%s`", jsonObj.get("provider").toString()));
-      }
-  }
-
-  public static class CustomTypeAdapterFactory implements TypeAdapterFactory {
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-       if (!AiResponse.class.isAssignableFrom(type.getRawType())) {
-         return null; // this class only serializes 'AiResponse' and its subtypes
-       }
-       final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-       final TypeAdapter<AiResponse> thisAdapter
-                        = gson.getDelegateAdapter(this, TypeToken.get(AiResponse.class));
-
-       return (TypeAdapter<T>) new TypeAdapter<AiResponse>() {
-           @Override
-           public void write(JsonWriter out, AiResponse value) throws IOException {
-             JsonObject obj = thisAdapter.toJsonTree(value).getAsJsonObject();
-             elementAdapter.write(out, obj);
-           }
-
-           @Override
-           public AiResponse read(JsonReader in) throws IOException {
-             JsonElement jsonElement = elementAdapter.read(in);
-             validateJsonElement(jsonElement);
-             return thisAdapter.fromJsonTree(jsonElement);
-           }
-
-       }.nullSafe();
-    }
-  }
-
-  /**
-   * Create an instance of AiResponse given an JSON string
-   *
-   * @param jsonString JSON string
-   * @return An instance of AiResponse
-   * @throws IOException if the JSON string is invalid with respect to AiResponse
-   */
-  public static AiResponse fromJson(String jsonString) throws IOException {
-    return JSON.getGson().fromJson(jsonString, AiResponse.class);
-  }
-
-  /**
-   * Convert an instance of AiResponse to an JSON string
-   *
-   * @return JSON string
-   */
-  public String toJson() {
-    return JSON.getGson().toJson(this);
-  }
 }
 

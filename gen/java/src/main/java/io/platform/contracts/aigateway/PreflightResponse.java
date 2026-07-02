@@ -14,53 +14,38 @@
 package io.platform.contracts.aigateway;
 
 import java.util.Objects;
-import com.google.gson.TypeAdapter;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Arrays;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import io.platform.contracts.JSON;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * PreflightResponse
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T04:54:43.564310+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@JsonPropertyOrder({
+  PreflightResponse.JSON_PROPERTY_DECISION,
+  PreflightResponse.JSON_PROPERTY_DOWNSHIFT_MODEL,
+  PreflightResponse.JSON_PROPERTY_REASON,
+  PreflightResponse.JSON_PROPERTY_CEILING,
+  PreflightResponse.JSON_PROPERTY_CONSUMED
+})
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:47.178638500+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class PreflightResponse {
   /**
    * allow: proceed with the requested model. downshift: proceed with downshiftModel instead (cheaper). block: ceiling reached; do not proceed. 
    */
-  @JsonAdapter(DecisionEnum.Adapter.class)
   public enum DecisionEnum {
-    ALLOW("allow"),
+    ALLOW(String.valueOf("allow")),
     
-    DOWNSHIFT("downshift"),
+    DOWNSHIFT(String.valueOf("downshift")),
     
-    BLOCK("block");
+    BLOCK(String.valueOf("block"));
 
     private String value;
 
@@ -68,6 +53,7 @@ public class PreflightResponse {
       this.value = value;
     }
 
+    @JsonValue
     public String getValue() {
       return value;
     }
@@ -77,6 +63,7 @@ public class PreflightResponse {
       return String.valueOf(value);
     }
 
+    @JsonCreator
     public static DecisionEnum fromValue(String value) {
       for (DecisionEnum b : DecisionEnum.values()) {
         if (b.value.equals(value)) {
@@ -85,55 +72,33 @@ public class PreflightResponse {
       }
       throw new IllegalArgumentException("Unexpected value '" + value + "'");
     }
-
-    public static class Adapter extends TypeAdapter<DecisionEnum> {
-      @Override
-      public void write(final JsonWriter jsonWriter, final DecisionEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
-      }
-
-      @Override
-      public DecisionEnum read(final JsonReader jsonReader) throws IOException {
-        String value =  jsonReader.nextString();
-        return DecisionEnum.fromValue(value);
-      }
-    }
-
-    public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      String value = jsonElement.getAsString();
-      DecisionEnum.fromValue(value);
-    }
   }
 
-  public static final String SERIALIZED_NAME_DECISION = "decision";
-  @SerializedName(SERIALIZED_NAME_DECISION)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_DECISION = "decision";
+  @jakarta.annotation.Nonnull
   private DecisionEnum decision;
 
-  public static final String SERIALIZED_NAME_DOWNSHIFT_MODEL = "downshiftModel";
-  @SerializedName(SERIALIZED_NAME_DOWNSHIFT_MODEL)
-  @javax.annotation.Nullable
+  public static final String JSON_PROPERTY_DOWNSHIFT_MODEL = "downshiftModel";
+  @jakarta.annotation.Nullable
   private String downshiftModel;
 
-  public static final String SERIALIZED_NAME_REASON = "reason";
-  @SerializedName(SERIALIZED_NAME_REASON)
-  @javax.annotation.Nullable
+  public static final String JSON_PROPERTY_REASON = "reason";
+  @jakarta.annotation.Nullable
   private String reason;
 
-  public static final String SERIALIZED_NAME_CEILING = "ceiling";
-  @SerializedName(SERIALIZED_NAME_CEILING)
-  @javax.annotation.Nullable
+  public static final String JSON_PROPERTY_CEILING = "ceiling";
+  @jakarta.annotation.Nullable
   private BigDecimal ceiling;
 
-  public static final String SERIALIZED_NAME_CONSUMED = "consumed";
-  @SerializedName(SERIALIZED_NAME_CONSUMED)
-  @javax.annotation.Nullable
+  public static final String JSON_PROPERTY_CONSUMED = "consumed";
+  @jakarta.annotation.Nullable
   private BigDecimal consumed;
 
   public PreflightResponse() {
   }
 
-  public PreflightResponse decision(@javax.annotation.Nonnull DecisionEnum decision) {
+  public PreflightResponse decision(@jakarta.annotation.Nonnull DecisionEnum decision) {
+    
     this.decision = decision;
     return this;
   }
@@ -142,17 +107,23 @@ public class PreflightResponse {
    * allow: proceed with the requested model. downshift: proceed with downshiftModel instead (cheaper). block: ceiling reached; do not proceed. 
    * @return decision
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_DECISION, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public DecisionEnum getDecision() {
     return decision;
   }
 
-  public void setDecision(@javax.annotation.Nonnull DecisionEnum decision) {
+
+  @JsonProperty(value = JSON_PROPERTY_DECISION, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setDecision(@jakarta.annotation.Nonnull DecisionEnum decision) {
     this.decision = decision;
   }
 
-
-  public PreflightResponse downshiftModel(@javax.annotation.Nullable String downshiftModel) {
+  public PreflightResponse downshiftModel(@jakarta.annotation.Nullable String downshiftModel) {
+    
     this.downshiftModel = downshiftModel;
     return this;
   }
@@ -161,17 +132,23 @@ public class PreflightResponse {
    * Alternative model to use; only present when decision is downshift
    * @return downshiftModel
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_DOWNSHIFT_MODEL, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
   public String getDownshiftModel() {
     return downshiftModel;
   }
 
-  public void setDownshiftModel(@javax.annotation.Nullable String downshiftModel) {
+
+  @JsonProperty(value = JSON_PROPERTY_DOWNSHIFT_MODEL, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setDownshiftModel(@jakarta.annotation.Nullable String downshiftModel) {
     this.downshiftModel = downshiftModel;
   }
 
-
-  public PreflightResponse reason(@javax.annotation.Nullable String reason) {
+  public PreflightResponse reason(@jakarta.annotation.Nullable String reason) {
+    
     this.reason = reason;
     return this;
   }
@@ -180,17 +157,23 @@ public class PreflightResponse {
    * Human-readable reason for the decision. Required when decision is block (D023 — never silent). May also be present for downshift to explain the substitution. 
    * @return reason
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_REASON, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
   public String getReason() {
     return reason;
   }
 
-  public void setReason(@javax.annotation.Nullable String reason) {
+
+  @JsonProperty(value = JSON_PROPERTY_REASON, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setReason(@jakarta.annotation.Nullable String reason) {
     this.reason = reason;
   }
 
-
-  public PreflightResponse ceiling(@javax.annotation.Nullable BigDecimal ceiling) {
+  public PreflightResponse ceiling(@jakarta.annotation.Nullable BigDecimal ceiling) {
+    
     this.ceiling = ceiling;
     return this;
   }
@@ -200,17 +183,23 @@ public class PreflightResponse {
    * minimum: 0
    * @return ceiling
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_CEILING, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
   public BigDecimal getCeiling() {
     return ceiling;
   }
 
-  public void setCeiling(@javax.annotation.Nullable BigDecimal ceiling) {
+
+  @JsonProperty(value = JSON_PROPERTY_CEILING, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCeiling(@jakarta.annotation.Nullable BigDecimal ceiling) {
     this.ceiling = ceiling;
   }
 
-
-  public PreflightResponse consumed(@javax.annotation.Nullable BigDecimal consumed) {
+  public PreflightResponse consumed(@jakarta.annotation.Nullable BigDecimal consumed) {
+    
     this.consumed = consumed;
     return this;
   }
@@ -220,15 +209,20 @@ public class PreflightResponse {
    * minimum: 0
    * @return consumed
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_CONSUMED, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
   public BigDecimal getConsumed() {
     return consumed;
   }
 
-  public void setConsumed(@javax.annotation.Nullable BigDecimal consumed) {
+
+  @JsonProperty(value = JSON_PROPERTY_CONSUMED, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setConsumed(@jakarta.annotation.Nullable BigDecimal consumed) {
     this.consumed = consumed;
   }
-
 
 
   @Override
@@ -273,106 +267,5 @@ public class PreflightResponse {
     return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 
-
-  public static HashSet<String> openapiFields;
-  public static HashSet<String> openapiRequiredFields;
-
-  static {
-    // a set of all properties/fields (JSON key names)
-    openapiFields = new HashSet<String>(Arrays.asList("decision", "downshiftModel", "reason", "ceiling", "consumed"));
-
-    // a set of required properties/fields (JSON key names)
-    openapiRequiredFields = new HashSet<String>(Arrays.asList("decision"));
-  }
-
-  /**
-   * Validates the JSON Element and throws an exception if issues found
-   *
-   * @param jsonElement JSON Element
-   * @throws IOException if the JSON Element is invalid with respect to PreflightResponse
-   */
-  public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      if (jsonElement == null) {
-        if (!PreflightResponse.openapiRequiredFields.isEmpty()) { // has required fields but JSON element is null
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field(s) %s in PreflightResponse is not found in the empty JSON string", PreflightResponse.openapiRequiredFields.toString()));
-        }
-      }
-
-      Set<Map.Entry<String, JsonElement>> entries = jsonElement.getAsJsonObject().entrySet();
-      // check to see if the JSON string contains additional fields
-      for (Map.Entry<String, JsonElement> entry : entries) {
-        if (!PreflightResponse.openapiFields.contains(entry.getKey())) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The field `%s` in the JSON string is not defined in the `PreflightResponse` properties. JSON: %s", entry.getKey(), jsonElement.toString()));
-        }
-      }
-
-      // check to make sure all required properties/fields are present in the JSON string
-      for (String requiredField : PreflightResponse.openapiRequiredFields) {
-        if (jsonElement.getAsJsonObject().get(requiredField) == null) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field `%s` is not found in the JSON string: %s", requiredField, jsonElement.toString()));
-        }
-      }
-        JsonObject jsonObj = jsonElement.getAsJsonObject();
-      if (!jsonObj.get("decision").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `decision` to be a primitive type in the JSON string but got `%s`", jsonObj.get("decision").toString()));
-      }
-      // validate the required field `decision`
-      DecisionEnum.validateJsonElement(jsonObj.get("decision"));
-      if ((jsonObj.get("downshiftModel") != null && !jsonObj.get("downshiftModel").isJsonNull()) && !jsonObj.get("downshiftModel").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `downshiftModel` to be a primitive type in the JSON string but got `%s`", jsonObj.get("downshiftModel").toString()));
-      }
-      if ((jsonObj.get("reason") != null && !jsonObj.get("reason").isJsonNull()) && !jsonObj.get("reason").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `reason` to be a primitive type in the JSON string but got `%s`", jsonObj.get("reason").toString()));
-      }
-  }
-
-  public static class CustomTypeAdapterFactory implements TypeAdapterFactory {
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-       if (!PreflightResponse.class.isAssignableFrom(type.getRawType())) {
-         return null; // this class only serializes 'PreflightResponse' and its subtypes
-       }
-       final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-       final TypeAdapter<PreflightResponse> thisAdapter
-                        = gson.getDelegateAdapter(this, TypeToken.get(PreflightResponse.class));
-
-       return (TypeAdapter<T>) new TypeAdapter<PreflightResponse>() {
-           @Override
-           public void write(JsonWriter out, PreflightResponse value) throws IOException {
-             JsonObject obj = thisAdapter.toJsonTree(value).getAsJsonObject();
-             elementAdapter.write(out, obj);
-           }
-
-           @Override
-           public PreflightResponse read(JsonReader in) throws IOException {
-             JsonElement jsonElement = elementAdapter.read(in);
-             validateJsonElement(jsonElement);
-             return thisAdapter.fromJsonTree(jsonElement);
-           }
-
-       }.nullSafe();
-    }
-  }
-
-  /**
-   * Create an instance of PreflightResponse given an JSON string
-   *
-   * @param jsonString JSON string
-   * @return An instance of PreflightResponse
-   * @throws IOException if the JSON string is invalid with respect to PreflightResponse
-   */
-  public static PreflightResponse fromJson(String jsonString) throws IOException {
-    return JSON.getGson().fromJson(jsonString, PreflightResponse.class);
-  }
-
-  /**
-   * Convert an instance of PreflightResponse to an JSON string
-   *
-   * @return JSON string
-   */
-  public String toJson() {
-    return JSON.getGson().toJson(this);
-  }
 }
 

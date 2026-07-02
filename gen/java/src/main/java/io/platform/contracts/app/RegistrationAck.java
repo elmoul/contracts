@@ -14,57 +14,39 @@
 package io.platform.contracts.app;
 
 import java.util.Objects;
-import com.google.gson.TypeAdapter;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import io.platform.contracts.JSON;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import java.time.OffsetDateTime;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * RegistrationAck
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T04:54:15.256676400+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@JsonPropertyOrder({
+  RegistrationAck.JSON_PROPERTY_APP_ID,
+  RegistrationAck.JSON_PROPERTY_REGISTERED_AT
+})
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:12.342354200+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class RegistrationAck {
-  public static final String SERIALIZED_NAME_APP_ID = "appId";
-  @SerializedName(SERIALIZED_NAME_APP_ID)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_APP_ID = "appId";
+  @jakarta.annotation.Nonnull
   private String appId;
 
-  public static final String SERIALIZED_NAME_REGISTERED_AT = "registeredAt";
-  @SerializedName(SERIALIZED_NAME_REGISTERED_AT)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_REGISTERED_AT = "registeredAt";
+  @jakarta.annotation.Nonnull
   private OffsetDateTime registeredAt;
 
   public RegistrationAck() {
   }
 
-  public RegistrationAck appId(@javax.annotation.Nonnull String appId) {
+  public RegistrationAck appId(@jakarta.annotation.Nonnull String appId) {
+    
     this.appId = appId;
     return this;
   }
@@ -73,17 +55,23 @@ public class RegistrationAck {
    * Canonical app identifier assigned by the control plane
    * @return appId
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_APP_ID, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getAppId() {
     return appId;
   }
 
-  public void setAppId(@javax.annotation.Nonnull String appId) {
+
+  @JsonProperty(value = JSON_PROPERTY_APP_ID, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setAppId(@jakarta.annotation.Nonnull String appId) {
     this.appId = appId;
   }
 
-
-  public RegistrationAck registeredAt(@javax.annotation.Nonnull OffsetDateTime registeredAt) {
+  public RegistrationAck registeredAt(@jakarta.annotation.Nonnull OffsetDateTime registeredAt) {
+    
     this.registeredAt = registeredAt;
     return this;
   }
@@ -92,15 +80,20 @@ public class RegistrationAck {
    * Get registeredAt
    * @return registeredAt
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_REGISTERED_AT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public OffsetDateTime getRegisteredAt() {
     return registeredAt;
   }
 
-  public void setRegisteredAt(@javax.annotation.Nonnull OffsetDateTime registeredAt) {
+
+  @JsonProperty(value = JSON_PROPERTY_REGISTERED_AT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setRegisteredAt(@jakarta.annotation.Nonnull OffsetDateTime registeredAt) {
     this.registeredAt = registeredAt;
   }
-
 
 
   @Override
@@ -139,98 +132,5 @@ public class RegistrationAck {
     return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 
-
-  public static HashSet<String> openapiFields;
-  public static HashSet<String> openapiRequiredFields;
-
-  static {
-    // a set of all properties/fields (JSON key names)
-    openapiFields = new HashSet<String>(Arrays.asList("appId", "registeredAt"));
-
-    // a set of required properties/fields (JSON key names)
-    openapiRequiredFields = new HashSet<String>(Arrays.asList("appId", "registeredAt"));
-  }
-
-  /**
-   * Validates the JSON Element and throws an exception if issues found
-   *
-   * @param jsonElement JSON Element
-   * @throws IOException if the JSON Element is invalid with respect to RegistrationAck
-   */
-  public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      if (jsonElement == null) {
-        if (!RegistrationAck.openapiRequiredFields.isEmpty()) { // has required fields but JSON element is null
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field(s) %s in RegistrationAck is not found in the empty JSON string", RegistrationAck.openapiRequiredFields.toString()));
-        }
-      }
-
-      Set<Map.Entry<String, JsonElement>> entries = jsonElement.getAsJsonObject().entrySet();
-      // check to see if the JSON string contains additional fields
-      for (Map.Entry<String, JsonElement> entry : entries) {
-        if (!RegistrationAck.openapiFields.contains(entry.getKey())) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The field `%s` in the JSON string is not defined in the `RegistrationAck` properties. JSON: %s", entry.getKey(), jsonElement.toString()));
-        }
-      }
-
-      // check to make sure all required properties/fields are present in the JSON string
-      for (String requiredField : RegistrationAck.openapiRequiredFields) {
-        if (jsonElement.getAsJsonObject().get(requiredField) == null) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field `%s` is not found in the JSON string: %s", requiredField, jsonElement.toString()));
-        }
-      }
-        JsonObject jsonObj = jsonElement.getAsJsonObject();
-      if (!jsonObj.get("appId").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `appId` to be a primitive type in the JSON string but got `%s`", jsonObj.get("appId").toString()));
-      }
-  }
-
-  public static class CustomTypeAdapterFactory implements TypeAdapterFactory {
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-       if (!RegistrationAck.class.isAssignableFrom(type.getRawType())) {
-         return null; // this class only serializes 'RegistrationAck' and its subtypes
-       }
-       final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-       final TypeAdapter<RegistrationAck> thisAdapter
-                        = gson.getDelegateAdapter(this, TypeToken.get(RegistrationAck.class));
-
-       return (TypeAdapter<T>) new TypeAdapter<RegistrationAck>() {
-           @Override
-           public void write(JsonWriter out, RegistrationAck value) throws IOException {
-             JsonObject obj = thisAdapter.toJsonTree(value).getAsJsonObject();
-             elementAdapter.write(out, obj);
-           }
-
-           @Override
-           public RegistrationAck read(JsonReader in) throws IOException {
-             JsonElement jsonElement = elementAdapter.read(in);
-             validateJsonElement(jsonElement);
-             return thisAdapter.fromJsonTree(jsonElement);
-           }
-
-       }.nullSafe();
-    }
-  }
-
-  /**
-   * Create an instance of RegistrationAck given an JSON string
-   *
-   * @param jsonString JSON string
-   * @return An instance of RegistrationAck
-   * @throws IOException if the JSON string is invalid with respect to RegistrationAck
-   */
-  public static RegistrationAck fromJson(String jsonString) throws IOException {
-    return JSON.getGson().fromJson(jsonString, RegistrationAck.class);
-  }
-
-  /**
-   * Convert an instance of RegistrationAck to an JSON string
-   *
-   * @return JSON string
-   */
-  public String toJson() {
-    return JSON.getGson().toJson(this);
-  }
 }
 

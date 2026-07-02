@@ -6,4 +6,11 @@ export type { paths as AiGatewayPreflightPaths, components as AiGatewayPreflight
 export type { paths as AppManifestPaths, components as AppManifestComponents } from "./app-manifest";
 export type { paths as AppHealthPaths, components as AppHealthComponents } from "./app-health";
 export type { UsageEvent } from "./usage-event";
-export type { StateEvent, ComponentHealthEvent, LoadEvent, CostTickEvent, CiRunEvent, AppStatusEvent } from "./state-event";
+export type {
+  StateEvent,
+  ComponentHealthEvent, ComponentHealthPayload,
+  LoadEvent, LoadPayload,
+  CostTickEvent, CostTickPayload,
+  CiRunEvent, CiRunPayload,
+  AppStatusEvent, AppStatusPayload,
+} from "./state-event";

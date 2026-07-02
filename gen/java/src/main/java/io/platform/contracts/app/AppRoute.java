@@ -14,61 +14,43 @@
 package io.platform.contracts.app;
 
 import java.util.Objects;
-import com.google.gson.TypeAdapter;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
 import java.util.Arrays;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import io.platform.contracts.JSON;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * AppRoute
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T04:54:15.256676400+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@JsonPropertyOrder({
+  AppRoute.JSON_PROPERTY_PATH,
+  AppRoute.JSON_PROPERTY_METHOD,
+  AppRoute.JSON_PROPERTY_PUBLIC
+})
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:12.342354200+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AppRoute {
-  public static final String SERIALIZED_NAME_PATH = "path";
-  @SerializedName(SERIALIZED_NAME_PATH)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_PATH = "path";
+  @jakarta.annotation.Nonnull
   private String path;
 
   /**
    * Gets or Sets method
    */
-  @JsonAdapter(MethodEnum.Adapter.class)
   public enum MethodEnum {
-    GET("GET"),
+    GET(String.valueOf("GET")),
     
-    POST("POST"),
+    POST(String.valueOf("POST")),
     
-    PUT("PUT"),
+    PUT(String.valueOf("PUT")),
     
-    PATCH("PATCH"),
+    PATCH(String.valueOf("PATCH")),
     
-    DELETE("DELETE");
+    DELETE(String.valueOf("DELETE"));
 
     private String value;
 
@@ -76,6 +58,7 @@ public class AppRoute {
       this.value = value;
     }
 
+    @JsonValue
     public String getValue() {
       return value;
     }
@@ -85,6 +68,7 @@ public class AppRoute {
       return String.valueOf(value);
     }
 
+    @JsonCreator
     public static MethodEnum fromValue(String value) {
       for (MethodEnum b : MethodEnum.values()) {
         if (b.value.equals(value)) {
@@ -93,40 +77,21 @@ public class AppRoute {
       }
       throw new IllegalArgumentException("Unexpected value '" + value + "'");
     }
-
-    public static class Adapter extends TypeAdapter<MethodEnum> {
-      @Override
-      public void write(final JsonWriter jsonWriter, final MethodEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
-      }
-
-      @Override
-      public MethodEnum read(final JsonReader jsonReader) throws IOException {
-        String value =  jsonReader.nextString();
-        return MethodEnum.fromValue(value);
-      }
-    }
-
-    public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      String value = jsonElement.getAsString();
-      MethodEnum.fromValue(value);
-    }
   }
 
-  public static final String SERIALIZED_NAME_METHOD = "method";
-  @SerializedName(SERIALIZED_NAME_METHOD)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_METHOD = "method";
+  @jakarta.annotation.Nonnull
   private MethodEnum method;
 
-  public static final String SERIALIZED_NAME_PUBLIC = "public";
-  @SerializedName(SERIALIZED_NAME_PUBLIC)
-  @javax.annotation.Nullable
+  public static final String JSON_PROPERTY_PUBLIC = "public";
+  @jakarta.annotation.Nullable
   private Boolean _public = false;
 
   public AppRoute() {
   }
 
-  public AppRoute path(@javax.annotation.Nonnull String path) {
+  public AppRoute path(@jakarta.annotation.Nonnull String path) {
+    
     this.path = path;
     return this;
   }
@@ -135,17 +100,23 @@ public class AppRoute {
    * Path relative to the app&#39;s base URL
    * @return path
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_PATH, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getPath() {
     return path;
   }
 
-  public void setPath(@javax.annotation.Nonnull String path) {
+
+  @JsonProperty(value = JSON_PROPERTY_PATH, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setPath(@jakarta.annotation.Nonnull String path) {
     this.path = path;
   }
 
-
-  public AppRoute method(@javax.annotation.Nonnull MethodEnum method) {
+  public AppRoute method(@jakarta.annotation.Nonnull MethodEnum method) {
+    
     this.method = method;
     return this;
   }
@@ -154,17 +125,23 @@ public class AppRoute {
    * Get method
    * @return method
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_METHOD, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public MethodEnum getMethod() {
     return method;
   }
 
-  public void setMethod(@javax.annotation.Nonnull MethodEnum method) {
+
+  @JsonProperty(value = JSON_PROPERTY_METHOD, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setMethod(@jakarta.annotation.Nonnull MethodEnum method) {
     this.method = method;
   }
 
-
-  public AppRoute _public(@javax.annotation.Nullable Boolean _public) {
+  public AppRoute _public(@jakarta.annotation.Nullable Boolean _public) {
+    
     this._public = _public;
     return this;
   }
@@ -173,15 +150,20 @@ public class AppRoute {
    * If true, the gateway allows unauthenticated access to this route
    * @return _public
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_PUBLIC, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
   public Boolean getPublic() {
     return _public;
   }
 
-  public void setPublic(@javax.annotation.Nullable Boolean _public) {
+
+  @JsonProperty(value = JSON_PROPERTY_PUBLIC, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPublic(@jakarta.annotation.Nullable Boolean _public) {
     this._public = _public;
   }
-
 
 
   @Override
@@ -222,103 +204,5 @@ public class AppRoute {
     return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 
-
-  public static HashSet<String> openapiFields;
-  public static HashSet<String> openapiRequiredFields;
-
-  static {
-    // a set of all properties/fields (JSON key names)
-    openapiFields = new HashSet<String>(Arrays.asList("path", "method", "public"));
-
-    // a set of required properties/fields (JSON key names)
-    openapiRequiredFields = new HashSet<String>(Arrays.asList("path", "method"));
-  }
-
-  /**
-   * Validates the JSON Element and throws an exception if issues found
-   *
-   * @param jsonElement JSON Element
-   * @throws IOException if the JSON Element is invalid with respect to AppRoute
-   */
-  public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      if (jsonElement == null) {
-        if (!AppRoute.openapiRequiredFields.isEmpty()) { // has required fields but JSON element is null
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field(s) %s in AppRoute is not found in the empty JSON string", AppRoute.openapiRequiredFields.toString()));
-        }
-      }
-
-      Set<Map.Entry<String, JsonElement>> entries = jsonElement.getAsJsonObject().entrySet();
-      // check to see if the JSON string contains additional fields
-      for (Map.Entry<String, JsonElement> entry : entries) {
-        if (!AppRoute.openapiFields.contains(entry.getKey())) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The field `%s` in the JSON string is not defined in the `AppRoute` properties. JSON: %s", entry.getKey(), jsonElement.toString()));
-        }
-      }
-
-      // check to make sure all required properties/fields are present in the JSON string
-      for (String requiredField : AppRoute.openapiRequiredFields) {
-        if (jsonElement.getAsJsonObject().get(requiredField) == null) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field `%s` is not found in the JSON string: %s", requiredField, jsonElement.toString()));
-        }
-      }
-        JsonObject jsonObj = jsonElement.getAsJsonObject();
-      if (!jsonObj.get("path").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `path` to be a primitive type in the JSON string but got `%s`", jsonObj.get("path").toString()));
-      }
-      if (!jsonObj.get("method").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `method` to be a primitive type in the JSON string but got `%s`", jsonObj.get("method").toString()));
-      }
-      // validate the required field `method`
-      MethodEnum.validateJsonElement(jsonObj.get("method"));
-  }
-
-  public static class CustomTypeAdapterFactory implements TypeAdapterFactory {
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-       if (!AppRoute.class.isAssignableFrom(type.getRawType())) {
-         return null; // this class only serializes 'AppRoute' and its subtypes
-       }
-       final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-       final TypeAdapter<AppRoute> thisAdapter
-                        = gson.getDelegateAdapter(this, TypeToken.get(AppRoute.class));
-
-       return (TypeAdapter<T>) new TypeAdapter<AppRoute>() {
-           @Override
-           public void write(JsonWriter out, AppRoute value) throws IOException {
-             JsonObject obj = thisAdapter.toJsonTree(value).getAsJsonObject();
-             elementAdapter.write(out, obj);
-           }
-
-           @Override
-           public AppRoute read(JsonReader in) throws IOException {
-             JsonElement jsonElement = elementAdapter.read(in);
-             validateJsonElement(jsonElement);
-             return thisAdapter.fromJsonTree(jsonElement);
-           }
-
-       }.nullSafe();
-    }
-  }
-
-  /**
-   * Create an instance of AppRoute given an JSON string
-   *
-   * @param jsonString JSON string
-   * @return An instance of AppRoute
-   * @throws IOException if the JSON string is invalid with respect to AppRoute
-   */
-  public static AppRoute fromJson(String jsonString) throws IOException {
-    return JSON.getGson().fromJson(jsonString, AppRoute.class);
-  }
-
-  /**
-   * Convert an instance of AppRoute to an JSON string
-   *
-   * @return JSON string
-   */
-  public String toJson() {
-    return JSON.getGson().toJson(this);
-  }
 }
 

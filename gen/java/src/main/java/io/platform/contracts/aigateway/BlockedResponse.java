@@ -14,62 +14,44 @@
 package io.platform.contracts.aigateway;
 
 import java.util.Objects;
-import com.google.gson.TypeAdapter;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Arrays;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import io.platform.contracts.JSON;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Returned with HTTP 402 when Treasury blocks the request (D023). The reason field is always present — block state is never silent. 
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T04:54:38.501427300+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@JsonPropertyOrder({
+  BlockedResponse.JSON_PROPERTY_REASON,
+  BlockedResponse.JSON_PROPERTY_CEILING,
+  BlockedResponse.JSON_PROPERTY_CONSUMED
+})
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:41.969387100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class BlockedResponse {
-  public static final String SERIALIZED_NAME_REASON = "reason";
-  @SerializedName(SERIALIZED_NAME_REASON)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_REASON = "reason";
+  @jakarta.annotation.Nonnull
   private String reason;
 
-  public static final String SERIALIZED_NAME_CEILING = "ceiling";
-  @SerializedName(SERIALIZED_NAME_CEILING)
-  @javax.annotation.Nullable
+  public static final String JSON_PROPERTY_CEILING = "ceiling";
+  @jakarta.annotation.Nullable
   private BigDecimal ceiling;
 
-  public static final String SERIALIZED_NAME_CONSUMED = "consumed";
-  @SerializedName(SERIALIZED_NAME_CONSUMED)
-  @javax.annotation.Nullable
+  public static final String JSON_PROPERTY_CONSUMED = "consumed";
+  @jakarta.annotation.Nullable
   private BigDecimal consumed;
 
   public BlockedResponse() {
   }
 
-  public BlockedResponse reason(@javax.annotation.Nonnull String reason) {
+  public BlockedResponse reason(@jakarta.annotation.Nonnull String reason) {
+    
     this.reason = reason;
     return this;
   }
@@ -78,17 +60,23 @@ public class BlockedResponse {
    * Human-readable explanation of why the request was blocked (e.g. monthly ceiling reached)
    * @return reason
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_REASON, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getReason() {
     return reason;
   }
 
-  public void setReason(@javax.annotation.Nonnull String reason) {
+
+  @JsonProperty(value = JSON_PROPERTY_REASON, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setReason(@jakarta.annotation.Nonnull String reason) {
     this.reason = reason;
   }
 
-
-  public BlockedResponse ceiling(@javax.annotation.Nullable BigDecimal ceiling) {
+  public BlockedResponse ceiling(@jakarta.annotation.Nullable BigDecimal ceiling) {
+    
     this.ceiling = ceiling;
     return this;
   }
@@ -98,17 +86,23 @@ public class BlockedResponse {
    * minimum: 0
    * @return ceiling
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_CEILING, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
   public BigDecimal getCeiling() {
     return ceiling;
   }
 
-  public void setCeiling(@javax.annotation.Nullable BigDecimal ceiling) {
+
+  @JsonProperty(value = JSON_PROPERTY_CEILING, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCeiling(@jakarta.annotation.Nullable BigDecimal ceiling) {
     this.ceiling = ceiling;
   }
 
-
-  public BlockedResponse consumed(@javax.annotation.Nullable BigDecimal consumed) {
+  public BlockedResponse consumed(@jakarta.annotation.Nullable BigDecimal consumed) {
+    
     this.consumed = consumed;
     return this;
   }
@@ -118,15 +112,20 @@ public class BlockedResponse {
    * minimum: 0
    * @return consumed
    */
-  @javax.annotation.Nullable
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_CONSUMED, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
   public BigDecimal getConsumed() {
     return consumed;
   }
 
-  public void setConsumed(@javax.annotation.Nullable BigDecimal consumed) {
+
+  @JsonProperty(value = JSON_PROPERTY_CONSUMED, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setConsumed(@jakarta.annotation.Nullable BigDecimal consumed) {
     this.consumed = consumed;
   }
-
 
 
   @Override
@@ -167,98 +166,5 @@ public class BlockedResponse {
     return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 
-
-  public static HashSet<String> openapiFields;
-  public static HashSet<String> openapiRequiredFields;
-
-  static {
-    // a set of all properties/fields (JSON key names)
-    openapiFields = new HashSet<String>(Arrays.asList("reason", "ceiling", "consumed"));
-
-    // a set of required properties/fields (JSON key names)
-    openapiRequiredFields = new HashSet<String>(Arrays.asList("reason"));
-  }
-
-  /**
-   * Validates the JSON Element and throws an exception if issues found
-   *
-   * @param jsonElement JSON Element
-   * @throws IOException if the JSON Element is invalid with respect to BlockedResponse
-   */
-  public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      if (jsonElement == null) {
-        if (!BlockedResponse.openapiRequiredFields.isEmpty()) { // has required fields but JSON element is null
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field(s) %s in BlockedResponse is not found in the empty JSON string", BlockedResponse.openapiRequiredFields.toString()));
-        }
-      }
-
-      Set<Map.Entry<String, JsonElement>> entries = jsonElement.getAsJsonObject().entrySet();
-      // check to see if the JSON string contains additional fields
-      for (Map.Entry<String, JsonElement> entry : entries) {
-        if (!BlockedResponse.openapiFields.contains(entry.getKey())) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The field `%s` in the JSON string is not defined in the `BlockedResponse` properties. JSON: %s", entry.getKey(), jsonElement.toString()));
-        }
-      }
-
-      // check to make sure all required properties/fields are present in the JSON string
-      for (String requiredField : BlockedResponse.openapiRequiredFields) {
-        if (jsonElement.getAsJsonObject().get(requiredField) == null) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field `%s` is not found in the JSON string: %s", requiredField, jsonElement.toString()));
-        }
-      }
-        JsonObject jsonObj = jsonElement.getAsJsonObject();
-      if (!jsonObj.get("reason").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `reason` to be a primitive type in the JSON string but got `%s`", jsonObj.get("reason").toString()));
-      }
-  }
-
-  public static class CustomTypeAdapterFactory implements TypeAdapterFactory {
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-       if (!BlockedResponse.class.isAssignableFrom(type.getRawType())) {
-         return null; // this class only serializes 'BlockedResponse' and its subtypes
-       }
-       final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-       final TypeAdapter<BlockedResponse> thisAdapter
-                        = gson.getDelegateAdapter(this, TypeToken.get(BlockedResponse.class));
-
-       return (TypeAdapter<T>) new TypeAdapter<BlockedResponse>() {
-           @Override
-           public void write(JsonWriter out, BlockedResponse value) throws IOException {
-             JsonObject obj = thisAdapter.toJsonTree(value).getAsJsonObject();
-             elementAdapter.write(out, obj);
-           }
-
-           @Override
-           public BlockedResponse read(JsonReader in) throws IOException {
-             JsonElement jsonElement = elementAdapter.read(in);
-             validateJsonElement(jsonElement);
-             return thisAdapter.fromJsonTree(jsonElement);
-           }
-
-       }.nullSafe();
-    }
-  }
-
-  /**
-   * Create an instance of BlockedResponse given an JSON string
-   *
-   * @param jsonString JSON string
-   * @return An instance of BlockedResponse
-   * @throws IOException if the JSON string is invalid with respect to BlockedResponse
-   */
-  public static BlockedResponse fromJson(String jsonString) throws IOException {
-    return JSON.getGson().fromJson(jsonString, BlockedResponse.class);
-  }
-
-  /**
-   * Convert an instance of BlockedResponse to an JSON string
-   *
-   * @return JSON string
-   */
-  public String toJson() {
-    return JSON.getGson().toJson(this);
-  }
 }
 

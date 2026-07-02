@@ -14,70 +14,54 @@
 package io.platform.contracts.app;
 
 import java.util.Objects;
-import com.google.gson.TypeAdapter;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
+import java.util.Arrays;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.platform.contracts.app.AppRoute;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import io.platform.contracts.JSON;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * AppManifest
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T04:54:15.256676400+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@JsonPropertyOrder({
+  AppManifest.JSON_PROPERTY_NAME,
+  AppManifest.JSON_PROPERTY_VERSION,
+  AppManifest.JSON_PROPERTY_OWNER,
+  AppManifest.JSON_PROPERTY_PLAN,
+  AppManifest.JSON_PROPERTY_PROPERTY_CLASS,
+  AppManifest.JSON_PROPERTY_ROUTES
+})
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:12.342354200+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AppManifest {
-  public static final String SERIALIZED_NAME_NAME = "name";
-  @SerializedName(SERIALIZED_NAME_NAME)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_NAME = "name";
+  @jakarta.annotation.Nonnull
   private String name;
 
-  public static final String SERIALIZED_NAME_VERSION = "version";
-  @SerializedName(SERIALIZED_NAME_VERSION)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_VERSION = "version";
+  @jakarta.annotation.Nonnull
   private String version;
 
-  public static final String SERIALIZED_NAME_OWNER = "owner";
-  @SerializedName(SERIALIZED_NAME_OWNER)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_OWNER = "owner";
+  @jakarta.annotation.Nonnull
   private String owner;
 
   /**
    * Billing plan tier the app is registered on
    */
-  @JsonAdapter(PlanEnum.Adapter.class)
   public enum PlanEnum {
-    FREE("free"),
+    FREE(String.valueOf("free")),
     
-    PRO("pro"),
+    PRO(String.valueOf("pro")),
     
-    ENTERPRISE("enterprise");
+    ENTERPRISE(String.valueOf("enterprise"));
 
     private String value;
 
@@ -85,6 +69,7 @@ public class AppManifest {
       this.value = value;
     }
 
+    @JsonValue
     public String getValue() {
       return value;
     }
@@ -94,6 +79,7 @@ public class AppManifest {
       return String.valueOf(value);
     }
 
+    @JsonCreator
     public static PlanEnum fromValue(String value) {
       for (PlanEnum b : PlanEnum.values()) {
         if (b.value.equals(value)) {
@@ -102,41 +88,21 @@ public class AppManifest {
       }
       throw new IllegalArgumentException("Unexpected value '" + value + "'");
     }
-
-    public static class Adapter extends TypeAdapter<PlanEnum> {
-      @Override
-      public void write(final JsonWriter jsonWriter, final PlanEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
-      }
-
-      @Override
-      public PlanEnum read(final JsonReader jsonReader) throws IOException {
-        String value =  jsonReader.nextString();
-        return PlanEnum.fromValue(value);
-      }
-    }
-
-    public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      String value = jsonElement.getAsString();
-      PlanEnum.fromValue(value);
-    }
   }
 
-  public static final String SERIALIZED_NAME_PLAN = "plan";
-  @SerializedName(SERIALIZED_NAME_PLAN)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_PLAN = "plan";
+  @jakarta.annotation.Nonnull
   private PlanEnum plan;
 
   /**
    * Risk class tier used by the control plane for guardrail configuration (D010). Product apps only — connectors and agents do not register through app.manifest.
    */
-  @JsonAdapter(PropertyClassEnum.Adapter.class)
   public enum PropertyClassEnum {
-    LOW_STAKES("low-stakes"),
+    LOW_STAKES(String.valueOf("low-stakes")),
     
-    HEALTH_CLASS("health-class"),
+    HEALTH_CLASS(String.valueOf("health-class")),
     
-    KIDS_CLASS("kids-class");
+    KIDS_CLASS(String.valueOf("kids-class"));
 
     private String value;
 
@@ -144,6 +110,7 @@ public class AppManifest {
       this.value = value;
     }
 
+    @JsonValue
     public String getValue() {
       return value;
     }
@@ -153,6 +120,7 @@ public class AppManifest {
       return String.valueOf(value);
     }
 
+    @JsonCreator
     public static PropertyClassEnum fromValue(String value) {
       for (PropertyClassEnum b : PropertyClassEnum.values()) {
         if (b.value.equals(value)) {
@@ -161,40 +129,21 @@ public class AppManifest {
       }
       throw new IllegalArgumentException("Unexpected value '" + value + "'");
     }
-
-    public static class Adapter extends TypeAdapter<PropertyClassEnum> {
-      @Override
-      public void write(final JsonWriter jsonWriter, final PropertyClassEnum enumeration) throws IOException {
-        jsonWriter.value(enumeration.getValue());
-      }
-
-      @Override
-      public PropertyClassEnum read(final JsonReader jsonReader) throws IOException {
-        String value =  jsonReader.nextString();
-        return PropertyClassEnum.fromValue(value);
-      }
-    }
-
-    public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      String value = jsonElement.getAsString();
-      PropertyClassEnum.fromValue(value);
-    }
   }
 
-  public static final String SERIALIZED_NAME_PROPERTY_CLASS = "class";
-  @SerializedName(SERIALIZED_NAME_PROPERTY_CLASS)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_PROPERTY_CLASS = "class";
+  @jakarta.annotation.Nonnull
   private PropertyClassEnum propertyClass;
 
-  public static final String SERIALIZED_NAME_ROUTES = "routes";
-  @SerializedName(SERIALIZED_NAME_ROUTES)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_ROUTES = "routes";
+  @jakarta.annotation.Nonnull
   private List<AppRoute> routes = new ArrayList<>();
 
   public AppManifest() {
   }
 
-  public AppManifest name(@javax.annotation.Nonnull String name) {
+  public AppManifest name(@jakarta.annotation.Nonnull String name) {
+    
     this.name = name;
     return this;
   }
@@ -203,17 +152,23 @@ public class AppManifest {
    * Functional name of the app — no theme words (D002)
    * @return name
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getName() {
     return name;
   }
 
-  public void setName(@javax.annotation.Nonnull String name) {
+
+  @JsonProperty(value = JSON_PROPERTY_NAME, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setName(@jakarta.annotation.Nonnull String name) {
     this.name = name;
   }
 
-
-  public AppManifest version(@javax.annotation.Nonnull String version) {
+  public AppManifest version(@jakarta.annotation.Nonnull String version) {
+    
     this.version = version;
     return this;
   }
@@ -222,17 +177,23 @@ public class AppManifest {
    * Semver of the app build
    * @return version
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_VERSION, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getVersion() {
     return version;
   }
 
-  public void setVersion(@javax.annotation.Nonnull String version) {
+
+  @JsonProperty(value = JSON_PROPERTY_VERSION, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setVersion(@jakarta.annotation.Nonnull String version) {
     this.version = version;
   }
 
-
-  public AppManifest owner(@javax.annotation.Nonnull String owner) {
+  public AppManifest owner(@jakarta.annotation.Nonnull String owner) {
+    
     this.owner = owner;
     return this;
   }
@@ -241,17 +202,23 @@ public class AppManifest {
    * Owning team or user identifier
    * @return owner
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_OWNER, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getOwner() {
     return owner;
   }
 
-  public void setOwner(@javax.annotation.Nonnull String owner) {
+
+  @JsonProperty(value = JSON_PROPERTY_OWNER, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setOwner(@jakarta.annotation.Nonnull String owner) {
     this.owner = owner;
   }
 
-
-  public AppManifest plan(@javax.annotation.Nonnull PlanEnum plan) {
+  public AppManifest plan(@jakarta.annotation.Nonnull PlanEnum plan) {
+    
     this.plan = plan;
     return this;
   }
@@ -260,17 +227,23 @@ public class AppManifest {
    * Billing plan tier the app is registered on
    * @return plan
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_PLAN, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public PlanEnum getPlan() {
     return plan;
   }
 
-  public void setPlan(@javax.annotation.Nonnull PlanEnum plan) {
+
+  @JsonProperty(value = JSON_PROPERTY_PLAN, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setPlan(@jakarta.annotation.Nonnull PlanEnum plan) {
     this.plan = plan;
   }
 
-
-  public AppManifest propertyClass(@javax.annotation.Nonnull PropertyClassEnum propertyClass) {
+  public AppManifest propertyClass(@jakarta.annotation.Nonnull PropertyClassEnum propertyClass) {
+    
     this.propertyClass = propertyClass;
     return this;
   }
@@ -279,17 +252,23 @@ public class AppManifest {
    * Risk class tier used by the control plane for guardrail configuration (D010). Product apps only — connectors and agents do not register through app.manifest.
    * @return propertyClass
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_PROPERTY_CLASS, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public PropertyClassEnum getPropertyClass() {
     return propertyClass;
   }
 
-  public void setPropertyClass(@javax.annotation.Nonnull PropertyClassEnum propertyClass) {
+
+  @JsonProperty(value = JSON_PROPERTY_PROPERTY_CLASS, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setPropertyClass(@jakarta.annotation.Nonnull PropertyClassEnum propertyClass) {
     this.propertyClass = propertyClass;
   }
 
-
-  public AppManifest routes(@javax.annotation.Nonnull List<AppRoute> routes) {
+  public AppManifest routes(@jakarta.annotation.Nonnull List<AppRoute> routes) {
+    
     this.routes = routes;
     return this;
   }
@@ -306,15 +285,20 @@ public class AppManifest {
    * HTTP routes the app exposes; used by the gateway for routing
    * @return routes
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_ROUTES, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public List<AppRoute> getRoutes() {
     return routes;
   }
 
-  public void setRoutes(@javax.annotation.Nonnull List<AppRoute> routes) {
+
+  @JsonProperty(value = JSON_PROPERTY_ROUTES, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setRoutes(@jakarta.annotation.Nonnull List<AppRoute> routes) {
     this.routes = routes;
   }
-
 
 
   @Override
@@ -361,124 +345,5 @@ public class AppManifest {
     return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 
-
-  public static HashSet<String> openapiFields;
-  public static HashSet<String> openapiRequiredFields;
-
-  static {
-    // a set of all properties/fields (JSON key names)
-    openapiFields = new HashSet<String>(Arrays.asList("name", "version", "owner", "plan", "class", "routes"));
-
-    // a set of required properties/fields (JSON key names)
-    openapiRequiredFields = new HashSet<String>(Arrays.asList("name", "version", "owner", "plan", "class", "routes"));
-  }
-
-  /**
-   * Validates the JSON Element and throws an exception if issues found
-   *
-   * @param jsonElement JSON Element
-   * @throws IOException if the JSON Element is invalid with respect to AppManifest
-   */
-  public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      if (jsonElement == null) {
-        if (!AppManifest.openapiRequiredFields.isEmpty()) { // has required fields but JSON element is null
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field(s) %s in AppManifest is not found in the empty JSON string", AppManifest.openapiRequiredFields.toString()));
-        }
-      }
-
-      Set<Map.Entry<String, JsonElement>> entries = jsonElement.getAsJsonObject().entrySet();
-      // check to see if the JSON string contains additional fields
-      for (Map.Entry<String, JsonElement> entry : entries) {
-        if (!AppManifest.openapiFields.contains(entry.getKey())) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The field `%s` in the JSON string is not defined in the `AppManifest` properties. JSON: %s", entry.getKey(), jsonElement.toString()));
-        }
-      }
-
-      // check to make sure all required properties/fields are present in the JSON string
-      for (String requiredField : AppManifest.openapiRequiredFields) {
-        if (jsonElement.getAsJsonObject().get(requiredField) == null) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field `%s` is not found in the JSON string: %s", requiredField, jsonElement.toString()));
-        }
-      }
-        JsonObject jsonObj = jsonElement.getAsJsonObject();
-      if (!jsonObj.get("name").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `name` to be a primitive type in the JSON string but got `%s`", jsonObj.get("name").toString()));
-      }
-      if (!jsonObj.get("version").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `version` to be a primitive type in the JSON string but got `%s`", jsonObj.get("version").toString()));
-      }
-      if (!jsonObj.get("owner").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `owner` to be a primitive type in the JSON string but got `%s`", jsonObj.get("owner").toString()));
-      }
-      if (!jsonObj.get("plan").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `plan` to be a primitive type in the JSON string but got `%s`", jsonObj.get("plan").toString()));
-      }
-      // validate the required field `plan`
-      PlanEnum.validateJsonElement(jsonObj.get("plan"));
-      if (!jsonObj.get("class").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `class` to be a primitive type in the JSON string but got `%s`", jsonObj.get("class").toString()));
-      }
-      // validate the required field `class`
-      PropertyClassEnum.validateJsonElement(jsonObj.get("class"));
-      if (jsonObj.get("routes") != null) {
-        if (!jsonObj.get("routes").isJsonArray()) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `routes` to be an array in the JSON string but got `%s`", jsonObj.get("routes").toString()));
-        }
-        JsonArray jsonArrayroutes = jsonObj.getAsJsonArray("routes");
-        // validate the required field `routes` (array)
-        for (int i = 0; i < jsonArrayroutes.size(); i++) {
-          AppRoute.validateJsonElement(jsonArrayroutes.get(i));
-        }
-      }
-  }
-
-  public static class CustomTypeAdapterFactory implements TypeAdapterFactory {
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-       if (!AppManifest.class.isAssignableFrom(type.getRawType())) {
-         return null; // this class only serializes 'AppManifest' and its subtypes
-       }
-       final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-       final TypeAdapter<AppManifest> thisAdapter
-                        = gson.getDelegateAdapter(this, TypeToken.get(AppManifest.class));
-
-       return (TypeAdapter<T>) new TypeAdapter<AppManifest>() {
-           @Override
-           public void write(JsonWriter out, AppManifest value) throws IOException {
-             JsonObject obj = thisAdapter.toJsonTree(value).getAsJsonObject();
-             elementAdapter.write(out, obj);
-           }
-
-           @Override
-           public AppManifest read(JsonReader in) throws IOException {
-             JsonElement jsonElement = elementAdapter.read(in);
-             validateJsonElement(jsonElement);
-             return thisAdapter.fromJsonTree(jsonElement);
-           }
-
-       }.nullSafe();
-    }
-  }
-
-  /**
-   * Create an instance of AppManifest given an JSON string
-   *
-   * @param jsonString JSON string
-   * @return An instance of AppManifest
-   * @throws IOException if the JSON string is invalid with respect to AppManifest
-   */
-  public static AppManifest fromJson(String jsonString) throws IOException {
-    return JSON.getGson().fromJson(jsonString, AppManifest.class);
-  }
-
-  /**
-   * Convert an instance of AppManifest to an JSON string
-   *
-   * @return JSON string
-   */
-  public String toJson() {
-    return JSON.getGson().toJson(this);
-  }
 }
 

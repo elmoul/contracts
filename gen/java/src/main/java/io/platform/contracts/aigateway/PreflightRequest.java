@@ -14,76 +14,58 @@
 package io.platform.contracts.aigateway;
 
 import java.util.Objects;
-import com.google.gson.TypeAdapter;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
 import java.util.Arrays;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import io.platform.contracts.JSON;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * PreflightRequest
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T04:54:43.564310+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@JsonPropertyOrder({
+  PreflightRequest.JSON_PROPERTY_APP_ID,
+  PreflightRequest.JSON_PROPERTY_USER_ID,
+  PreflightRequest.JSON_PROPERTY_PROVIDER,
+  PreflightRequest.JSON_PROPERTY_MODEL,
+  PreflightRequest.JSON_PROPERTY_ESTIMATED_TOKENS_IN,
+  PreflightRequest.JSON_PROPERTY_ESTIMATED_TOKENS_OUT
+})
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:47.178638500+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class PreflightRequest {
-  public static final String SERIALIZED_NAME_APP_ID = "appId";
-  @SerializedName(SERIALIZED_NAME_APP_ID)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_APP_ID = "appId";
+  @jakarta.annotation.Nonnull
   private String appId;
 
-  public static final String SERIALIZED_NAME_USER_ID = "userId";
-  @SerializedName(SERIALIZED_NAME_USER_ID)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_USER_ID = "userId";
+  @jakarta.annotation.Nonnull
   private String userId;
 
-  public static final String SERIALIZED_NAME_PROVIDER = "provider";
-  @SerializedName(SERIALIZED_NAME_PROVIDER)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_PROVIDER = "provider";
+  @jakarta.annotation.Nonnull
   private String provider;
 
-  public static final String SERIALIZED_NAME_MODEL = "model";
-  @SerializedName(SERIALIZED_NAME_MODEL)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_MODEL = "model";
+  @jakarta.annotation.Nonnull
   private String model;
 
-  public static final String SERIALIZED_NAME_ESTIMATED_TOKENS_IN = "estimatedTokensIn";
-  @SerializedName(SERIALIZED_NAME_ESTIMATED_TOKENS_IN)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_ESTIMATED_TOKENS_IN = "estimatedTokensIn";
+  @jakarta.annotation.Nonnull
   private Integer estimatedTokensIn;
 
-  public static final String SERIALIZED_NAME_ESTIMATED_TOKENS_OUT = "estimatedTokensOut";
-  @SerializedName(SERIALIZED_NAME_ESTIMATED_TOKENS_OUT)
-  @javax.annotation.Nonnull
+  public static final String JSON_PROPERTY_ESTIMATED_TOKENS_OUT = "estimatedTokensOut";
+  @jakarta.annotation.Nonnull
   private Integer estimatedTokensOut;
 
   public PreflightRequest() {
   }
 
-  public PreflightRequest appId(@javax.annotation.Nonnull String appId) {
+  public PreflightRequest appId(@jakarta.annotation.Nonnull String appId) {
+    
     this.appId = appId;
     return this;
   }
@@ -92,17 +74,23 @@ public class PreflightRequest {
    * App requesting the AI call
    * @return appId
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_APP_ID, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getAppId() {
     return appId;
   }
 
-  public void setAppId(@javax.annotation.Nonnull String appId) {
+
+  @JsonProperty(value = JSON_PROPERTY_APP_ID, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setAppId(@jakarta.annotation.Nonnull String appId) {
     this.appId = appId;
   }
 
-
-  public PreflightRequest userId(@javax.annotation.Nonnull String userId) {
+  public PreflightRequest userId(@jakarta.annotation.Nonnull String userId) {
+    
     this.userId = userId;
     return this;
   }
@@ -111,17 +99,23 @@ public class PreflightRequest {
    * End-user within the app
    * @return userId
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_USER_ID, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getUserId() {
     return userId;
   }
 
-  public void setUserId(@javax.annotation.Nonnull String userId) {
+
+  @JsonProperty(value = JSON_PROPERTY_USER_ID, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setUserId(@jakarta.annotation.Nonnull String userId) {
     this.userId = userId;
   }
 
-
-  public PreflightRequest provider(@javax.annotation.Nonnull String provider) {
+  public PreflightRequest provider(@jakarta.annotation.Nonnull String provider) {
+    
     this.provider = provider;
     return this;
   }
@@ -130,17 +124,23 @@ public class PreflightRequest {
    * Intended AI provider
    * @return provider
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_PROVIDER, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getProvider() {
     return provider;
   }
 
-  public void setProvider(@javax.annotation.Nonnull String provider) {
+
+  @JsonProperty(value = JSON_PROPERTY_PROVIDER, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setProvider(@jakarta.annotation.Nonnull String provider) {
     this.provider = provider;
   }
 
-
-  public PreflightRequest model(@javax.annotation.Nonnull String model) {
+  public PreflightRequest model(@jakarta.annotation.Nonnull String model) {
+    
     this.model = model;
     return this;
   }
@@ -149,17 +149,23 @@ public class PreflightRequest {
    * Intended model; Treasury may suggest a cheaper alternative
    * @return model
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_MODEL, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public String getModel() {
     return model;
   }
 
-  public void setModel(@javax.annotation.Nonnull String model) {
+
+  @JsonProperty(value = JSON_PROPERTY_MODEL, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setModel(@jakarta.annotation.Nonnull String model) {
     this.model = model;
   }
 
-
-  public PreflightRequest estimatedTokensIn(@javax.annotation.Nonnull Integer estimatedTokensIn) {
+  public PreflightRequest estimatedTokensIn(@jakarta.annotation.Nonnull Integer estimatedTokensIn) {
+    
     this.estimatedTokensIn = estimatedTokensIn;
     return this;
   }
@@ -169,17 +175,23 @@ public class PreflightRequest {
    * minimum: 0
    * @return estimatedTokensIn
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_ESTIMATED_TOKENS_IN, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public Integer getEstimatedTokensIn() {
     return estimatedTokensIn;
   }
 
-  public void setEstimatedTokensIn(@javax.annotation.Nonnull Integer estimatedTokensIn) {
+
+  @JsonProperty(value = JSON_PROPERTY_ESTIMATED_TOKENS_IN, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setEstimatedTokensIn(@jakarta.annotation.Nonnull Integer estimatedTokensIn) {
     this.estimatedTokensIn = estimatedTokensIn;
   }
 
-
-  public PreflightRequest estimatedTokensOut(@javax.annotation.Nonnull Integer estimatedTokensOut) {
+  public PreflightRequest estimatedTokensOut(@jakarta.annotation.Nonnull Integer estimatedTokensOut) {
+    
     this.estimatedTokensOut = estimatedTokensOut;
     return this;
   }
@@ -189,15 +201,20 @@ public class PreflightRequest {
    * minimum: 0
    * @return estimatedTokensOut
    */
-  @javax.annotation.Nonnull
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_ESTIMATED_TOKENS_OUT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
   public Integer getEstimatedTokensOut() {
     return estimatedTokensOut;
   }
 
-  public void setEstimatedTokensOut(@javax.annotation.Nonnull Integer estimatedTokensOut) {
+
+  @JsonProperty(value = JSON_PROPERTY_ESTIMATED_TOKENS_OUT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setEstimatedTokensOut(@jakarta.annotation.Nonnull Integer estimatedTokensOut) {
     this.estimatedTokensOut = estimatedTokensOut;
   }
-
 
 
   @Override
@@ -244,107 +261,5 @@ public class PreflightRequest {
     return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 
-
-  public static HashSet<String> openapiFields;
-  public static HashSet<String> openapiRequiredFields;
-
-  static {
-    // a set of all properties/fields (JSON key names)
-    openapiFields = new HashSet<String>(Arrays.asList("appId", "userId", "provider", "model", "estimatedTokensIn", "estimatedTokensOut"));
-
-    // a set of required properties/fields (JSON key names)
-    openapiRequiredFields = new HashSet<String>(Arrays.asList("appId", "userId", "provider", "model", "estimatedTokensIn", "estimatedTokensOut"));
-  }
-
-  /**
-   * Validates the JSON Element and throws an exception if issues found
-   *
-   * @param jsonElement JSON Element
-   * @throws IOException if the JSON Element is invalid with respect to PreflightRequest
-   */
-  public static void validateJsonElement(JsonElement jsonElement) throws IOException {
-      if (jsonElement == null) {
-        if (!PreflightRequest.openapiRequiredFields.isEmpty()) { // has required fields but JSON element is null
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field(s) %s in PreflightRequest is not found in the empty JSON string", PreflightRequest.openapiRequiredFields.toString()));
-        }
-      }
-
-      Set<Map.Entry<String, JsonElement>> entries = jsonElement.getAsJsonObject().entrySet();
-      // check to see if the JSON string contains additional fields
-      for (Map.Entry<String, JsonElement> entry : entries) {
-        if (!PreflightRequest.openapiFields.contains(entry.getKey())) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The field `%s` in the JSON string is not defined in the `PreflightRequest` properties. JSON: %s", entry.getKey(), jsonElement.toString()));
-        }
-      }
-
-      // check to make sure all required properties/fields are present in the JSON string
-      for (String requiredField : PreflightRequest.openapiRequiredFields) {
-        if (jsonElement.getAsJsonObject().get(requiredField) == null) {
-          throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "The required field `%s` is not found in the JSON string: %s", requiredField, jsonElement.toString()));
-        }
-      }
-        JsonObject jsonObj = jsonElement.getAsJsonObject();
-      if (!jsonObj.get("appId").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `appId` to be a primitive type in the JSON string but got `%s`", jsonObj.get("appId").toString()));
-      }
-      if (!jsonObj.get("userId").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `userId` to be a primitive type in the JSON string but got `%s`", jsonObj.get("userId").toString()));
-      }
-      if (!jsonObj.get("provider").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `provider` to be a primitive type in the JSON string but got `%s`", jsonObj.get("provider").toString()));
-      }
-      if (!jsonObj.get("model").isJsonPrimitive()) {
-        throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "Expected the field `model` to be a primitive type in the JSON string but got `%s`", jsonObj.get("model").toString()));
-      }
-  }
-
-  public static class CustomTypeAdapterFactory implements TypeAdapterFactory {
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-       if (!PreflightRequest.class.isAssignableFrom(type.getRawType())) {
-         return null; // this class only serializes 'PreflightRequest' and its subtypes
-       }
-       final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-       final TypeAdapter<PreflightRequest> thisAdapter
-                        = gson.getDelegateAdapter(this, TypeToken.get(PreflightRequest.class));
-
-       return (TypeAdapter<T>) new TypeAdapter<PreflightRequest>() {
-           @Override
-           public void write(JsonWriter out, PreflightRequest value) throws IOException {
-             JsonObject obj = thisAdapter.toJsonTree(value).getAsJsonObject();
-             elementAdapter.write(out, obj);
-           }
-
-           @Override
-           public PreflightRequest read(JsonReader in) throws IOException {
-             JsonElement jsonElement = elementAdapter.read(in);
-             validateJsonElement(jsonElement);
-             return thisAdapter.fromJsonTree(jsonElement);
-           }
-
-       }.nullSafe();
-    }
-  }
-
-  /**
-   * Create an instance of PreflightRequest given an JSON string
-   *
-   * @param jsonString JSON string
-   * @return An instance of PreflightRequest
-   * @throws IOException if the JSON string is invalid with respect to PreflightRequest
-   */
-  public static PreflightRequest fromJson(String jsonString) throws IOException {
-    return JSON.getGson().fromJson(jsonString, PreflightRequest.class);
-  }
-
-  /**
-   * Convert an instance of PreflightRequest to an JSON string
-   *
-   * @return JSON string
-   */
-  public String toJson() {
-    return JSON.getGson().toJson(this);
-  }
 }
 

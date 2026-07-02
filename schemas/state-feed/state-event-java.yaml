@@ -1,0 +1,211 @@
+openapi: "3.1.0"
+info:
+  title: State-feed — Event Schemas (Java codegen wrapper)
+  version: "0.1.0"
+  description: >
+    OpenAPI wrapper around the state.event JSON Schema, used only to drive
+    openapi-generator for the Java binding (jsonschema2pojo cannot generate
+    per-variant classes from a oneOf union). The source of truth for all
+    other consumers (TypeScript, Python, validators) is state.event.json.
+
+paths: {}
+
+components:
+  schemas:
+    ComponentHealthEvent:
+      type: object
+      required:
+        - type
+        - timestamp
+        - payload
+      properties:
+        type:
+          type: string
+          enum: ["component.health"]
+          description: Discriminator value — always "component.health"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO-8601 timestamp when the event was produced
+        payload:
+          $ref: "#/components/schemas/ComponentHealthPayload"
+      additionalProperties: false
+
+    ComponentHealthPayload:
+      type: object
+      required:
+        - componentId
+        - status
+      properties:
+        componentId:
+          type: string
+          description: Functional identifier of the hexagon or infrastructure component
+        status:
+          type: string
+          enum: ["UP", "DOWN", "DEGRADED"]
+          description: Current health status
+        details:
+          type: string
+          description: Optional human-readable detail about a non-UP status
+      additionalProperties: false
+
+    LoadEvent:
+      type: object
+      required:
+        - type
+        - timestamp
+        - payload
+      properties:
+        type:
+          type: string
+          enum: ["load"]
+          description: Discriminator value — always "load"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO-8601 timestamp when the event was produced
+        payload:
+          $ref: "#/components/schemas/LoadPayload"
+      additionalProperties: false
+
+    LoadPayload:
+      type: object
+      required:
+        - componentId
+        - value
+      properties:
+        componentId:
+          type: string
+          description: Functional identifier of the component being measured
+        value:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Load percentage (0–100)
+        metric:
+          type: string
+          description: What is being measured (cpu, memory, rps, etc.)
+      additionalProperties: false
+
+    CostTickEvent:
+      type: object
+      required:
+        - type
+        - timestamp
+        - payload
+      properties:
+        type:
+          type: string
+          enum: ["cost.tick"]
+          description: Discriminator value — always "cost.tick"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO-8601 timestamp when the event was produced
+        payload:
+          $ref: "#/components/schemas/CostTickPayload"
+      additionalProperties: false
+
+    CostTickPayload:
+      type: object
+      required:
+        - period
+        - totalCost
+      properties:
+        period:
+          type: string
+          description: Billing period in YYYY-MM format
+          pattern: "^\\d{4}-\\d{2}$"
+        totalCost:
+          type: number
+          minimum: 0
+          description: Total platform AI cost in USD for the period so far
+        breakdown:
+          type: object
+          description: Cost in USD keyed by appId or provider
+          additionalProperties:
+            type: number
+            minimum: 0
+      additionalProperties: false
+
+    CiRunEvent:
+      type: object
+      required:
+        - type
+        - timestamp
+        - payload
+      properties:
+        type:
+          type: string
+          enum: ["ci.run"]
+          description: Discriminator value — always "ci.run"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO-8601 timestamp when the event was produced
+        payload:
+          $ref: "#/components/schemas/CiRunPayload"
+      additionalProperties: false
+
+    CiRunPayload:
+      type: object
+      required:
+        - repoName
+        - runId
+        - status
+      properties:
+        repoName:
+          type: string
+          description: Functional repo name (D002)
+        runId:
+          type: string
+          description: CI run identifier from ci-runner (D020)
+        status:
+          type: string
+          enum: ["running", "success", "failed"]
+          description: Current CI run status
+        branch:
+          type: string
+          description: Branch that triggered the run
+        durationMs:
+          type: integer
+          minimum: 0
+          description: Run duration in milliseconds; omitted while still running
+      additionalProperties: false
+
+    AppStatusEvent:
+      type: object
+      required:
+        - type
+        - timestamp
+        - payload
+      properties:
+        type:
+          type: string
+          enum: ["app.status"]
+          description: Discriminator value — always "app.status"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO-8601 timestamp when the event was produced
+        payload:
+          $ref: "#/components/schemas/AppStatusPayload"
+      additionalProperties: false
+
+    AppStatusPayload:
+      type: object
+      required:
+        - appId
+        - status
+      properties:
+        appId:
+          type: string
+          description: Functional app identifier as assigned by the control plane
+        status:
+          type: string
+          enum: ["starting", "running", "degraded", "stopped"]
+          description: Current runtime status of the app
+        version:
+          type: string
+          description: Deployed version (semver)
+      additionalProperties: false

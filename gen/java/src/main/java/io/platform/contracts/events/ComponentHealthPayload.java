@@ -1,6 +1,6 @@
 /*
- * App — Health
- * Health response shape conforming to Spring Actuator format (app.health contract, D009). Apps using Spring Boot expose this at /actuator/health with zero mapping. Non-Spring apps must conform to this same shape at /health. 
+ * State-feed — Event Schemas (Java codegen wrapper)
+ * OpenAPI wrapper around the state.event JSON Schema, used only to drive openapi-generator for the Java binding (jsonschema2pojo cannot generate per-variant classes from a oneOf union). The source of truth for all other consumers (TypeScript, Python, validators) is state.event.json. 
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -11,7 +11,7 @@
  */
 
 
-package io.platform.contracts.app;
+package io.platform.contracts.events;
 
 import java.util.Objects;
 import java.util.Arrays;
@@ -20,32 +20,33 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.HashMap;
-import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * HealthComponent
+ * ComponentHealthPayload
  */
 @JsonPropertyOrder({
-  HealthComponent.JSON_PROPERTY_STATUS,
-  HealthComponent.JSON_PROPERTY_DETAILS
+  ComponentHealthPayload.JSON_PROPERTY_COMPONENT_ID,
+  ComponentHealthPayload.JSON_PROPERTY_STATUS,
+  ComponentHealthPayload.JSON_PROPERTY_DETAILS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:17.606169200+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
-public class HealthComponent {
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:52.417126900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+public class ComponentHealthPayload {
+  public static final String JSON_PROPERTY_COMPONENT_ID = "componentId";
+  @jakarta.annotation.Nonnull
+  private String componentId;
+
   /**
-   * Gets or Sets status
+   * Current health status
    */
   public enum StatusEnum {
     UP(String.valueOf("UP")),
     
     DOWN(String.valueOf("DOWN")),
     
-    OUT_OF_SERVICE(String.valueOf("OUT_OF_SERVICE")),
-    
-    UNKNOWN(String.valueOf("UNKNOWN"));
+    DEGRADED(String.valueOf("DEGRADED"));
 
     private String value;
 
@@ -80,19 +81,44 @@ public class HealthComponent {
 
   public static final String JSON_PROPERTY_DETAILS = "details";
   @jakarta.annotation.Nullable
-  private Map<String, Object> details = new HashMap<>();
+  private String details;
 
-  public HealthComponent() {
+  public ComponentHealthPayload() {
   }
 
-  public HealthComponent status(@jakarta.annotation.Nonnull StatusEnum status) {
+  public ComponentHealthPayload componentId(@jakarta.annotation.Nonnull String componentId) {
+    
+    this.componentId = componentId;
+    return this;
+  }
+
+  /**
+   * Functional identifier of the hexagon or infrastructure component
+   * @return componentId
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_COMPONENT_ID, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public String getComponentId() {
+    return componentId;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_COMPONENT_ID, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setComponentId(@jakarta.annotation.Nonnull String componentId) {
+    this.componentId = componentId;
+  }
+
+  public ComponentHealthPayload status(@jakarta.annotation.Nonnull StatusEnum status) {
     
     this.status = status;
     return this;
   }
 
   /**
-   * Get status
+   * Current health status
    * @return status
    */
   @jakarta.annotation.Nonnull
@@ -110,36 +136,28 @@ public class HealthComponent {
     this.status = status;
   }
 
-  public HealthComponent details(@jakarta.annotation.Nullable Map<String, Object> details) {
+  public ComponentHealthPayload details(@jakarta.annotation.Nullable String details) {
     
     this.details = details;
     return this;
   }
 
-  public HealthComponent putDetailsItem(String key, Object detailsItem) {
-    if (this.details == null) {
-      this.details = new HashMap<>();
-    }
-    this.details.put(key, detailsItem);
-    return this;
-  }
-
   /**
-   * Component-specific diagnostic details
+   * Optional human-readable detail about a non-UP status
    * @return details
    */
   @jakarta.annotation.Nullable
   @JsonProperty(value = JSON_PROPERTY_DETAILS, required = false)
-  @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Map<String, Object> getDetails() {
+  public String getDetails() {
     return details;
   }
 
 
   @JsonProperty(value = JSON_PROPERTY_DETAILS, required = false)
-  @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDetails(@jakarta.annotation.Nullable Map<String, Object> details) {
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setDetails(@jakarta.annotation.Nullable String details) {
     this.details = details;
   }
 
@@ -152,20 +170,22 @@ public class HealthComponent {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    HealthComponent healthComponent = (HealthComponent) o;
-    return Objects.equals(this.status, healthComponent.status) &&
-        Objects.equals(this.details, healthComponent.details);
+    ComponentHealthPayload componentHealthPayload = (ComponentHealthPayload) o;
+    return Objects.equals(this.componentId, componentHealthPayload.componentId) &&
+        Objects.equals(this.status, componentHealthPayload.status) &&
+        Objects.equals(this.details, componentHealthPayload.details);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(status, details);
+    return Objects.hash(componentId, status, details);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class HealthComponent {\n");
+    sb.append("class ComponentHealthPayload {\n");
+    sb.append("    componentId: ").append(toIndentedString(componentId)).append("\n");
     sb.append("    status: ").append(toIndentedString(status)).append("\n");
     sb.append("    details: ").append(toIndentedString(details)).append("\n");
     sb.append("}");
