@@ -24,3 +24,13 @@
 - Versioned as a minor bump (0.1.1 → 0.2.0), not major — reasoning in `CHANGELOG.md`: standard pre-1.0 semver, and no hexagon has actually pinned/built against `contracts` yet.
 
 **Next step:** When ci-runner starts its own build (per its spec), update its local TS types to use `ci.run` (dot) instead of `ci-run`, and consume `CiRunPayload` from the generated binding rather than hand-rolling it.
+
+## 2026-07-02 — Session 3
+
+**State:** v0.2.1 tagged and pushed (patch, no schema changes). Closed two gaps from the v0.2.0 review.
+
+**Decisions taken this session:**
+- Codegen'd `BuildCommand`/`BuildResult` across all three targets (shipped as schemas in v0.2.0 but never actually generated). Java uses a second `jsonschema2pojo` execution (`sourceType=yamlschema`, package `io.platform.contracts.cirunner`) since these are plain object schemas, unlike `state.event.json`'s `oneOf` which needs the openapi-generator workaround.
+- Per new D031 (git-tag pinning, no registry), added `gen/ts/tsconfig.json` (was missing) and `"prepare": "tsc"` to `gen/ts/package.json` so `npm install github:elmoul/contracts#v0.2.1` builds `dist/` on install. Verified with a real scratch-project install against the pushed tag. `gen/ts/dist/` is now gitignored, not committed.
+
+**Next step:** None pending from this session. Java/Python consumers still install via version-pinned Maven/pip coordinates per D031 — only TS needed the `prepare` fix.

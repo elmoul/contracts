@@ -10,6 +10,38 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.2.1 — 2026-07-02
+
+Patch release closing two gaps found in the v0.2.0 review. No schema changes.
+
+### gen/java, gen/ts, gen/python (codegen gap fix)
+- `build-command.yaml` (`BuildCommand`) and `build-result.yaml` (`BuildResult`) shipped
+  as schemas in v0.2.0 but were never actually run through codegen — no generated type
+  existed in any of the three language bindings. Fixed:
+  - **Java:** added a second `jsonschema2pojo-maven-plugin` execution (`ci-runner`,
+    `sourceType=yamlschema`) targeting `io.platform.contracts.cirunner` — `BuildCommand`
+    and `BuildResult` are plain object schemas (no `oneOf`), so unlike `state.event.json`
+    they don't need the openapi-generator union workaround.
+  - **TypeScript:** generated `build-command.ts` / `build-result.ts` via
+    json-schema-to-typescript, re-exported from `index.ts`.
+  - **Python:** generated `platform_contracts/ci_runner/{build_command,build_result}.py`
+    via datamodel-code-generator (pydantic v2), wired into the package `__init__.py`.
+  - Verified: `mvn compile`, `tsc --noEmit --strict`, and a Python round-trip
+    (`model_dump_json`) all pass clean on the new types.
+
+### gen/ts (D031 follow-through — git-tag consumption)
+- Per new decision **D031** (`contracts` is consumed via GitHub-tag pinning, no package
+  registry), `gen/ts/package.json` had `main: dist/index.js` but no build step npm runs
+  automatically on `npm install github:...` — only a manual `build` script, which a
+  git-installed dependency never triggers. Consumers pinning via tag would get a 404 on
+  `dist/index.js`.
+- Fixed: added a `tsconfig.json` (was missing entirely — bare `tsc` with no config and
+  no file args does nothing, so this was a second, compounding gap) and a `"prepare":
+  "tsc"` script — `prepare` is the npm lifecycle hook that runs on `npm install
+  github:...`. `dist/` is generated at install time and gitignored, not committed.
+- Verified end-to-end: `npm install github:elmoul/contracts#v0.2.1` into a scratch
+  project builds `dist/index.js` and the package is importable.
+
 ## v0.2.0 — 2026-07-02
 
 Two changes landed on `main` directly from other repos' sessions reaching across the

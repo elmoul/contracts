@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -73,9 +73,32 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <id>events</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>ci-runner</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${project.basedir}/../../schemas/ci-runner/build-command.yaml</sourcePath>
+                                <sourcePath>${project.basedir}/../../schemas/ci-runner/build-result.yaml</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>io.platform.contracts.cirunner</targetPackage>
+                            <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+                            <sourceType>yamlschema</sourceType>
+                            <annotationStyle>jackson2</annotationStyle>
+                            <includeAdditionalProperties>false</includeAdditionalProperties>
+                            <includeConstructors>true</includeConstructors>
+                            <generateBuilders>false</generateBuilders>
+                            <useTitleAsClassname>true</useTitleAsClassname>
+                            <dateTimeType>java.time.OffsetDateTime</dateTimeType>
+                            <useJakartaValidation>true</useJakartaValidation>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
