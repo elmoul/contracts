@@ -1,0 +1,104 @@
+openapi: "3.1.0"
+info:
+  title: AI Gateway — Pre-flight Authorization
+  version: "0.1.0"
+  description: >
+    Synchronous authorization check from ai-gateway to Treasury before executing an AI call (D022, D023).
+    Treasury returns allow / downshift / block based on the app's cost ceiling and consumed budget.
+    A block response always carries an explicit reason — never silent (D023).
+
+paths:
+  /treasury/preflight:
+    post:
+      summary: Authorize an AI call against the app's cost ceiling
+      operationId: preflightAuthorize
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreflightRequest"
+      responses:
+        "200":
+          description: Authorization decision returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreflightResponse"
+
+components:
+  schemas:
+    PreflightRequest:
+      type: object
+      required:
+        - appId
+        - userId
+        - provider
+        - model
+        - estimatedTokensIn
+        - estimatedTokensOut
+      properties:
+        appId:
+          type: string
+          description: App requesting the AI call
+        userId:
+          type: string
+          description: End-user within the app
+        provider:
+          type: string
+          description: Intended AI provider
+          examples:
+            - "anthropic"
+            - "openai"
+        model:
+          type: string
+          description: Intended model; Treasury may suggest a cheaper alternative
+          examples:
+            - "claude-sonnet-4-6"
+        estimatedTokensIn:
+          type: integer
+          minimum: 0
+          description: Estimated input tokens for cost ceiling comparison
+        estimatedTokensOut:
+          type: integer
+          minimum: 0
+          description: Estimated output tokens for cost ceiling comparison
+      additionalProperties: false
+
+    PreflightResponse:
+      type: object
+      required:
+        - decision
+      properties:
+        decision:
+          type: string
+          enum: [allow, downshift, block]
+          description: >
+            allow: proceed with the requested model.
+            downshift: proceed with downshiftModel instead (cheaper).
+            block: ceiling reached; do not proceed.
+        downshiftModel:
+          type: string
+          description: Alternative model to use; only present when decision is downshift
+        reason:
+          type: string
+          description: >
+            Human-readable reason for the decision.
+            Required when decision is block (D023 — never silent).
+            May also be present for downshift to explain the substitution.
+        ceiling:
+          type: number
+          minimum: 0
+          description: Cost ceiling in USD for this app/user in the current period
+        consumed:
+          type: number
+          minimum: 0
+          description: Cost already consumed in the current period (USD)
+      additionalProperties: false
+      if:
+        properties:
+          decision:
+            const: block
+      then:
+        required:
+          - reason

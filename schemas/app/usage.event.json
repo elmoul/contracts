@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/app/usage.event",
+  "title": "UsageEvent",
+  "description": "Emitted to Kafka after every AI call. The most load-bearing schema in the platform — consumed by Treasury for billing and cost enforcement (D022, D024).",
+  "type": "object",
+  "required": [
+    "eventId",
+    "appId",
+    "userId",
+    "provider",
+    "model",
+    "tokensIn",
+    "tokensOut",
+    "computedCost",
+    "timestamp"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier for idempotent consumption"
+    },
+    "appId": {
+      "type": "string",
+      "description": "Functional identifier of the app that initiated the AI call"
+    },
+    "userId": {
+      "type": "string",
+      "description": "End-user identifier within the app (attribution only; app manages its own user auth)"
+    },
+    "provider": {
+      "type": "string",
+      "description": "AI provider name",
+      "examples": ["anthropic", "openai"]
+    },
+    "model": {
+      "type": "string",
+      "description": "Exact model identifier as returned by the provider after possible downshift",
+      "examples": ["claude-sonnet-4-6", "gpt-4o"]
+    },
+    "tokensIn": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Input tokens consumed by this call"
+    },
+    "tokensOut": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Output tokens produced by this call"
+    },
+    "computedCost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Cost in USD computed by the AI gateway from provider pricing at call time"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of when the AI call completed"
+    }
+  },
+  "additionalProperties": false
+}

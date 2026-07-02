@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/control-plane/registry.entry",
+  "title": "RegistryEntry",
+  "description": "STUB — A registered app or repo record held by the control plane (D014). Represents the control plane's view of a registered hexagon after accepting an AppManifest. To be specced when control-plane internals are designed.",
+  "type": "object",
+  "properties": {
+    "appId": { "type": "string" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "class": { "type": "string" },
+    "plan": { "type": "string" },
+    "owner": { "type": "string" },
+    "registeredAt": { "type": "string", "format": "date-time" },
+    "status": { "type": "string", "enum": ["active", "suspended", "deregistered"] }
+  }
+}

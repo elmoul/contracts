@@ -1,0 +1,101 @@
+openapi: "3.1.0"
+info:
+  title: AI Gateway — Request / Response
+  version: "0.1.0"
+  description: >
+    Unified AI call shape routed through ai-gateway (D022).
+    Apps never call providers directly — all AI calls go through this contract.
+
+paths:
+  /ai/request:
+    post:
+      summary: Submit an AI request through the gateway
+      operationId: submitAiRequest
+      description: >
+        The gateway performs a pre-flight authorization check with Treasury before
+        forwarding to the provider. May transparently downshift the model.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiRequest"
+      responses:
+        "200":
+          description: AI call completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiResponse"
+        "402":
+          description: Cost ceiling reached — request blocked by Treasury (D023)
+        "503":
+          description: Provider unavailable
+
+components:
+  schemas:
+    AiRequest:
+      type: object
+      required:
+        - prompt
+        - appId
+        - userId
+      properties:
+        prompt:
+          type: string
+          description: The prompt or message to send to the AI provider
+          minLength: 1
+        modelHint:
+          type: string
+          description: >
+            Preferred model identifier. The gateway may downshift to a cheaper model
+            if Treasury authorization requires it (D023).
+          examples:
+            - "claude-sonnet-4-6"
+            - "gpt-4o"
+        appId:
+          type: string
+          description: Functional app identifier for attribution and cost tracking
+        userId:
+          type: string
+          description: End-user identifier within the app
+        context:
+          type: object
+          description: >
+            Provider-agnostic call context: system prompt, conversation history,
+            temperature, max tokens, etc. Passed through by the gateway.
+          additionalProperties: true
+      additionalProperties: false
+
+    AiResponse:
+      type: object
+      required:
+        - result
+        - model
+        - provider
+        - tokensIn
+        - tokensOut
+        - computedCost
+      properties:
+        result:
+          type: string
+          description: The AI-generated response text
+        model:
+          type: string
+          description: Actual model used — may differ from modelHint after downshift
+        provider:
+          type: string
+          description: AI provider that handled this request
+        tokensIn:
+          type: integer
+          minimum: 0
+          description: Input tokens consumed
+        tokensOut:
+          type: integer
+          minimum: 0
+          description: Output tokens produced
+        computedCost:
+          type: number
+          minimum: 0
+          description: Cost in USD for this call, as computed by the gateway
+      additionalProperties: false

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/app/identity",
+  "title": "AppIdentity",
+  "description": "STUB — The tenant/app identity claim shape passed with AI calls for attribution. Attribution only; each app manages its own user authentication (D009). To be specced when app-identity flow is designed.",
+  "type": "object",
+  "properties": {
+    "appId": { "type": "string" },
+    "tenantId": { "type": "string" }
+  }
+}

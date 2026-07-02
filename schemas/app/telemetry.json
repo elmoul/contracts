@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/app/telemetry",
+  "title": "TelemetryConventions",
+  "description": "STUB — Metric and log field conventions for the observability Towers. Defines the required field names and types that all platform hexagons must emit. To be specced when observability spec is finalized.",
+  "type": "object",
+  "properties": {
+    "appId": { "type": "string" },
+    "level": { "type": "string", "enum": ["DEBUG", "INFO", "WARN", "ERROR"] },
+    "message": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

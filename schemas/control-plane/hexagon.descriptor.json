@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/control-plane/hexagon.descriptor",
+  "title": "HexagonDescriptor",
+  "description": "STUB — Machine-readable HEXAGON.md schema (D013). Makes repo self-description validatable by the control plane and ci-runner. To be specced when the validator in conventions is designed.",
+  "type": "object",
+  "properties": {
+    "functionalName": { "type": "string" },
+    "side": { "type": "string", "enum": ["host", "hub", "shared"] },
+    "class": { "type": "string" },
+    "status": { "type": "string" },
+    "deps": { "type": "array", "items": { "type": "string" } },
+    "consumedBy": { "type": "array", "items": { "type": "string" } },
+    "contractsUsed": { "type": "array", "items": { "type": "string" } }
+  }
+}

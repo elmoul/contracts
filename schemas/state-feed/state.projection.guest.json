@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/state-feed/state.projection.guest",
+  "title": "StateProjectionGuest",
+  "description": "STUB — The curated read-only subset of state.event that guests may receive (D008). A strict allow-list; never the full feed. To be specced when the guest access policy is defined.",
+  "type": "object",
+  "properties": {
+    "type": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "payload": { "type": "object" }
+  }
+}

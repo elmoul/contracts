@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/state-feed/state.event",
+  "title": "StateEvent",
+  "description": "Event emitted over SSE by the state-feed (D029). Consumed by the dashboard, the 3D renderer, and the guest projection — the same schema, three renderers. The 'type' field is the discriminator.",
+  "type": "object",
+  "required": ["type", "timestamp", "payload"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["component.health", "load", "cost.tick", "ci.run", "app.status"]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when the event was produced"
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/ComponentHealthEvent" },
+    { "$ref": "#/$defs/LoadEvent" },
+    { "$ref": "#/$defs/CostTickEvent" },
+    { "$ref": "#/$defs/CiRunEvent" },
+    { "$ref": "#/$defs/AppStatusEvent" }
+  ],
+  "$defs": {
+    "ComponentHealthEvent": {
+      "properties": {
+        "type": { "const": "component.health" },
+        "payload": {
+          "type": "object",
+          "required": ["componentId", "status"],
+          "properties": {
+            "componentId": {
+              "type": "string",
+              "description": "Functional identifier of the hexagon or infrastructure component"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["UP", "DOWN", "DEGRADED"],
+              "description": "Current health status"
+            },
+            "details": {
+              "type": "string",
+              "description": "Optional human-readable detail about a non-UP status"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "payload"]
+    },
+    "LoadEvent": {
+      "properties": {
+        "type": { "const": "load" },
+        "payload": {
+          "type": "object",
+          "required": ["componentId", "value"],
+          "properties": {
+            "componentId": {
+              "type": "string",
+              "description": "Functional identifier of the component being measured"
+            },
+            "value": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Load percentage (0–100)"
+            },
+            "metric": {
+              "type": "string",
+              "description": "What is being measured (cpu, memory, rps, etc.)",
+              "examples": ["cpu", "memory", "rps"]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "payload"]
+    },
+    "CostTickEvent": {
+      "properties": {
+        "type": { "const": "cost.tick" },
+        "payload": {
+          "type": "object",
+          "required": ["period", "totalCost"],
+          "properties": {
+            "period": {
+              "type": "string",
+              "description": "Billing period in YYYY-MM format",
+              "pattern": "^\\d{4}-\\d{2}$",
+              "examples": ["2026-07"]
+            },
+            "totalCost": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Total platform AI cost in USD for the period so far"
+            },
+            "breakdown": {
+              "type": "object",
+              "description": "Cost in USD keyed by appId or provider",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "payload"]
+    },
+    "CiRunEvent": {
+      "properties": {
+        "type": { "const": "ci.run" },
+        "payload": {
+          "type": "object",
+          "required": ["repoName", "runId", "status"],
+          "properties": {
+            "repoName": {
+              "type": "string",
+              "description": "Functional repo name (D002)"
+            },
+            "runId": {
+              "type": "string",
+              "description": "CI run identifier from ci-runner (D020)"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["running", "success", "failed"],
+              "description": "Current CI run status"
+            },
+            "branch": {
+              "type": "string",
+              "description": "Branch that triggered the run"
+            },
+            "durationMs": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Run duration in milliseconds; omitted while still running"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "payload"]
+    },
+    "AppStatusEvent": {
+      "properties": {
+        "type": { "const": "app.status" },
+        "payload": {
+          "type": "object",
+          "required": ["appId", "status"],
+          "properties": {
+            "appId": {
+              "type": "string",
+              "description": "Functional app identifier as assigned by the control plane"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["starting", "running", "degraded", "stopped"],
+              "description": "Current runtime status of the app"
+            },
+            "version": {
+              "type": "string",
+              "description": "Deployed version (semver)"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "payload"]
+    }
+  }
+}

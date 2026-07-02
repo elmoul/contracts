@@ -1,0 +1,107 @@
+openapi: "3.1.0"
+info:
+  title: App — Manifest (Registration)
+  version: "0.1.0"
+  description: >
+    Registration payload an app sends to the control plane.
+    Implements the app.manifest contract (D009).
+
+paths:
+  /apps/register:
+    post:
+      summary: Register or re-register an app with the control plane
+      operationId: registerApp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppManifest"
+      responses:
+        "201":
+          description: App registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationAck"
+        "409":
+          description: Name conflict — app already registered under a different owner
+
+components:
+  schemas:
+    AppManifest:
+      type: object
+      required:
+        - name
+        - version
+        - owner
+        - plan
+        - class
+        - routes
+      properties:
+        name:
+          type: string
+          description: Functional name of the app — no theme words (D002)
+          pattern: "^[a-z][a-z0-9-]+$"
+          examples:
+            - tutor
+            - treasury
+        version:
+          type: string
+          description: Semver of the app build
+          pattern: "^\\d+\\.\\d+\\.\\d+$"
+          examples:
+            - "1.0.0"
+        owner:
+          type: string
+          description: Owning team or user identifier
+        plan:
+          type: string
+          enum: [free, pro, enterprise]
+          description: Billing plan tier the app is registered on
+        class:
+          type: string
+          enum: [app, connector, agent]
+          description: Hexagon class of this registration
+        routes:
+          type: array
+          minItems: 0
+          items:
+            $ref: "#/components/schemas/AppRoute"
+          description: HTTP routes the app exposes; used by the gateway for routing
+      additionalProperties: false
+
+    AppRoute:
+      type: object
+      required:
+        - path
+        - method
+      properties:
+        path:
+          type: string
+          pattern: "^/"
+          description: Path relative to the app's base URL
+          examples:
+            - "/api/sessions"
+        method:
+          type: string
+          enum: [GET, POST, PUT, PATCH, DELETE]
+        public:
+          type: boolean
+          default: false
+          description: If true, the gateway allows unauthenticated access to this route
+      additionalProperties: false
+
+    RegistrationAck:
+      type: object
+      required:
+        - appId
+        - registeredAt
+      properties:
+        appId:
+          type: string
+          description: Canonical app identifier assigned by the control plane
+        registeredAt:
+          type: string
+          format: date-time
+      additionalProperties: false
