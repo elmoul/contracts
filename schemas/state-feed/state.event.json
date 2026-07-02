@@ -144,31 +144,53 @@
     },
     "CiRunPayload": {
       "title": "CiRunPayload",
+      "description": "Produced by ci-runner for each workflow_job phase transition.",
       "type": "object",
-      "required": ["repoName", "runId", "status"],
+      "required": ["runId", "repo", "ref", "workflow", "jobName", "phase", "runnerLabels"],
       "additionalProperties": false,
       "properties": {
-        "repoName": {
-          "type": "string",
-          "description": "Functional repo name (D002)"
-        },
         "runId": {
-          "type": "string",
-          "description": "CI run identifier from ci-runner (D020)"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["running", "success", "failed"],
-          "description": "Current CI run status"
-        },
-        "branch": {
-          "type": "string",
-          "description": "Branch that triggered the run"
-        },
-        "durationMs": {
           "type": "integer",
-          "minimum": 0,
-          "description": "Run duration in milliseconds; omitted while still running"
+          "description": "GitHub Actions workflow run ID."
+        },
+        "repo": {
+          "type": "string",
+          "description": "Full repo name (owner/repo)."
+        },
+        "ref": {
+          "type": "string",
+          "description": "Branch or tag that triggered the run."
+        },
+        "workflow": {
+          "type": "string",
+          "description": "Workflow name as reported by GitHub."
+        },
+        "jobName": {
+          "type": "string",
+          "description": "Specific job name within the workflow."
+        },
+        "phase": {
+          "type": "string",
+          "enum": ["queued", "in_progress", "completed"],
+          "description": "Lifecycle phase matching the GitHub workflow_job action."
+        },
+        "conclusion": {
+          "type": "string",
+          "enum": ["success", "failure", "cancelled", "skipped", "timed_out"],
+          "description": "Terminal outcome; present only when phase=completed."
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "runnerLabels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Labels on the runner that executed the job."
         }
       }
     },

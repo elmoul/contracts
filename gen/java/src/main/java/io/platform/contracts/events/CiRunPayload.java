@@ -20,43 +20,64 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * CiRunPayload
+ * Produced by ci-runner for each workflow_job phase transition.
  */
 @JsonPropertyOrder({
-  CiRunPayload.JSON_PROPERTY_REPO_NAME,
   CiRunPayload.JSON_PROPERTY_RUN_ID,
-  CiRunPayload.JSON_PROPERTY_STATUS,
-  CiRunPayload.JSON_PROPERTY_BRANCH,
-  CiRunPayload.JSON_PROPERTY_DURATION_MS
+  CiRunPayload.JSON_PROPERTY_REPO,
+  CiRunPayload.JSON_PROPERTY_REF,
+  CiRunPayload.JSON_PROPERTY_WORKFLOW,
+  CiRunPayload.JSON_PROPERTY_JOB_NAME,
+  CiRunPayload.JSON_PROPERTY_PHASE,
+  CiRunPayload.JSON_PROPERTY_CONCLUSION,
+  CiRunPayload.JSON_PROPERTY_STARTED_AT,
+  CiRunPayload.JSON_PROPERTY_COMPLETED_AT,
+  CiRunPayload.JSON_PROPERTY_RUNNER_LABELS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:52.417126900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T15:32:54.183043900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class CiRunPayload {
-  public static final String JSON_PROPERTY_REPO_NAME = "repoName";
-  @jakarta.annotation.Nonnull
-  private String repoName;
-
   public static final String JSON_PROPERTY_RUN_ID = "runId";
   @jakarta.annotation.Nonnull
-  private String runId;
+  private Integer runId;
+
+  public static final String JSON_PROPERTY_REPO = "repo";
+  @jakarta.annotation.Nonnull
+  private String repo;
+
+  public static final String JSON_PROPERTY_REF = "ref";
+  @jakarta.annotation.Nonnull
+  private String ref;
+
+  public static final String JSON_PROPERTY_WORKFLOW = "workflow";
+  @jakarta.annotation.Nonnull
+  private String workflow;
+
+  public static final String JSON_PROPERTY_JOB_NAME = "jobName";
+  @jakarta.annotation.Nonnull
+  private String jobName;
 
   /**
-   * Current CI run status
+   * Lifecycle phase matching the GitHub workflow_job action.
    */
-  public enum StatusEnum {
-    RUNNING(String.valueOf("running")),
+  public enum PhaseEnum {
+    QUEUED(String.valueOf("queued")),
     
-    SUCCESS(String.valueOf("success")),
+    IN_PROGRESS(String.valueOf("in_progress")),
     
-    FAILED(String.valueOf("failed"));
+    COMPLETED(String.valueOf("completed"));
 
     private String value;
 
-    StatusEnum(String value) {
+    PhaseEnum(String value) {
       this.value = value;
     }
 
@@ -71,8 +92,8 @@ public class CiRunPayload {
     }
 
     @JsonCreator
-    public static StatusEnum fromValue(String value) {
-      for (StatusEnum b : StatusEnum.values()) {
+    public static PhaseEnum fromValue(String value) {
+      for (PhaseEnum b : PhaseEnum.values()) {
         if (b.value.equals(value)) {
           return b;
         }
@@ -81,145 +102,326 @@ public class CiRunPayload {
     }
   }
 
-  public static final String JSON_PROPERTY_STATUS = "status";
+  public static final String JSON_PROPERTY_PHASE = "phase";
   @jakarta.annotation.Nonnull
-  private StatusEnum status;
+  private PhaseEnum phase;
 
-  public static final String JSON_PROPERTY_BRANCH = "branch";
-  @jakarta.annotation.Nullable
-  private String branch;
+  /**
+   * Terminal outcome; present only when phase&#x3D;completed.
+   */
+  public enum ConclusionEnum {
+    SUCCESS(String.valueOf("success")),
+    
+    FAILURE(String.valueOf("failure")),
+    
+    CANCELLED(String.valueOf("cancelled")),
+    
+    SKIPPED(String.valueOf("skipped")),
+    
+    TIMED_OUT(String.valueOf("timed_out"));
 
-  public static final String JSON_PROPERTY_DURATION_MS = "durationMs";
+    private String value;
+
+    ConclusionEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static ConclusionEnum fromValue(String value) {
+      for (ConclusionEnum b : ConclusionEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+  }
+
+  public static final String JSON_PROPERTY_CONCLUSION = "conclusion";
   @jakarta.annotation.Nullable
-  private Integer durationMs;
+  private ConclusionEnum conclusion;
+
+  public static final String JSON_PROPERTY_STARTED_AT = "startedAt";
+  @jakarta.annotation.Nullable
+  private OffsetDateTime startedAt;
+
+  public static final String JSON_PROPERTY_COMPLETED_AT = "completedAt";
+  @jakarta.annotation.Nullable
+  private OffsetDateTime completedAt;
+
+  public static final String JSON_PROPERTY_RUNNER_LABELS = "runnerLabels";
+  @jakarta.annotation.Nonnull
+  private List<String> runnerLabels = new ArrayList<>();
 
   public CiRunPayload() {
   }
 
-  public CiRunPayload repoName(@jakarta.annotation.Nonnull String repoName) {
-    
-    this.repoName = repoName;
-    return this;
-  }
-
-  /**
-   * Functional repo name (D002)
-   * @return repoName
-   */
-  @jakarta.annotation.Nonnull
-  @JsonProperty(value = JSON_PROPERTY_REPO_NAME, required = true)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public String getRepoName() {
-    return repoName;
-  }
-
-
-  @JsonProperty(value = JSON_PROPERTY_REPO_NAME, required = true)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setRepoName(@jakarta.annotation.Nonnull String repoName) {
-    this.repoName = repoName;
-  }
-
-  public CiRunPayload runId(@jakarta.annotation.Nonnull String runId) {
+  public CiRunPayload runId(@jakarta.annotation.Nonnull Integer runId) {
     
     this.runId = runId;
     return this;
   }
 
   /**
-   * CI run identifier from ci-runner (D020)
+   * GitHub Actions workflow run ID.
    * @return runId
    */
   @jakarta.annotation.Nonnull
   @JsonProperty(value = JSON_PROPERTY_RUN_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public String getRunId() {
+  public Integer getRunId() {
     return runId;
   }
 
 
   @JsonProperty(value = JSON_PROPERTY_RUN_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setRunId(@jakarta.annotation.Nonnull String runId) {
+  public void setRunId(@jakarta.annotation.Nonnull Integer runId) {
     this.runId = runId;
   }
 
-  public CiRunPayload status(@jakarta.annotation.Nonnull StatusEnum status) {
+  public CiRunPayload repo(@jakarta.annotation.Nonnull String repo) {
     
-    this.status = status;
+    this.repo = repo;
     return this;
   }
 
   /**
-   * Current CI run status
-   * @return status
+   * Full repo name (owner/repo).
+   * @return repo
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(value = JSON_PROPERTY_STATUS, required = true)
+  @JsonProperty(value = JSON_PROPERTY_REPO, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public StatusEnum getStatus() {
-    return status;
+  public String getRepo() {
+    return repo;
   }
 
 
-  @JsonProperty(value = JSON_PROPERTY_STATUS, required = true)
+  @JsonProperty(value = JSON_PROPERTY_REPO, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setStatus(@jakarta.annotation.Nonnull StatusEnum status) {
-    this.status = status;
+  public void setRepo(@jakarta.annotation.Nonnull String repo) {
+    this.repo = repo;
   }
 
-  public CiRunPayload branch(@jakarta.annotation.Nullable String branch) {
+  public CiRunPayload ref(@jakarta.annotation.Nonnull String ref) {
     
-    this.branch = branch;
+    this.ref = ref;
     return this;
   }
 
   /**
-   * Branch that triggered the run
-   * @return branch
+   * Branch or tag that triggered the run.
+   * @return ref
    */
-  @jakarta.annotation.Nullable
-  @JsonProperty(value = JSON_PROPERTY_BRANCH, required = false)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_REF, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public String getBranch() {
-    return branch;
+  public String getRef() {
+    return ref;
   }
 
 
-  @JsonProperty(value = JSON_PROPERTY_BRANCH, required = false)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setBranch(@jakarta.annotation.Nullable String branch) {
-    this.branch = branch;
+  @JsonProperty(value = JSON_PROPERTY_REF, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setRef(@jakarta.annotation.Nonnull String ref) {
+    this.ref = ref;
   }
 
-  public CiRunPayload durationMs(@jakarta.annotation.Nullable Integer durationMs) {
+  public CiRunPayload workflow(@jakarta.annotation.Nonnull String workflow) {
     
-    this.durationMs = durationMs;
+    this.workflow = workflow;
     return this;
   }
 
   /**
-   * Run duration in milliseconds; omitted while still running
-   * minimum: 0
-   * @return durationMs
+   * Workflow name as reported by GitHub.
+   * @return workflow
    */
-  @jakarta.annotation.Nullable
-  @JsonProperty(value = JSON_PROPERTY_DURATION_MS, required = false)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_WORKFLOW, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public Integer getDurationMs() {
-    return durationMs;
+  public String getWorkflow() {
+    return workflow;
   }
 
 
-  @JsonProperty(value = JSON_PROPERTY_DURATION_MS, required = false)
+  @JsonProperty(value = JSON_PROPERTY_WORKFLOW, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setWorkflow(@jakarta.annotation.Nonnull String workflow) {
+    this.workflow = workflow;
+  }
+
+  public CiRunPayload jobName(@jakarta.annotation.Nonnull String jobName) {
+    
+    this.jobName = jobName;
+    return this;
+  }
+
+  /**
+   * Specific job name within the workflow.
+   * @return jobName
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_JOB_NAME, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public String getJobName() {
+    return jobName;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_JOB_NAME, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setJobName(@jakarta.annotation.Nonnull String jobName) {
+    this.jobName = jobName;
+  }
+
+  public CiRunPayload phase(@jakarta.annotation.Nonnull PhaseEnum phase) {
+    
+    this.phase = phase;
+    return this;
+  }
+
+  /**
+   * Lifecycle phase matching the GitHub workflow_job action.
+   * @return phase
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_PHASE, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public PhaseEnum getPhase() {
+    return phase;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_PHASE, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setPhase(@jakarta.annotation.Nonnull PhaseEnum phase) {
+    this.phase = phase;
+  }
+
+  public CiRunPayload conclusion(@jakarta.annotation.Nullable ConclusionEnum conclusion) {
+    
+    this.conclusion = conclusion;
+    return this;
+  }
+
+  /**
+   * Terminal outcome; present only when phase&#x3D;completed.
+   * @return conclusion
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_CONCLUSION, required = false)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDurationMs(@jakarta.annotation.Nullable Integer durationMs) {
-    this.durationMs = durationMs;
+
+  public ConclusionEnum getConclusion() {
+    return conclusion;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_CONCLUSION, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setConclusion(@jakarta.annotation.Nullable ConclusionEnum conclusion) {
+    this.conclusion = conclusion;
+  }
+
+  public CiRunPayload startedAt(@jakarta.annotation.Nullable OffsetDateTime startedAt) {
+    
+    this.startedAt = startedAt;
+    return this;
+  }
+
+  /**
+   * Get startedAt
+   * @return startedAt
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_STARTED_AT, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public OffsetDateTime getStartedAt() {
+    return startedAt;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_STARTED_AT, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setStartedAt(@jakarta.annotation.Nullable OffsetDateTime startedAt) {
+    this.startedAt = startedAt;
+  }
+
+  public CiRunPayload completedAt(@jakarta.annotation.Nullable OffsetDateTime completedAt) {
+    
+    this.completedAt = completedAt;
+    return this;
+  }
+
+  /**
+   * Get completedAt
+   * @return completedAt
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_COMPLETED_AT, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public OffsetDateTime getCompletedAt() {
+    return completedAt;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_COMPLETED_AT, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCompletedAt(@jakarta.annotation.Nullable OffsetDateTime completedAt) {
+    this.completedAt = completedAt;
+  }
+
+  public CiRunPayload runnerLabels(@jakarta.annotation.Nonnull List<String> runnerLabels) {
+    
+    this.runnerLabels = runnerLabels;
+    return this;
+  }
+
+  public CiRunPayload addRunnerLabelsItem(String runnerLabelsItem) {
+    if (this.runnerLabels == null) {
+      this.runnerLabels = new ArrayList<>();
+    }
+    this.runnerLabels.add(runnerLabelsItem);
+    return this;
+  }
+
+  /**
+   * Labels on the runner that executed the job.
+   * @return runnerLabels
+   */
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_RUNNER_LABELS, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public List<String> getRunnerLabels() {
+    return runnerLabels;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_RUNNER_LABELS, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setRunnerLabels(@jakarta.annotation.Nonnull List<String> runnerLabels) {
+    this.runnerLabels = runnerLabels;
   }
 
 
@@ -232,27 +434,37 @@ public class CiRunPayload {
       return false;
     }
     CiRunPayload ciRunPayload = (CiRunPayload) o;
-    return Objects.equals(this.repoName, ciRunPayload.repoName) &&
-        Objects.equals(this.runId, ciRunPayload.runId) &&
-        Objects.equals(this.status, ciRunPayload.status) &&
-        Objects.equals(this.branch, ciRunPayload.branch) &&
-        Objects.equals(this.durationMs, ciRunPayload.durationMs);
+    return Objects.equals(this.runId, ciRunPayload.runId) &&
+        Objects.equals(this.repo, ciRunPayload.repo) &&
+        Objects.equals(this.ref, ciRunPayload.ref) &&
+        Objects.equals(this.workflow, ciRunPayload.workflow) &&
+        Objects.equals(this.jobName, ciRunPayload.jobName) &&
+        Objects.equals(this.phase, ciRunPayload.phase) &&
+        Objects.equals(this.conclusion, ciRunPayload.conclusion) &&
+        Objects.equals(this.startedAt, ciRunPayload.startedAt) &&
+        Objects.equals(this.completedAt, ciRunPayload.completedAt) &&
+        Objects.equals(this.runnerLabels, ciRunPayload.runnerLabels);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(repoName, runId, status, branch, durationMs);
+    return Objects.hash(runId, repo, ref, workflow, jobName, phase, conclusion, startedAt, completedAt, runnerLabels);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class CiRunPayload {\n");
-    sb.append("    repoName: ").append(toIndentedString(repoName)).append("\n");
     sb.append("    runId: ").append(toIndentedString(runId)).append("\n");
-    sb.append("    status: ").append(toIndentedString(status)).append("\n");
-    sb.append("    branch: ").append(toIndentedString(branch)).append("\n");
-    sb.append("    durationMs: ").append(toIndentedString(durationMs)).append("\n");
+    sb.append("    repo: ").append(toIndentedString(repo)).append("\n");
+    sb.append("    ref: ").append(toIndentedString(ref)).append("\n");
+    sb.append("    workflow: ").append(toIndentedString(workflow)).append("\n");
+    sb.append("    jobName: ").append(toIndentedString(jobName)).append("\n");
+    sb.append("    phase: ").append(toIndentedString(phase)).append("\n");
+    sb.append("    conclusion: ").append(toIndentedString(conclusion)).append("\n");
+    sb.append("    startedAt: ").append(toIndentedString(startedAt)).append("\n");
+    sb.append("    completedAt: ").append(toIndentedString(completedAt)).append("\n");
+    sb.append("    runnerLabels: ").append(toIndentedString(runnerLabels)).append("\n");
     sb.append("}");
     return sb.toString();
   }

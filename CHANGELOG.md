@@ -10,6 +10,65 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.2.0 — 2026-07-02
+
+Two changes landed on `main` directly from other repos' sessions reaching across the
+repo boundary mid-debug (a process gap now closed — see root `CLAUDE.md`). Reviewed
+here and folded into a proper tagged release rather than reverted, since the content
+was mostly right.
+
+### gen/java (tag-integrity fix)
+- `jakarta.annotation-api` was added to `pom.xml` (commit `8bf51ba`) after the `v0.1.1`
+  tag was already cut, with no version bump. The dependency itself is correct —
+  openapi-generator's `resttemplate` library (with `useJakartaEe=true`) emits
+  `@jakarta.annotation.Nonnull`/`@Nullable` on every generated field, and the artifact
+  was missing from the classpath. But because it landed post-tag, `git checkout v0.1.1`
+  today produces a `pom.xml` that does not compile — the tag lies about its own
+  content. This alone would justify a patch release.
+
+### ci-runner control-plane contracts (additive)
+- Added `build-command.yaml` (`BuildCommand`) and `build-result.yaml` (`BuildResult`):
+  the control-plane → ci-runner async build-dispatch contracts (correlationId echo
+  pattern for correlating the async `BuildResult` back to its `BuildCommand`).
+  Reviewed — sound, no conflicts with existing contracts.
+
+### state.event / CiRunPayload (breaking)
+- `schemas/ci-runner/ci-run.payload.json` shipped as a second, disconnected
+  definition of the `ci.run` state-event payload, conflicting with the `CiRunPayload`
+  already wired into `state.event.json`'s `oneOf`. It described real GitHub
+  `workflow_job` lifecycle granularity (phase/conclusion/runnerLabels, per-job) —
+  more accurate than the original `CiRunPayload`, which was a guess written before
+  `ci-runner` existed — but as a second file it broke the "one `oneOf`, one source of
+  truth" rule, and even used a different discriminator spelling (`ci-run`) than
+  `state.event.json` (`ci.run`), which ci-runner's own `PROGRESS.md` flagged as an
+  unresolved TODO.
+- Fixed by deleting the orphaned file and revising `CiRunPayload` in
+  `state.event.json` in place to the richer, ci-runner-shaped fields: `runId`
+  (string → integer), `repo`, `ref`, `workflow`, `jobName`, `phase`
+  (queued/in_progress/completed), `conclusion?`, `startedAt?`, `completedAt?`,
+  `runnerLabels`. Removed: `repoName`, `status` (running/success/failed), `branch`,
+  `durationMs`. `state.event.json`'s `oneOf` is once again the only source of truth
+  for state-feed payloads.
+- Discriminator: kept `ci.run` (dot) as canonical — consistent with every other event
+  (`component.health`, `cost.tick`, `app.status`). ci-runner's local `ci-run` TS types
+  are the side that needs to conform.
+- Also updated `schemas/state-feed/state-event-java.yaml` (the openapi-generator
+  wrapper used only to drive the Java binding) to match, and regenerated all three
+  language bindings for `state.event` (Java via openapi-generator 7.23.0 +
+  `useJakartaEe=true`, TypeScript via json-schema-to-typescript, Python via
+  datamodel-code-generator 0.66.3). Verified: `mvn compile`, `tsc --noEmit --strict`,
+  and a Python round-trip (`model_dump_json` → `model_validate`) all pass clean.
+
+**Versioning:** bumped minor (0.1.1 → 0.2.0), not patch, not major. The repo's own
+stated rule (breaking = major bump) is the 1.0+ rule; while a package sits at
+`0.y.z`, standard semver treats that line as initial development, where breaking
+changes conventionally move the minor digit and major stays `0` until a `1.0.0`
+stability declaration. No hexagon has actually pinned or built against a `contracts`
+version yet — `control-plane`, `ci-runner`, and `ai-gateway` are all still in
+spec-only or early-build phase — so the original `CiRunPayload` guess was never
+consumed in anger. Reserving a major bump for when a real breaking change would
+ripple through running consumer code, not a schema nobody has built against yet.
+
 ## v0.1.1 — 2026-07-02
 
 ### state.event (patch — schema shape fix, wire format unchanged)

@@ -11,3 +11,16 @@
 - BlockedResponse added to 402 on /ai/request per D023.
 
 **Next step:** First consuming hexagon can now pin `io.platform:contracts:0.1.0` / `@platform/contracts@0.1.0` / `platform-contracts==0.1.0`. When control-plane or ai-gateway starts schema work, reference the stubs in schemas/control-plane/ and schemas/ai-gateway/ respectively. Codegen CI automation tracked in ci-runner spec §8.
+
+## 2026-07-02 — Session 2
+
+**State:** v0.2.0 tagged and pushed. Reviewed and released two changes that had landed on `main` from other repos' sessions reaching across the boundary mid-debug (process gap now closed in root `CLAUDE.md`).
+
+**Decisions taken this session:**
+- Kept `jakarta.annotation-api` in `gen/java/pom.xml` (was correct) but folded it into a real tagged release — it had landed after `v0.1.1` with no version bump, so the old tag no longer reflected a compilable state.
+- Kept `schemas/ci-runner/build-command.yaml` / `build-result.yaml` as-is — reviewed, sound.
+- Deleted `schemas/ci-runner/ci-run.payload.json` (an orphaned second definition of the `ci.run` payload) and revised `CiRunPayload` inside `schemas/state-feed/state.event.json` in place to the richer, ci-runner-shaped fields (GitHub `workflow_job` granularity). `state.event.json`'s `oneOf` remains the single source of truth for state-feed payloads — no per-hexagon payload files. Discriminator stays `ci.run` (dot); ci-runner's local `ci-run` (dash) TS types are the side that needs to conform.
+- Regenerated all three language bindings for `state.event` and verified each compiles/validates (`mvn compile`, `tsc --noEmit --strict`, Python round-trip).
+- Versioned as a minor bump (0.1.1 → 0.2.0), not major — reasoning in `CHANGELOG.md`: standard pre-1.0 semver, and no hexagon has actually pinned/built against `contracts` yet.
+
+**Next step:** When ci-runner starts its own build (per its spec), update its local TS types to use `ci.run` (dot) instead of `ci-run`, and consume `CiRunPayload` from the generated binding rather than hand-rolling it.

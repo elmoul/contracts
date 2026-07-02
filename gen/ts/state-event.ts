@@ -86,27 +86,44 @@ export interface CiRunEvent {
   timestamp: string;
   payload: CiRunPayload;
 }
+/**
+ * Produced by ci-runner for each workflow_job phase transition.
+ */
 export interface CiRunPayload {
   /**
-   * Functional repo name (D002)
+   * GitHub Actions workflow run ID.
    */
-  repoName: string;
+  runId: number;
   /**
-   * CI run identifier from ci-runner (D020)
+   * Full repo name (owner/repo).
    */
-  runId: string;
+  repo: string;
   /**
-   * Current CI run status
+   * Branch or tag that triggered the run.
    */
-  status: "running" | "success" | "failed";
+  ref: string;
   /**
-   * Branch that triggered the run
+   * Workflow name as reported by GitHub.
    */
-  branch?: string;
+  workflow: string;
   /**
-   * Run duration in milliseconds; omitted while still running
+   * Specific job name within the workflow.
    */
-  durationMs?: number;
+  jobName: string;
+  /**
+   * Lifecycle phase matching the GitHub workflow_job action.
+   */
+  phase: "queued" | "in_progress" | "completed";
+  /**
+   * Terminal outcome; present only when phase=completed.
+   */
+  conclusion?: "success" | "failure" | "cancelled" | "skipped" | "timed_out";
+  startedAt?: string;
+  completedAt?: string;
+  /**
+   * Labels on the runner that executed the job.
+   */
+  runnerLabels: string[];
 }
 export interface AppStatusEvent {
   type: "app.status";
