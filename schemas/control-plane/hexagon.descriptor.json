@@ -2,15 +2,82 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://platform/contracts/control-plane/hexagon.descriptor",
   "title": "HexagonDescriptor",
-  "description": "STUB — Machine-readable HEXAGON.md schema (D013). Makes repo self-description validatable by the control plane and ci-runner. To be specced when the validator in conventions is designed.",
+  "description": "Machine-readable schema for the YAML frontmatter block every repo carries at the top of its HEXAGON.md (D013). Describes stable identity/structure only — deliberately no `version` field (hand-edited versions go stale); changing state lives in `registry.entry`, sourced from git/CI. Also deliberately omits `consumedBy` (derived by control-plane by inverting `deps` across the fleet) and `ports` (deferred — `deps` + `contracts.used` are the machine projection of the port tables; prose keeps the rest).",
   "type": "object",
+  "required": ["functionalName", "kind", "side", "status", "deps"],
   "properties": {
-    "functionalName": { "type": "string" },
-    "side": { "type": "string", "enum": ["host", "hub", "shared"] },
-    "class": { "type": "string" },
-    "status": { "type": "string" },
-    "deps": { "type": "array", "items": { "type": "string" } },
-    "consumedBy": { "type": "array", "items": { "type": "string" } },
-    "contractsUsed": { "type": "array", "items": { "type": "string" } }
-  }
+    "functionalName": {
+      "type": "string",
+      "description": "Functional name of the repo — no theme words (D002). Same shape as app.manifest's name.",
+      "pattern": "^[a-z][a-z0-9-]+$",
+      "examples": ["treasury", "control-plane"]
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["runtime", "app", "buildtime"],
+      "description": "What this repo is: a runtime hexagon, a product app (D009), or a buildtime tool."
+    },
+    "side": {
+      "type": "string",
+      "enum": ["host", "hub", "ui", "shared"],
+      "description": "Which wall the repo sits on (D011). `ui` is the side whose repos the theme-check skips — dashboard is side: ui."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "building", "active", "deprecated"],
+      "description": "Repo lifecycle state."
+    },
+    "class": {
+      "type": "string",
+      "enum": ["low-stakes", "health-class", "kids-class"],
+      "description": "D010 risk class tier. Meaningful only when kind: app; the schema stays permissive here — policy-level enforcement (e.g. \"apps must have class\") belongs to the conventions validator, not this schema."
+    },
+    "spec": {
+      "type": "string",
+      "description": "Vault spec filename this repo implements.",
+      "examples": ["spec-treasury.md"]
+    },
+    "decisions": {
+      "type": "array",
+      "description": "Platform decisions (vault PLATFORM_DECISIONS.md) this repo's design follows.",
+      "items": {
+        "type": "string",
+        "pattern": "^D\\d{3}$"
+      }
+    },
+    "deps": {
+      "type": "array",
+      "description": "Functional names of sibling platform repos this one depends on. What dependency-direction checks (hub never imported by host) read. May be empty.",
+      "items": { "type": "string" }
+    },
+    "infra": {
+      "type": "array",
+      "description": "Non-repo dependencies, e.g. kafka, postgres.",
+      "items": { "type": "string" }
+    },
+    "contracts": {
+      "type": "object",
+      "description": "Omitted entirely by buildtime repos like contracts itself, which pin nothing.",
+      "required": ["pin", "binding", "used"],
+      "properties": {
+        "pin": {
+          "type": "string",
+          "description": "Git tag of contracts checked out.",
+          "examples": ["v0.2.2"]
+        },
+        "binding": {
+          "type": "string",
+          "enum": ["java", "ts", "python"]
+        },
+        "used": {
+          "type": "array",
+          "description": "Per-contract names consumed, not per-repo — contracts version independently and the D015 rebuild set is computed per contract from this field.",
+          "items": { "type": "string" },
+          "examples": [["ai.preflight", "usage.event", "state.event"]]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
 }

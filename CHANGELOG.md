@@ -10,6 +10,61 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.3.0 — 2026-07-03
+
+Minor release: fleshes out the two control-plane STUB schemas per the owner-approved
+design. Purely additive — verified first that nothing consumes them yet (control-plane
+chunk 1 deliberately used its own `RegistryEntry` record instead of these stubs, and
+has no `contracts` dependency at all).
+
+### schemas/control-plane/hexagon.descriptor.json (STUB → full schema)
+- Validates the YAML frontmatter block every repo carries at the top of its
+  `HEXAGON.md`. Fields: `functionalName`, `kind` (runtime/app/buildtime), `side`
+  (host/hub/ui/shared), `status` (planned/building/active/deprecated), `class`
+  (optional, D010 risk tier, meaningful only for `kind: app`), `spec`, `decisions`,
+  `deps` (required, may be empty), `infra`, and an optional nested `contracts` object
+  (`pin`, `binding`, `used` — per-contract, not per-repo, since the D015 rebuild set is
+  computed per contract).
+- **`side` enum fix:** the stub's enum (`host`/`hub`/`shared`) was wrong — added `ui`,
+  which spec-conventions officially recognizes as the side whose repos the theme-check
+  skips (dashboard is `side: ui`).
+- Deliberately **no `version` field** — hand-edited versions in frontmatter go stale;
+  changing state lives in `registry.entry`, sourced from git/CI.
+- Deliberately **no `consumedBy`** (derived by control-plane by inverting `deps` across
+  the fleet) and **no `ports`** (deferred — `deps` + `contracts.used` are the machine
+  projection of the port tables; prose keeps the rest). Both omissions noted in the
+  schema description so they aren't "helpfully" re-added later.
+
+### schemas/control-plane/registry.entry.json (STUB → full schema)
+- Control plane's served record — a descriptor summary plus changing state:
+  `functionalName`, `kind`, `side`, `status` (adds `suspended`, a registry-only action,
+  not a repo property), `repoUrl`, `version` (git tag, or `version+shortsha` — the
+  convention control-plane's static registry file already established), `contractsPin`,
+  `updatedAt`, and app-only `appId`/`class`/`plan` (populated once `app.manifest`
+  registration arrives; `class`/`plan` enums aligned with `app.manifest`'s).
+
+### Codegen
+- **Java:** new `jsonschema2pojo` execution (`control-plane`, plain object schemas,
+  package `io.platform.contracts.controlplane`) generating `HexagonDescriptor`,
+  `RegistryEntry`, and the nested `Contracts` type. Verified with `mvn compile`.
+- **TypeScript:** generated `hexagon-descriptor.ts` / `registry-entry.ts` via
+  json-schema-to-typescript, re-exported from `index.ts`. `gen/ts/dist/` rebuilt fresh
+  per D031. Verified with `tsc --noEmit --strict`.
+- **Python:** generated `platform_contracts/control_plane/{hexagon_descriptor,
+  registry_entry}.py` via datamodel-code-generator (pydantic v2), wired into the
+  package `__init__.py`. Verified with a model round-trip and a rejected known-bad
+  document.
+
+### Tests
+- Added `tests/validate_control_plane.py` — no test framework existed in this repo
+  before this release (prior sessions verified only by compiling/typechecking the
+  generated bindings). This validates the JSON Schemas themselves against example
+  documents: a known-good `hexagon.descriptor` (treasury's real values — `kind:
+  runtime`, `side: host`, `deps: [contracts, state-feed]`, `contracts.pin: v0.2.2`,
+  `binding: java`, `used: [ai.preflight, usage.event, state.event]`) and a known-bad
+  one (`side: invalid`, missing `functionalName`), plus the equivalent pair for
+  `registry.entry`.
+
 ## v0.2.2 — 2026-07-02
 
 Patch release fixing a consumption-mechanism defect found while re-verifying D031 in

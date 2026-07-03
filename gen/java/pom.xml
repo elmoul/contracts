@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.2.1</version>
+    <version>0.3.0</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -91,6 +91,27 @@
                             <targetPackage>io.platform.contracts.cirunner</targetPackage>
                             <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
                             <sourceType>yamlschema</sourceType>
+                            <annotationStyle>jackson2</annotationStyle>
+                            <includeAdditionalProperties>false</includeAdditionalProperties>
+                            <includeConstructors>true</includeConstructors>
+                            <generateBuilders>false</generateBuilders>
+                            <useTitleAsClassname>true</useTitleAsClassname>
+                            <dateTimeType>java.time.OffsetDateTime</dateTimeType>
+                            <useJakartaValidation>true</useJakartaValidation>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>control-plane</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${project.basedir}/../../schemas/control-plane/hexagon.descriptor.json</sourcePath>
+                                <sourcePath>${project.basedir}/../../schemas/control-plane/registry.entry.json</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>io.platform.contracts.controlplane</targetPackage>
+                            <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
                             <annotationStyle>jackson2</annotationStyle>
                             <includeAdditionalProperties>false</includeAdditionalProperties>
                             <includeConstructors>true</includeConstructors>

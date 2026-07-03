@@ -1,0 +1,55 @@
+/**
+ * Machine-readable schema for the YAML frontmatter block every repo carries at the top of its HEXAGON.md (D013). Describes stable identity/structure only — deliberately no `version` field (hand-edited versions go stale); changing state lives in `registry.entry`, sourced from git/CI. Also deliberately omits `consumedBy` (derived by control-plane by inverting `deps` across the fleet) and `ports` (deferred — `deps` + `contracts.used` are the machine projection of the port tables; prose keeps the rest).
+ */
+export interface HexagonDescriptor {
+    /**
+     * Functional name of the repo — no theme words (D002). Same shape as app.manifest's name.
+     */
+    functionalName: string;
+    /**
+     * What this repo is: a runtime hexagon, a product app (D009), or a buildtime tool.
+     */
+    kind: "runtime" | "app" | "buildtime";
+    /**
+     * Which wall the repo sits on (D011). `ui` is the side whose repos the theme-check skips — dashboard is side: ui.
+     */
+    side: "host" | "hub" | "ui" | "shared";
+    /**
+     * Repo lifecycle state.
+     */
+    status: "planned" | "building" | "active" | "deprecated";
+    /**
+     * D010 risk class tier. Meaningful only when kind: app; the schema stays permissive here — policy-level enforcement (e.g. "apps must have class") belongs to the conventions validator, not this schema.
+     */
+    class?: "low-stakes" | "health-class" | "kids-class";
+    /**
+     * Vault spec filename this repo implements.
+     */
+    spec?: string;
+    /**
+     * Platform decisions (vault PLATFORM_DECISIONS.md) this repo's design follows.
+     */
+    decisions?: string[];
+    /**
+     * Functional names of sibling platform repos this one depends on. What dependency-direction checks (hub never imported by host) read. May be empty.
+     */
+    deps: string[];
+    /**
+     * Non-repo dependencies, e.g. kafka, postgres.
+     */
+    infra?: string[];
+    /**
+     * Omitted entirely by buildtime repos like contracts itself, which pin nothing.
+     */
+    contracts?: {
+        /**
+         * Git tag of contracts checked out.
+         */
+        pin: string;
+        binding: "java" | "ts" | "python";
+        /**
+         * Per-contract names consumed, not per-repo — contracts version independently and the D015 rebuild set is computed per contract from this field.
+         */
+        used: string[];
+    };
+}
