@@ -45,3 +45,16 @@
 - Verified end-to-end in a scratch project outside this repo: `file:` install resolves, `require('@platform/contracts')` works, and a `.ts` file importing `BuildCommand`/`BuildResult`/`UsageEvent` passes `tsc --noEmit --strict`.
 
 **Next step:** None pending from this session. If control-plane or ai-gateway starts consuming `@platform/contracts` from TS, they should pin via `file:` path to a checked-out tag, not a git URL.
+
+## 2026-07-03 — Session 5
+
+**State:** v0.3.0 tagged and pushed (minor, additive). Fleshed out both control-plane STUB schemas per owner-approved design.
+
+**Decisions taken this session:**
+- Verified nothing consumes `hexagon.descriptor`/`registry.entry` yet — control-plane chunk 1 deliberately uses its own `RegistryEntry` record and has zero `contracts` dependency (`pom.xml` comment confirms this is intentional pending this design pass) — so this is a purely additive minor release, no rebuild set to compute.
+- `hexagon.descriptor.json`: full schema for the HEXAGON.md frontmatter block (`functionalName`, `kind`, `side`, `status`, optional `class`/`spec`/`decisions`/`infra`, required `deps`, optional nested `contracts.{pin,binding,used}`). Fixed the stub's `side` enum bug — added `ui` (dashboard's side, skipped by the theme-check). Deliberately no `version`, `consumedBy`, or `ports` fields — documented why in the schema description so they don't get re-added later.
+- `registry.entry.json`: full schema for control-plane's served record — descriptor summary + changing state (`repoUrl`, `version`, `contractsPin`, `updatedAt`, app-only `appId`/`class`/`plan`). `status` adds `suspended` (registry-only, not a repo property).
+- Regenerated all three bindings (Java: new `jsonschema2pojo` execution, package `io.platform.contracts.controlplane`; TS: `hexagon-descriptor.ts`/`registry-entry.ts`, `dist/` rebuilt fresh per D031; Python: `platform_contracts/control_plane/`). Verified `mvn compile`, `tsc --noEmit --strict`, and a Python round-trip + rejected-bad-doc all pass.
+- Added `tests/validate_control_plane.py` — first structured test file in this repo (prior releases verified only by compiling generated bindings). Validates the JSON Schemas directly against example documents: known-good (treasury's real values) and known-bad (bad `side`, missing `functionalName`) for both schemas.
+
+**Next step:** Nine repos adopt the `hexagon.descriptor` frontmatter in HEXAGON.md in parallel; control-plane's inventory reader builds against the generated Java `HexagonDescriptor`/`RegistryEntry` types (`io.platform.contracts.controlplane`). Both gated on this release — v0.3.0 is now pinnable.
