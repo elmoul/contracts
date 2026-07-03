@@ -1,23 +1,17 @@
 ---
-type: hexagon
-title: "contracts"
-functional_name: "contracts"
+functionalName: contracts
+kind: buildtime
 side: shared
-class: kernel
-status: draft
-phase: "A"
-spec: "[[spec-contracts]]"
-skin_howl: ""
+status: active
 deps: []
-consumed_by: ["all"]
-contracts_used: []
-created: 2026-07-02
-updated: 2026-07-02
-tags:
-  - hexagon
-  - platform
-related: []
-sources: []
+spec: spec-contracts.md
+decisions:
+  - D002
+  - D007
+  - D009
+  - D015
+  - D022
+  - D029
 ---
 
 # contracts
