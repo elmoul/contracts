@@ -10,6 +10,36 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.6.2 — 2026-07-05
+
+Patch release, Python packaging fix only: no schema change.
+
+### gen/python build-backend fix
+- `gen/python/pyproject.toml` declared `build-backend =
+  "setuptools.backends.legacy:build"` — that module path does not exist in
+  setuptools. Any PEP 517 install (including the documented D031 consumer
+  pattern, `pip install
+  "git+https://github.com/elmoul/contracts.git@<tag>#subdirectory=gen/python"`)
+  failed at the build-backend hook with `ModuleNotFoundError: No module named
+  'setuptools.backends'`. `connector-gmail` (first Python consumer) hit this
+  and worked around it locally instead of fixing it here; `orchestrator` and
+  `sentinel-hub` (both Python, next in Wave 4) would have hit the same wall.
+  The D031 "pip `#subdirectory=` genuinely works" note had never actually been
+  run against this file.
+- Fixed to `setuptools.build_meta`, the standard PEP 517 entry point.
+- `version` bumped from `0.6.0` to `0.6.2` — it was left at `0.6.0` through
+  v0.6.1's Java-only patch; an installed package reporting the wrong version
+  is a latent trap.
+- Verified with a clean install in a fresh virtualenv, build isolation on
+  (`pip install ./gen/python`): resolves, builds `platform_contracts-0.6.2-py3-none-any.whl`,
+  installs cleanly. Then, after tagging, verified the real acceptance path —
+  `pip install "git+https://github.com/elmoul/contracts.git@v0.6.2#subdirectory=gen/python"`
+  in a second fresh virtualenv — followed by importing
+  `platform_contracts`, `platform_contracts.connector.connector_vocabulary`,
+  and `platform_contracts.state_feed.state_event`. `gen/java`
+  (`mvn clean test`, 10/10-stable per v0.6.1) and `gen/ts`
+  (`tsc --noEmit --strict`) confirmed untouched and unaffected.
+
 ## v0.6.1 — 2026-07-04
 
 Patch release, Java binding only: build-layout fix, no schema change.

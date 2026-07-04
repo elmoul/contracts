@@ -142,3 +142,35 @@
 - Regenerated all three bindings; added `ConnectorContractsRoundTripTest` + `StateEventOriginTest` to `gen/java` (full suite: 9 tests green, including `RunIdOverflowRegressionTest`), `tests/validate_connector.py` in Python (full suite: 5 files green). `tsc --noEmit --strict` clean; Python package imports cleanly.
 
 **Next step:** None pending from this session. First connector to build (per spec-connectors.md §7, `connector-gmail` read-only) should declare its vocabulary against the generated `ConnectorVocabulary`/`Verb` binding and speak `ConnectorInvokeRequest`/`ConnectorInvokeResponse` for the orchestrator call; state-feed producers may start tagging `origin: hub` on hub-side events once state-feed itself builds against `v0.6.0`.
+
+## 2026-07-05 — Session 12
+
+**State:** v0.6.2 tagged and pushed (patch, Python packaging fix only, no schema change). `connector-gmail` had hit a broken `gen/python` install and worked around it locally instead of fixing it here; this session closes the actual bug.
+
+**Decisions taken this session:**
+- `gen/python/pyproject.toml` had `build-backend = "setuptools.backends.legacy:build"` — not a real setuptools module path. Any PEP 517 install, including the documented D031 consumer pattern (`pip install "git+https://github.com/elmoul/contracts.git@<tag>#subdirectory=gen/python"`), failed at the build-backend hook with `ModuleNotFoundError: No module named 'setuptools.backends'`. The D031 "pip `#subdirectory=` genuinely works" note had never actually been exercised against this file. Fixed to `setuptools.build_meta`.
+- Bumped `version` 0.6.0 → 0.6.2 in the same file — it had been left at 0.6.0 through v0.6.1's Java-only patch.
+- Verified pre-tag with a clean install in a fresh, throwaway virtualenv, build isolation on:
+  ```
+  python -m venv <scratch>/verify_venv_local
+  <scratch>/verify_venv_local/Scripts/activate
+  pip install ./gen/python
+  ```
+  Output: resolves `pydantic>=2.0` and deps, then
+  `Building wheel for platform-contracts (pyproject.toml): finished with status 'done'`,
+  `Created wheel for platform-contracts: filename=platform_contracts-0.6.2-py3-none-any.whl ...`,
+  `Successfully installed ... platform-contracts-0.6.2 ...`. Then:
+  ```
+  python -c "import platform_contracts; from platform_contracts.connector import connector_vocabulary; from platform_contracts.state_feed import state_event; print(platform_contracts.__version__ if hasattr(platform_contracts,'__version__') else 'imported ok')"
+  ```
+  Output: `imported ok`.
+- Post-tag (the real acceptance test), verified the actual git-URL install in a second fresh virtualenv:
+  ```
+  python -m venv <scratch>/verify_venv_gittag
+  <scratch>/verify_venv_gittag/Scripts/activate
+  pip install "git+https://github.com/elmoul/contracts.git@v0.6.2#subdirectory=gen/python"
+  ```
+  followed by the same import check. Both installs succeeded; no build-backend failure. (See CHANGELOG.md v0.6.2 entry for the full command/output detail.)
+- Confirmed Java and TS untouched: `mvn -q clean test` in `gen/java` (10/10-stable per v0.6.1) and `npx tsc --noEmit --strict` in `gen/ts` both clean, zero output.
+
+**Next step:** None pending from this session. `connector-gmail` currently pins/points at v0.6.1 and should re-pin to v0.6.2 — that repo's own session, not this one. `orchestrator` and `sentinel-hub` (Wave 4 Python consumers) can now use the documented D031 `pip install "git+...#subdirectory=gen/python"` pattern without hitting the build-backend bug.
