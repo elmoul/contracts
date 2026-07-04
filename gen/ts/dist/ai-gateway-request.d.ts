@@ -44,6 +44,20 @@ export interface components {
             context?: {
                 [key: string]: unknown;
             };
+            /** @description Optional media attachments for multimodal requests (e.g. photo-based identification). Passed through by the gateway to providers that support vision input; ignored by text-only providers. */
+            media?: {
+                /**
+                 * Format: byte
+                 * @description Base64-encoded media content
+                 */
+                data: string;
+                /**
+                 * @description Media MIME type
+                 * @example image/jpeg
+                 * @example image/png
+                 */
+                mimeType: string;
+            }[];
         };
         AiResponse: {
             /** @description The AI-generated response text */

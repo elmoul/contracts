@@ -20,7 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.platform.contracts.aigateway.AiRequestMediaInner;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -34,9 +38,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   AiRequest.JSON_PROPERTY_MODEL_HINT,
   AiRequest.JSON_PROPERTY_APP_ID,
   AiRequest.JSON_PROPERTY_USER_ID,
-  AiRequest.JSON_PROPERTY_CONTEXT
+  AiRequest.JSON_PROPERTY_CONTEXT,
+  AiRequest.JSON_PROPERTY_MEDIA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:41.969387100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-04T04:07:57.388337600+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AiRequest {
   public static final String JSON_PROPERTY_PROMPT = "prompt";
   @jakarta.annotation.Nonnull
@@ -57,6 +62,10 @@ public class AiRequest {
   public static final String JSON_PROPERTY_CONTEXT = "context";
   @jakarta.annotation.Nullable
   private Map<String, Object> context = new HashMap<>();
+
+  public static final String JSON_PROPERTY_MEDIA = "media";
+  @jakarta.annotation.Nullable
+  private List<AiRequestMediaInner> media = new ArrayList<>();
 
   public AiRequest() {
   }
@@ -194,6 +203,39 @@ public class AiRequest {
     this.context = context;
   }
 
+  public AiRequest media(@jakarta.annotation.Nullable List<AiRequestMediaInner> media) {
+    
+    this.media = media;
+    return this;
+  }
+
+  public AiRequest addMediaItem(AiRequestMediaInner mediaItem) {
+    if (this.media == null) {
+      this.media = new ArrayList<>();
+    }
+    this.media.add(mediaItem);
+    return this;
+  }
+
+  /**
+   * Optional media attachments for multimodal requests (e.g. photo-based identification). Passed through by the gateway to providers that support vision input; ignored by text-only providers. 
+   * @return media
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_MEDIA, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<AiRequestMediaInner> getMedia() {
+    return media;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_MEDIA, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMedia(@jakarta.annotation.Nullable List<AiRequestMediaInner> media) {
+    this.media = media;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -208,12 +250,13 @@ public class AiRequest {
         Objects.equals(this.modelHint, aiRequest.modelHint) &&
         Objects.equals(this.appId, aiRequest.appId) &&
         Objects.equals(this.userId, aiRequest.userId) &&
-        Objects.equals(this.context, aiRequest.context);
+        Objects.equals(this.context, aiRequest.context) &&
+        Objects.equals(this.media, aiRequest.media);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(prompt, modelHint, appId, userId, context);
+    return Objects.hash(prompt, modelHint, appId, userId, context, media);
   }
 
   @Override
@@ -225,6 +268,7 @@ public class AiRequest {
     sb.append("    appId: ").append(toIndentedString(appId)).append("\n");
     sb.append("    userId: ").append(toIndentedString(userId)).append("\n");
     sb.append("    context: ").append(toIndentedString(context)).append("\n");
+    sb.append("    media: ").append(toIndentedString(media)).append("\n");
     sb.append("}");
     return sb.toString();
   }

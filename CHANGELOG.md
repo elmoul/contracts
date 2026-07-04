@@ -10,6 +10,78 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.4.0 — 2026-07-04
+
+Minor release: adds an optional `media` field to `ai.request`'s `AiRequest` schema
+so photo-based (and other multimodal) calls can route through `ai-gateway` on the
+same envelope. Purely additive — no existing required field touched, `AiResponse`
+and `BlockedResponse` are untouched (response stays text-only).
+
+### schemas/ai-gateway/request.yaml (AiRequest — additive)
+- Driven by PlantPal's chunk 1 (parallel to its own clone/scaffold chunk, no
+  dependency between them): all four of PlantPal's AI-calling modules
+  (identification, treatment, species enrichment, chat) need to send a photo
+  alongside — or instead of — a text prompt. gateway-spec §8-3 had already leaned
+  toward "same envelope, optional media field" over a second endpoint; this
+  release finalizes that ruling. PlantNet (and any future vision-capable
+  provider) rides the existing `AiRequest`/`ai.request` contract — there is no
+  separate `ai.vision.request`.
+- Added `media`: optional array of `{ data, mimeType }` objects. `data` is
+  base64-encoded content (`format: byte`), `mimeType` is a free-form string
+  (examples `image/jpeg`, `image/png` — not an enum, so the gateway doesn't need
+  a schema bump every time a provider adds a supported format). Both fields
+  required *within* a media item (`additionalProperties: false` on the item, as
+  on every other object in this contract) — but the `media` array itself is not
+  in `AiRequest`'s top-level `required` list, so text-only callers are unaffected.
+  The gateway is expected to pass `media` through untouched to providers that
+  support vision input, and to ignore it for providers that don't.
+- Deliberately did not touch `AiResponse`/`BlockedResponse` — a vision call's
+  result is still just text (the identification, the treatment advice, etc.), so
+  the response envelope doesn't need a media-shaped counterpart.
+
+### Codegen
+- **Java:** regenerated `AiRequest.java` via openapi-generator 7.23.0
+  (`JavaClientCodegen`, `resttemplate` library, `useJakartaEe=true`, scoped to
+  models only via `--global-property models,supportingFiles=false,apiTests=false,
+  modelTests=false,apiDocs=false,modelDocs=false`, `--model-package
+  io.platform.contracts.aigateway`) directly against `request.yaml` — this is
+  the same invocation shape `AiRequest.java`'s existing generator header already
+  implied (JavaClientCodegen, not jsonschema2pojo like the other Java targets;
+  `ai.request` is an OpenAPI document, not a plain JSON Schema, so it never went
+  through the `jsonschema2pojo-maven-plugin` executions in `pom.xml`). Produced a
+  new `AiRequestMediaInner.java` (the array item type) alongside the additive
+  diff to `AiRequest.java` — `AiResponse.java`/`BlockedResponse.java` regenerated
+  byte-identical (confirmed via diff) since their schemas didn't change.
+  Verified with `mvn compile` — clean.
+- **TypeScript:** regenerated `ai-gateway-request.ts` via `openapi-typescript`
+  (matching the file's own header — it was never `json-schema-to-typescript`
+  output like the plain-JSON-Schema control-plane files, since `request.yaml` is
+  a full OpenAPI document with `paths`+`components`). Rebuilt `gen/ts/dist/`
+  fresh via `npx tsc` per D031 (committed, not gitignored) — picked up the
+  14-line additive diff to `dist/ai-gateway-request.d.ts` plus line-ending
+  normalization on a few unrelated `dist/` files untouched in content. Verified
+  with `tsc --noEmit --strict` — clean.
+- **Python:** regenerated `platform_contracts/ai_gateway/request.py` via
+  `datamodel-code-generator` (pydantic v2, `--input-file-type openapi`, no
+  `--field-constraints` flag — matching the existing file's `constr`/`conint`/
+  `confloat`-style constraints rather than inline `Field(ge=...)`). Produced a
+  new `MediaItem` model (base64 content typed as pydantic's `Base64Str`).
+  Verified: a payload with `media` round-trips (`model_dump_json` →
+  `model_validate_json`), a payload without `media` still validates (proves the
+  field is truly optional, not accidentally required), and a media item missing
+  `mimeType` raises `ValidationError` (rejected by `extra='forbid'` +
+  `mimeType`'s required-ness).
+
+### Tests
+- Added `tests/validate_ai_request.py` — first structured test for `ai-gateway`
+  (previously verified only by compiling/typechecking the generated bindings, same
+  gap `validate_control_plane.py` closed for control-plane in v0.3.0). Pulls
+  `AiRequest` out of `request.yaml`'s `components.schemas` (it's an OpenAPI
+  document, not a standalone JSON Schema file) and validates it directly against:
+  a known-good request with `media` (plausible base64 JPEG stub), a known-good
+  request without `media` (proves optionality), and a known-bad request whose
+  media item is missing `mimeType` (must be rejected).
+
 ## v0.3.0 — 2026-07-03
 
 Minor release: fleshes out the two control-plane STUB schemas per the owner-approved
