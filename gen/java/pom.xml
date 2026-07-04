@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -80,7 +80,7 @@
                         <sourcePath>${project.basedir}/../../schemas/app/dimension.event.json</sourcePath>
                     </sourcePaths>
                     <targetPackage>io.platform.contracts.events</targetPackage>
-                    <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+                    <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
                     <annotationStyle>jackson2</annotationStyle>
                     <includeAdditionalProperties>false</includeAdditionalProperties>
                     <includeConstructors>true</includeConstructors>
@@ -107,7 +107,7 @@
                                 <sourcePath>${project.basedir}/../../schemas/ci-runner/build-result.yaml</sourcePath>
                             </sourcePaths>
                             <targetPackage>io.platform.contracts.cirunner</targetPackage>
-                            <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+                            <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
                             <sourceType>yamlschema</sourceType>
                             <annotationStyle>jackson2</annotationStyle>
                             <includeAdditionalProperties>false</includeAdditionalProperties>
@@ -129,7 +129,7 @@
                                 <sourcePath>${project.basedir}/../../schemas/control-plane/registry.entry.json</sourcePath>
                             </sourcePaths>
                             <targetPackage>io.platform.contracts.controlplane</targetPackage>
-                            <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+                            <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
                             <annotationStyle>jackson2</annotationStyle>
                             <includeAdditionalProperties>false</includeAdditionalProperties>
                             <includeConstructors>true</includeConstructors>
@@ -151,7 +151,7 @@
                                 <sourcePath>${project.basedir}/../../schemas/connector/connector.invoke.response.json</sourcePath>
                             </sourcePaths>
                             <targetPackage>io.platform.contracts.connector</targetPackage>
-                            <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+                            <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
                             <annotationStyle>jackson2</annotationStyle>
                             <includeAdditionalProperties>false</includeAdditionalProperties>
                             <includeConstructors>true</includeConstructors>

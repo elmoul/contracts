@@ -10,6 +10,43 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.6.1 — 2026-07-04
+
+Patch release, Java binding only: build-layout fix, no schema change.
+
+### gen/java build stability
+- Fixed an intermittent `gen/java` clean-build failure (~50% failure rate across
+  `mvn clean test` runs, confirmed over two sessions' worth of 8x/10x repeated
+  clean-build loops) that showed up as truncated/zero-length `.class` files,
+  `surefire` failing to load a class that had "successfully" compiled one phase
+  earlier, or entire generated packages going invisible to javac's directory scan
+  (`package io.platform.contracts.connector does not exist`) — with the affected
+  package and even the compiled-file count varying between otherwise-identical
+  clean runs.
+- Root cause: all four `jsonschema2pojo` executions (`events`, `ci-runner`,
+  `control-plane`, `connector`) wrote generated sources directly into
+  `${project.basedir}/src/main/java` — the checked-in source tree that
+  `maven-compiler-plugin` scans in the same reactor build, immediately after the
+  four executions finish writing to it in the same `generate-sources` phase. This
+  is a write-then-scan race in a shared directory, not an incremental-compilation
+  cache issue (failures occurred even from `mvn clean` every time, and even
+  affected static, non-generated files in the same directory).
+- Fix: moved all four executions' `outputDirectory` to the conventional
+  `target/generated-sources/jsonschema2pojo`, isolating generated output from the
+  checked-in `src/main/java` tree. `jsonschema2pojo-maven-plugin` 1.2.1 registers
+  this directory as a compile source root automatically (confirmed via the
+  plugin's own `addCompileSourceRoot` call) — no `build-helper-maven-plugin`
+  needed. Removed the now-stale generated files from `src/main/java` for the
+  packages these executions own (`events` — `UsageEvent.java`/`DimensionEvent.java`
+  only; `cirunner`; `controlplane`; `connector`); static/openapi-generator-derived
+  files in `events` (`Origin.java`, `ComponentHealthEvent.java`, etc.) are
+  untouched.
+- Verified with `mvn clean test` **10 times in a row**: 10/10 BUILD SUCCESS, 9
+  tests passing each run — first clean run of this loop with a 0% failure rate
+  since the flakiness was first observed. `gen/ts` (`tsc --noEmit --strict`) and
+  `gen/python` (`import platform_contracts`) confirmed unaffected; neither
+  binding's version is bumped since neither's generated output changed.
+
 ## v0.6.0 — 2026-07-04
 
 Minor release: Wave 4 hub schema delta. Three additive changes — new `connector`
