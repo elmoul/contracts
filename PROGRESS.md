@@ -58,3 +58,16 @@
 - Added `tests/validate_control_plane.py` — first structured test file in this repo (prior releases verified only by compiling generated bindings). Validates the JSON Schemas directly against example documents: known-good (treasury's real values) and known-bad (bad `side`, missing `functionalName`) for both schemas.
 
 **Next step:** Nine repos adopt the `hexagon.descriptor` frontmatter in HEXAGON.md in parallel; control-plane's inventory reader builds against the generated Java `HexagonDescriptor`/`RegistryEntry` types (`io.platform.contracts.controlplane`). Both gated on this release — v0.3.0 is now pinnable.
+
+## 2026-07-04 — Session 6
+
+**State:** v0.4.0 tagged and pushed (minor, additive). PlantPal integration chunk 1 — extended `ai.request` for photo-based/multimodal calls, run in parallel with PlantPal's own chunk 0 clone (no dependency between them).
+
+**Decisions taken this session:**
+- Added optional `media` field to `AiRequest` (array of `{data, mimeType}`) per gateway-spec §8-3's existing lean toward "same envelope, optional field" over a separate vision endpoint — PlantNet (and any future vision provider) rides `ai.request`, full stop. `AiResponse`/`BlockedResponse` untouched — responses stay text-only.
+- Confirmed `AiRequest.java`'s generator header (`JavaClientCodegen`) meant it was never on the `jsonschema2pojo` path the rest of `gen/java/pom.xml` uses — it's generated straight from `request.yaml` (an OpenAPI doc, not a plain JSON Schema) via `openapi-generator-cli generate -g java --library resttemplate --additional-properties=useJakartaEe=true --model-package io.platform.contracts.aigateway --global-property models,supportingFiles=false,apiTests=false,modelTests=false,apiDocs=false,modelDocs=false`. Reconstructed and reused this exact invocation (verified byte-for-byte match on the unchanged `AiResponse`/`BlockedResponse` output before trusting it).
+- Same story for TS (`openapi-typescript`, not `json-schema-to-typescript` — that tool is only for the plain-JSON-Schema targets like control-plane) and Python (`datamodel-code-generator` **without** `--field-constraints`, since that flag inverts to `Field(ge=...)` inline style — the existing file uses `conint`/`confloat`/`constr`, which is the *default*, unflagged behavior).
+- Regenerated all three bindings; verified `mvn compile`, `tsc --noEmit --strict` (after `npm install` in `gen/ts` — no `node_modules` existed locally), and a Python round-trip with media, without media (proves optionality), and a rejected missing-`mimeType` case.
+- Added `tests/validate_ai_request.py` — first structured test for `ai-gateway` (same gap `validate_control_plane.py` closed for control-plane in v0.3.0). Pulls `AiRequest` out of `request.yaml`'s `components.schemas` via PyYAML since the source is an OpenAPI document, not a standalone schema file.
+
+**Next step:** PlantPal chunk 0 (clone/scaffold) proceeds independently. Once PlantPal starts consuming `contracts`, it pins `v0.4.0` and builds its four AI-calling modules (identification, treatment, species enrichment, chat) against the generated `AiRequest` with `media` populated for photo calls, omitted for text-only ones. `ai-gateway`'s own build still needs to actually read/forward `media` to a vision-capable provider (PlantNet) — that's gateway-side work, not a contracts change.
