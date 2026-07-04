@@ -64,7 +64,7 @@ public class BuildResult {
      */
     @JsonProperty("runId")
     @JsonPropertyDescription("GitHub Actions workflow run ID.")
-    private Integer runId;
+    private Long runId;
     /**
      * Terminal outcome of the build.
      * (Required)
@@ -115,7 +115,7 @@ public class BuildResult {
      * @param status
      *     Terminal outcome of the build.
      */
-    public BuildResult(String correlationId, String repo, String ref, Integer runId, BuildResult.Status status, String artifactRef, OffsetDateTime completedAt) {
+    public BuildResult(String correlationId, String repo, String ref, Long runId, BuildResult.Status status, String artifactRef, OffsetDateTime completedAt) {
         super();
         this.correlationId = correlationId;
         this.repo = repo;
@@ -192,7 +192,7 @@ public class BuildResult {
      * 
      */
     @JsonProperty("runId")
-    public Integer getRunId() {
+    public Long getRunId() {
         return runId;
     }
 
@@ -202,7 +202,7 @@ public class BuildResult {
      * 
      */
     @JsonProperty("runId")
-    public void setRunId(Integer runId) {
+    public void setRunId(Long runId) {
         this.runId = runId;
     }
 

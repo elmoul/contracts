@@ -10,6 +10,41 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.5.1 — 2026-07-04
+
+Patch release: fixes an int32 overflow on both `runId` fields.
+
+### ci-runner/build-result, state-feed/CiRunPayload (fix)
+- `BuildResult.runId` (`schemas/ci-runner/build-result.yaml`) and
+  `CiRunPayload.runId` (`schemas/state-feed/state.event.json` and its Java
+  codegen wrapper `schemas/state-feed/state-event-java.yaml`) were declared as
+  a plain `integer` with no width, so the Java generator emitted `Integer`.
+  Real GitHub Actions run IDs are ~11 digits (e.g. `28714195292`), which
+  overflows a 32-bit int. Found via a live end-to-end test: a real
+  `workflow_dispatch` run's result was rejected by control-plane's
+  `/ci/results` endpoint with `HttpMessageNotReadableException: JSON parse
+  error: Numeric value (28714195292) out of range of int`.
+- Fixed by adding `format: int64` to both `runId` properties. For
+  `BuildResult`, `jsonschema2pojo` doesn't map OpenAPI's `format: int64` on
+  its own, so `existingJavaType: java.lang.Long` was also added as a
+  jsonschema2pojo-specific extension to force the field to `Long`.
+  `CiRunPayload` is generated via `openapi-generator` (not
+  `jsonschema2pojo`), which does respect `format: int64` and emits `Long`
+  directly — regenerated with `--library resttemplate` (the same Jackson
+  serialization as before; the default `java` library emits Gson, which
+  would have silently swapped serialization frameworks for the whole
+  `events` package).
+- Regenerated all three bindings. Java: `BuildResult.runId` and
+  `CiRunPayload.runId` are now `Long` — verified `mvn compile`. TS/Python are
+  unaffected at this size (`number`/`int` don't overflow) but now declare
+  `int64` consistently across all three languages.
+- Added `gen/java/src/test/java/io/platform/contracts/RunIdOverflowRegressionTest.java`
+  (first JUnit test in this repo — added `junit-jupiter` +
+  `maven-surefire-plugin` to `gen/java/pom.xml` to support it) deserializing
+  an 11-digit `runId` (`28714195292`) into both `BuildResult` and
+  `CiRunPayload`, so a future accidental narrowing back to `int`/`Integer` is
+  caught by `mvn test`.
+
 ## v0.5.0 — 2026-07-04
 
 Minor release: adds a new standalone `dimension.event` schema. Purely additive —

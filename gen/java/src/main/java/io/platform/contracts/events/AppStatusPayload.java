@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   AppStatusPayload.JSON_PROPERTY_STATUS,
   AppStatusPayload.JSON_PROPERTY_VERSION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:52.417126900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-04T18:59:26.736856700+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AppStatusPayload {
   public static final String JSON_PROPERTY_APP_ID = "appId";
   @jakarta.annotation.Nonnull

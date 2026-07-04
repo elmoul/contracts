@@ -20,6 +20,8 @@ properties:
     description: Git ref that was built.
   runId:
     type: integer
+    format: int64
+    existingJavaType: java.lang.Long
     description: GitHub Actions workflow run ID.
   status:
     type: string

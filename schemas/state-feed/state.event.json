@@ -151,6 +151,7 @@
       "properties": {
         "runId": {
           "type": "integer",
+          "format": "int64",
           "description": "GitHub Actions workflow run ID."
         },
         "repo": {

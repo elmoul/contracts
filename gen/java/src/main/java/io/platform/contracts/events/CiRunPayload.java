@@ -43,11 +43,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   CiRunPayload.JSON_PROPERTY_COMPLETED_AT,
   CiRunPayload.JSON_PROPERTY_RUNNER_LABELS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T15:32:54.183043900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-04T18:59:26.736856700+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class CiRunPayload {
   public static final String JSON_PROPERTY_RUN_ID = "runId";
   @jakarta.annotation.Nonnull
-  private Integer runId;
+  private Long runId;
 
   public static final String JSON_PROPERTY_REPO = "repo";
   @jakarta.annotation.Nonnull
@@ -166,7 +166,7 @@ public class CiRunPayload {
   public CiRunPayload() {
   }
 
-  public CiRunPayload runId(@jakarta.annotation.Nonnull Integer runId) {
+  public CiRunPayload runId(@jakarta.annotation.Nonnull Long runId) {
     
     this.runId = runId;
     return this;
@@ -180,14 +180,14 @@ public class CiRunPayload {
   @JsonProperty(value = JSON_PROPERTY_RUN_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public Integer getRunId() {
+  public Long getRunId() {
     return runId;
   }
 
 
   @JsonProperty(value = JSON_PROPERTY_RUN_ID, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setRunId(@jakarta.annotation.Nonnull Integer runId) {
+  public void setRunId(@jakarta.annotation.Nonnull Long runId) {
     this.runId = runId;
   }
 

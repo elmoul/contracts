@@ -83,3 +83,14 @@
 - Explicitly did **not** touch `treasury`, `ai-gateway`, or `plantpal` — building the Treasury Kafka consumer adapter or a PlantPal producer is out of scope for this session per the prompt; noted here for whoever picks up next.
 
 **Next step:** Treasury can now build its inbound adapter (Kafka consumer, per `DimensionUpdatePort`'s javadoc) against the generated `DimensionEvent`/`DimensionEvent` Java binding, with real ledger-based dedup keyed on `eventId` (mirroring `UsageEventLedger`). PlantPal's producer side is a separate future chunk once it needs to emit plant-count changes. Tag and push `v0.5.0` once reviewed.
+
+## 2026-07-04 — Session 8
+
+**State:** v0.5.1 tagged and pushed (patch). Fixed int32 overflow on `runId` in `BuildResult` and `CiRunPayload`, found via a live end-to-end test rejecting a real 11-digit GitHub Actions run ID.
+
+**Decisions taken this session:**
+- Added `format: int64` to both `runId` properties (`schemas/ci-runner/build-result.yaml`, `schemas/state-feed/state.event.json`, `schemas/state-feed/state-event-java.yaml`). `jsonschema2pojo` (used for `BuildResult`) ignores OpenAPI's `format: int64`, so also added `existingJavaType: java.lang.Long` to force `Long` there. `openapi-generator` (used for `CiRunPayload`) respects `format: int64` natively — regenerated with `--library resttemplate` to keep Jackson serialization (the default `java` library emits Gson, which would have silently swapped the whole `events` package's serialization framework).
+- Added first JUnit 5 test infra to `gen/java` (`junit-jupiter` + `maven-surefire-plugin` in `pom.xml`, `jackson-datatype-jsr310` for `OffsetDateTime` test fixtures) — no Java tests existed in this repo before now. `RunIdOverflowRegressionTest` deserializes an 11-digit `runId` into both `BuildResult` and `CiRunPayload`, catching future narrowing back to `int`.
+- Regenerated all three bindings; TS/Python diffs are timestamp-only (neither language overflows at this size), Java diffs are the intended `Integer`→`Long` change plus the same regen-timestamp noise on unrelated `events` classes.
+
+**Next step:** None pending. Consumers currently pinned to `v0.5.0` (none yet, per session 7) should pin `v0.5.1` before building against `BuildResult`/`CiRunPayload` for real workflow runs.
