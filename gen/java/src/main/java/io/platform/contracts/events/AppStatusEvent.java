@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.platform.contracts.events.AppStatusPayload;
+import io.platform.contracts.events.Origin;
 import java.time.OffsetDateTime;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -32,9 +33,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @JsonPropertyOrder({
   AppStatusEvent.JSON_PROPERTY_TYPE,
   AppStatusEvent.JSON_PROPERTY_TIMESTAMP,
-  AppStatusEvent.JSON_PROPERTY_PAYLOAD
+  AppStatusEvent.JSON_PROPERTY_PAYLOAD,
+  AppStatusEvent.JSON_PROPERTY_ORIGIN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:52.417126900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-04T21:52:00.543013800+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AppStatusEvent {
   /**
    * Discriminator value — always \&quot;app.status\&quot;
@@ -80,6 +82,10 @@ public class AppStatusEvent {
   public static final String JSON_PROPERTY_PAYLOAD = "payload";
   @jakarta.annotation.Nonnull
   private AppStatusPayload payload;
+
+  public static final String JSON_PROPERTY_ORIGIN = "origin";
+  @jakarta.annotation.Nullable
+  private Origin origin;
 
   public AppStatusEvent() {
   }
@@ -159,6 +165,31 @@ public class AppStatusEvent {
     this.payload = payload;
   }
 
+  public AppStatusEvent origin(@jakarta.annotation.Nullable Origin origin) {
+    
+    this.origin = origin;
+    return this;
+  }
+
+  /**
+   * Get origin
+   * @return origin
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_ORIGIN, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Origin getOrigin() {
+    return origin;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_ORIGIN, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setOrigin(@jakarta.annotation.Nullable Origin origin) {
+    this.origin = origin;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -171,12 +202,13 @@ public class AppStatusEvent {
     AppStatusEvent appStatusEvent = (AppStatusEvent) o;
     return Objects.equals(this.type, appStatusEvent.type) &&
         Objects.equals(this.timestamp, appStatusEvent.timestamp) &&
-        Objects.equals(this.payload, appStatusEvent.payload);
+        Objects.equals(this.payload, appStatusEvent.payload) &&
+        Objects.equals(this.origin, appStatusEvent.origin);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, timestamp, payload);
+    return Objects.hash(type, timestamp, payload, origin);
   }
 
   @Override
@@ -186,6 +218,7 @@ public class AppStatusEvent {
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("    payload: ").append(toIndentedString(payload)).append("\n");
+    sb.append("    origin: ").append(toIndentedString(origin)).append("\n");
     sb.append("}");
     return sb.toString();
   }

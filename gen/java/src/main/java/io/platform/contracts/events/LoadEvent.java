@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.platform.contracts.events.LoadPayload;
+import io.platform.contracts.events.Origin;
 import java.time.OffsetDateTime;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -32,9 +33,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @JsonPropertyOrder({
   LoadEvent.JSON_PROPERTY_TYPE,
   LoadEvent.JSON_PROPERTY_TIMESTAMP,
-  LoadEvent.JSON_PROPERTY_PAYLOAD
+  LoadEvent.JSON_PROPERTY_PAYLOAD,
+  LoadEvent.JSON_PROPERTY_ORIGIN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-04T18:59:26.736856700+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-04T21:52:00.543013800+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class LoadEvent {
   /**
    * Discriminator value — always \&quot;load\&quot;
@@ -80,6 +82,10 @@ public class LoadEvent {
   public static final String JSON_PROPERTY_PAYLOAD = "payload";
   @jakarta.annotation.Nonnull
   private LoadPayload payload;
+
+  public static final String JSON_PROPERTY_ORIGIN = "origin";
+  @jakarta.annotation.Nullable
+  private Origin origin;
 
   public LoadEvent() {
   }
@@ -159,6 +165,31 @@ public class LoadEvent {
     this.payload = payload;
   }
 
+  public LoadEvent origin(@jakarta.annotation.Nullable Origin origin) {
+    
+    this.origin = origin;
+    return this;
+  }
+
+  /**
+   * Get origin
+   * @return origin
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_ORIGIN, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Origin getOrigin() {
+    return origin;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_ORIGIN, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setOrigin(@jakarta.annotation.Nullable Origin origin) {
+    this.origin = origin;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -171,12 +202,13 @@ public class LoadEvent {
     LoadEvent loadEvent = (LoadEvent) o;
     return Objects.equals(this.type, loadEvent.type) &&
         Objects.equals(this.timestamp, loadEvent.timestamp) &&
-        Objects.equals(this.payload, loadEvent.payload);
+        Objects.equals(this.payload, loadEvent.payload) &&
+        Objects.equals(this.origin, loadEvent.origin);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, timestamp, payload);
+    return Objects.hash(type, timestamp, payload, origin);
   }
 
   @Override
@@ -186,6 +218,7 @@ public class LoadEvent {
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("    payload: ").append(toIndentedString(payload)).append("\n");
+    sb.append("    origin: ").append(toIndentedString(origin)).append("\n");
     sb.append("}");
     return sb.toString();
   }

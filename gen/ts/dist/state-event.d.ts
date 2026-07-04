@@ -7,6 +7,10 @@
  * Event emitted over SSE by the state-feed (D029). Consumed by the dashboard, the 3D renderer, and the guest projection — the same schema, three renderers. Discriminate on the 'type' field.
  */
 export type StateEvent = ComponentHealthEvent | LoadEvent | CostTickEvent | CiRunEvent | AppStatusEvent;
+/**
+ * Which wall the event was produced on (D011). Optional — absent means host, preserving compatibility with producers that predate this field.
+ */
+export type Origin = "host" | "hub";
 export interface ComponentHealthEvent {
     type: "component.health";
     /**
@@ -14,6 +18,7 @@ export interface ComponentHealthEvent {
      */
     timestamp: string;
     payload: ComponentHealthPayload;
+    origin?: Origin;
 }
 export interface ComponentHealthPayload {
     /**
@@ -36,6 +41,7 @@ export interface LoadEvent {
      */
     timestamp: string;
     payload: LoadPayload;
+    origin?: Origin;
 }
 export interface LoadPayload {
     /**
@@ -58,6 +64,7 @@ export interface CostTickEvent {
      */
     timestamp: string;
     payload: CostTickPayload;
+    origin?: Origin;
 }
 export interface CostTickPayload {
     /**
@@ -82,6 +89,7 @@ export interface CiRunEvent {
      */
     timestamp: string;
     payload: CiRunPayload;
+    origin?: Origin;
 }
 /**
  * Produced by ci-runner for each workflow_job phase transition.
@@ -129,6 +137,7 @@ export interface AppStatusEvent {
      */
     timestamp: string;
     payload: AppStatusPayload;
+    origin?: Origin;
 }
 export interface AppStatusPayload {
     /**

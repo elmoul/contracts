@@ -23,7 +23,8 @@
           "format": "date-time",
           "description": "ISO-8601 timestamp when the event was produced"
         },
-        "payload": { "$ref": "#/definitions/ComponentHealthPayload" }
+        "payload": { "$ref": "#/definitions/ComponentHealthPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
       }
     },
     "ComponentHealthPayload": {
@@ -59,7 +60,8 @@
           "format": "date-time",
           "description": "ISO-8601 timestamp when the event was produced"
         },
-        "payload": { "$ref": "#/definitions/LoadPayload" }
+        "payload": { "$ref": "#/definitions/LoadPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
       }
     },
     "LoadPayload": {
@@ -97,7 +99,8 @@
           "format": "date-time",
           "description": "ISO-8601 timestamp when the event was produced"
         },
-        "payload": { "$ref": "#/definitions/CostTickPayload" }
+        "payload": { "$ref": "#/definitions/CostTickPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
       }
     },
     "CostTickPayload": {
@@ -139,7 +142,8 @@
           "format": "date-time",
           "description": "ISO-8601 timestamp when the event was produced"
         },
-        "payload": { "$ref": "#/definitions/CiRunPayload" }
+        "payload": { "$ref": "#/definitions/CiRunPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
       }
     },
     "CiRunPayload": {
@@ -207,7 +211,8 @@
           "format": "date-time",
           "description": "ISO-8601 timestamp when the event was produced"
         },
-        "payload": { "$ref": "#/definitions/AppStatusPayload" }
+        "payload": { "$ref": "#/definitions/AppStatusPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
       }
     },
     "AppStatusPayload": {
@@ -230,6 +235,12 @@
           "description": "Deployed version (semver)"
         }
       }
+    },
+    "Origin": {
+      "title": "Origin",
+      "type": "string",
+      "enum": ["host", "hub"],
+      "description": "Which wall the event was produced on (D011). Optional — absent means host, preserving compatibility with producers that predate this field."
     }
   }
 }

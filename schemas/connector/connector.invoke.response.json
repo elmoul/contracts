@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/connector/connector.invoke.response",
+  "title": "ConnectorInvokeResponse",
+  "description": "Response envelope for one verb call against a connector (spec-connectors.md §5), correlated to a connector.invoke.request by requestId.",
+  "type": "object",
+  "required": ["requestId", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Echoes the requestId of the connector.invoke.request this responds to."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["ok", "refused", "error"],
+      "description": "Outcome of the invocation. 'refused' is a first-class outcome, not an error — the connector declines a call outside its declared vocabulary, missing/invalid confirmation token, or otherwise against policy. 'error' is an unexpected failure (provider unavailable, etc.)."
+    },
+    "result": {
+      "type": "object",
+      "description": "Verb-specific result payload. Present only when status is 'ok'; shape follows the invoked verb's declared returns.",
+      "additionalProperties": true,
+      "existingJavaType": "java.util.Map<String, Object>"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Human-readable explanation for a non-ok outcome. Required when status is 'refused' or 'error'; absent when status is 'ok'."
+    }
+  }
+}

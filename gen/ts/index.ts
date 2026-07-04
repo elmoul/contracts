@@ -19,3 +19,6 @@ export type {
 } from "./state-event";
 export type { HexagonDescriptor } from "./hexagon-descriptor";
 export type { RegistryEntry } from "./registry-entry";
+export type { ConnectorVocabulary, Verb } from "./connector-vocabulary";
+export type { ConnectorInvokeRequest } from "./connector-invoke-request";
+export type { ConnectorInvokeResponse } from "./connector-invoke-response";

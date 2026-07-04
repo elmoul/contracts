@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/connector/connector.vocabulary",
+  "title": "ConnectorVocabulary",
+  "description": "Machine-readable form of a connector's verb vocabulary (spec-connectors.md §2, §6-1) — mirrors what the connector's HEXAGON.md declares in prose. Lets the orchestrator discover capabilities mechanically and lets the conventions validator check 'no undeclared verbs'. A verb not listed here does not exist for that connector.",
+  "type": "object",
+  "required": ["connectorId", "verbs"],
+  "additionalProperties": false,
+  "properties": {
+    "connectorId": {
+      "type": "string",
+      "description": "Functional name of the connector (D002). No theme words.",
+      "pattern": "^[a-z][a-z0-9-]+$",
+      "examples": ["connector-gmail", "connector-calendar", "connector-files"]
+    },
+    "verbs": {
+      "type": "array",
+      "description": "The connector's complete verb vocabulary. Read and write verbs are declared side by side; write verbs are distinguished only by mode, not by a separate list — the confirmation-token requirement is enforced by the connector at call time, not by this schema.",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/Verb" }
+    }
+  },
+  "definitions": {
+    "Verb": {
+      "title": "Verb",
+      "type": "object",
+      "required": ["name", "mode", "description", "params", "returns"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Verb name, unique within the connector.",
+          "examples": ["list", "read", "search", "draft", "send"]
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["read", "write"],
+          "description": "Read verbs never mutate the provider. Write verbs require a valid confirmation token to succeed — enforcement is connector-side policy (spec-connectors.md §2), not expressed in this schema."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable summary of what the verb does."
+        },
+        "params": {
+          "type": "object",
+          "description": "JSON-Schema-style description of the verb's parameters. Deliberately permissive — this field carries whatever shape the connector author declares and is not itself validated against the JSON Schema meta-schema.",
+          "additionalProperties": true,
+          "existingJavaType": "java.util.Map<String, Object>"
+        },
+        "returns": {
+          "type": "string",
+          "description": "Human-readable description of what the verb returns."
+        }
+      }
+    }
+  }
+}

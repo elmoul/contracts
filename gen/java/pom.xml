@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.5.1</version>
+    <version>0.6.0</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -129,6 +129,28 @@
                                 <sourcePath>${project.basedir}/../../schemas/control-plane/registry.entry.json</sourcePath>
                             </sourcePaths>
                             <targetPackage>io.platform.contracts.controlplane</targetPackage>
+                            <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+                            <annotationStyle>jackson2</annotationStyle>
+                            <includeAdditionalProperties>false</includeAdditionalProperties>
+                            <includeConstructors>true</includeConstructors>
+                            <generateBuilders>false</generateBuilders>
+                            <useTitleAsClassname>true</useTitleAsClassname>
+                            <dateTimeType>java.time.OffsetDateTime</dateTimeType>
+                            <useJakartaValidation>true</useJakartaValidation>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>connector</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${project.basedir}/../../schemas/connector/connector.vocabulary.json</sourcePath>
+                                <sourcePath>${project.basedir}/../../schemas/connector/connector.invoke.request.json</sourcePath>
+                                <sourcePath>${project.basedir}/../../schemas/connector/connector.invoke.response.json</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>io.platform.contracts.connector</targetPackage>
                             <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
                             <annotationStyle>jackson2</annotationStyle>
                             <includeAdditionalProperties>false</includeAdditionalProperties>

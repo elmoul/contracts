@@ -10,6 +10,81 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.6.0 — 2026-07-04
+
+Minor release: Wave 4 hub schema delta. Three additive changes — new `connector`
+schema group, an optional `origin` field on every `state.event` envelope. No
+existing required field touched.
+
+### connector.vocabulary, connector.invoke.request, connector.invoke.response (new schemas)
+- New `schemas/connector/` group (spec-connectors.md §2, §5, §6-1). `connector.vocabulary`
+  is the machine-readable form of a connector's verb vocabulary — mirrors what each
+  connector's `HEXAGON.md` declares in prose, letting the orchestrator discover
+  capabilities mechanically and the conventions validator check "no undeclared verbs."
+  Each `Verb` has `name`, `mode` (`read`/`write`), `description`, a deliberately
+  permissive `params` field, and `returns`. `connector.invoke.request`/`.response` are
+  the sync request/response envelope for one verb call (orchestrator/sentinel-hub →
+  connector). `confirmationToken` is optional on the request — write verbs require one
+  to succeed, but enforcement is connector-side policy, not this schema. `refused` is a
+  first-class `status` value on the response, not folded into `error`; `reason` is
+  optional but documented as required whenever `status` isn't `ok` (not schema-enforced,
+  matching this repo's existing convention for conditionally-present fields, e.g.
+  `CiRunPayload.conclusion`).
+- Split into three files (one root schema each) rather than one file with multiple
+  roots, matching the `ci-runner`/`control-plane` group convention (`build-command.yaml`
+  + `build-result.yaml`, `hexagon.descriptor.json` + `registry.entry.json`).
+- **Java quirk:** `jsonschema2pojo` with `includeAdditionalProperties=false` (the
+  setting every other execution in this repo uses) silently drops a bare
+  `"additionalProperties": true` object down to an empty POJO — it does not fall back
+  to a `Map`. Fixed the same way `runId`'s `int64` overflow was fixed in v0.5.1: added
+  the jsonschema2pojo-specific `existingJavaType: java.util.Map<String, Object>`
+  extension directly to the `params`/`result` schema nodes. TS/Python generators map
+  the same nodes to `{[k: string]: unknown}` / `dict[str, Any]` natively, no extension
+  needed there.
+
+### state.event (additive)
+- Added optional `origin` field (`host`/`hub`, D011) to the envelope of all five event
+  types (`ComponentHealthEvent`, `LoadEvent`, `CostTickEvent`, `CiRunEvent`,
+  `AppStatusEvent`) in both `state.event.json` and its Java codegen wrapper
+  `state-event-java.yaml`. Absent means host — existing producers are untouched and
+  keep deserializing. Added to both files explicitly since every envelope declares
+  `additionalProperties: false`.
+
+### Codegen
+- **Java:** new `jsonschema2pojo` execution `connector` in `gen/java/pom.xml`
+  (package `io.platform.contracts.connector`), producing `ConnectorVocabulary`,
+  `Verb`, `ConnectorInvokeRequest`, `ConnectorInvokeResponse`. Regenerated the
+  `events` package via the same `openapi-generator` invocation used for
+  `state-event-java.yaml` since v0.1.1 (`-g java --library resttemplate
+  --additional-properties=useJakartaEe=true --model-package
+  io.platform.contracts.events`) — produces a new `Origin` enum plus the `origin`
+  field on all five event classes; verified zero `com.google.gson` imports across
+  `gen/java/src` (the regression flagged in an earlier session). `mvn compile` clean.
+- **TypeScript:** `connector-vocabulary.ts`, `connector-invoke-request.ts`,
+  `connector-invoke-response.ts` via `json-schema-to-typescript`; `state-event.ts`
+  regenerated the same way, now exporting an `Origin` type and `origin?: Origin` on
+  every event interface. Added all three new types to `index.ts`. `dist/` rebuilt via
+  `tsc` per D031 (committed, not gitignored). `tsc --noEmit --strict` clean.
+- **Python:** `platform_contracts/connector/{connector_vocabulary,
+  connector_invoke_request, connector_invoke_response}.py` via
+  `datamodel-code-generator` (pydantic v2), wired into `platform_contracts/__init__.py`.
+  `state_event.py` regenerated the same way, adding an `Origin` enum and
+  `origin: Origin | None = None` on all five event models. Package imports cleanly.
+
+### Tests
+- **Java:** added `ConnectorContractsRoundTripTest` (serialize/deserialize
+  `ConnectorVocabulary`, `ConnectorInvokeRequest` with and without
+  `confirmationToken`, `ConnectorInvokeResponse` for both `ok` and `refused`
+  statuses) and `StateEventOriginTest` (an origin-tagged `ComponentHealthEvent`
+  deserializes with `Origin.HUB`; an origin-less event still deserializes with
+  `origin` null). Full suite green, including `RunIdOverflowRegressionTest`
+  (9 tests total, up from 2).
+- **Python:** added `tests/validate_connector.py` mirroring
+  `validate_control_plane.py`'s pattern: known-good/known-bad documents for
+  `connector.vocabulary` (empty `verbs`, undeclared `mode`) and both
+  `connector.invoke` envelopes (missing `verb`, missing `status`). Full suite
+  (5 files) passes.
+
 ## v0.5.1 — 2026-07-04
 
 Patch release: fixes an int32 overflow on both `runId` fields.

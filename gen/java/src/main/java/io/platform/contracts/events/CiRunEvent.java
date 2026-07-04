@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.platform.contracts.events.CiRunPayload;
+import io.platform.contracts.events.Origin;
 import java.time.OffsetDateTime;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -32,9 +33,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @JsonPropertyOrder({
   CiRunEvent.JSON_PROPERTY_TYPE,
   CiRunEvent.JSON_PROPERTY_TIMESTAMP,
-  CiRunEvent.JSON_PROPERTY_PAYLOAD
+  CiRunEvent.JSON_PROPERTY_PAYLOAD,
+  CiRunEvent.JSON_PROPERTY_ORIGIN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-04T18:59:26.736856700+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-04T21:52:00.543013800+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class CiRunEvent {
   /**
    * Discriminator value — always \&quot;ci.run\&quot;
@@ -80,6 +82,10 @@ public class CiRunEvent {
   public static final String JSON_PROPERTY_PAYLOAD = "payload";
   @jakarta.annotation.Nonnull
   private CiRunPayload payload;
+
+  public static final String JSON_PROPERTY_ORIGIN = "origin";
+  @jakarta.annotation.Nullable
+  private Origin origin;
 
   public CiRunEvent() {
   }
@@ -159,6 +165,31 @@ public class CiRunEvent {
     this.payload = payload;
   }
 
+  public CiRunEvent origin(@jakarta.annotation.Nullable Origin origin) {
+    
+    this.origin = origin;
+    return this;
+  }
+
+  /**
+   * Get origin
+   * @return origin
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_ORIGIN, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Origin getOrigin() {
+    return origin;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_ORIGIN, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setOrigin(@jakarta.annotation.Nullable Origin origin) {
+    this.origin = origin;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -171,12 +202,13 @@ public class CiRunEvent {
     CiRunEvent ciRunEvent = (CiRunEvent) o;
     return Objects.equals(this.type, ciRunEvent.type) &&
         Objects.equals(this.timestamp, ciRunEvent.timestamp) &&
-        Objects.equals(this.payload, ciRunEvent.payload);
+        Objects.equals(this.payload, ciRunEvent.payload) &&
+        Objects.equals(this.origin, ciRunEvent.origin);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, timestamp, payload);
+    return Objects.hash(type, timestamp, payload, origin);
   }
 
   @Override
@@ -186,6 +218,7 @@ public class CiRunEvent {
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("    payload: ").append(toIndentedString(payload)).append("\n");
+    sb.append("    origin: ").append(toIndentedString(origin)).append("\n");
     sb.append("}");
     return sb.toString();
   }

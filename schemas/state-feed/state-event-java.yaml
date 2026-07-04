@@ -29,6 +29,8 @@ components:
           description: ISO-8601 timestamp when the event was produced
         payload:
           $ref: "#/components/schemas/ComponentHealthPayload"
+        origin:
+          $ref: "#/components/schemas/Origin"
       additionalProperties: false
 
     ComponentHealthPayload:
@@ -66,6 +68,8 @@ components:
           description: ISO-8601 timestamp when the event was produced
         payload:
           $ref: "#/components/schemas/LoadPayload"
+        origin:
+          $ref: "#/components/schemas/Origin"
       additionalProperties: false
 
     LoadPayload:
@@ -104,6 +108,8 @@ components:
           description: ISO-8601 timestamp when the event was produced
         payload:
           $ref: "#/components/schemas/CostTickPayload"
+        origin:
+          $ref: "#/components/schemas/Origin"
       additionalProperties: false
 
     CostTickPayload:
@@ -145,6 +151,8 @@ components:
           description: ISO-8601 timestamp when the event was produced
         payload:
           $ref: "#/components/schemas/CiRunPayload"
+        origin:
+          $ref: "#/components/schemas/Origin"
       additionalProperties: false
 
     CiRunPayload:
@@ -213,6 +221,8 @@ components:
           description: ISO-8601 timestamp when the event was produced
         payload:
           $ref: "#/components/schemas/AppStatusPayload"
+        origin:
+          $ref: "#/components/schemas/Origin"
       additionalProperties: false
 
     AppStatusPayload:
@@ -232,3 +242,10 @@ components:
           type: string
           description: Deployed version (semver)
       additionalProperties: false
+
+    Origin:
+      type: string
+      enum: ["host", "hub"]
+      description: >-
+        Which wall the event was produced on (D011). Optional — absent means
+        host, preserving compatibility with producers that predate this field.
