@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -60,6 +60,7 @@
                              per-variant classes from a oneOf union. State event Java classes are
                              generated via openapi-generator from schemas/state-feed/state-event-java.yaml. -->
                         <sourcePath>${project.basedir}/../../schemas/app/usage.event.json</sourcePath>
+                        <sourcePath>${project.basedir}/../../schemas/app/dimension.event.json</sourcePath>
                     </sourcePaths>
                     <targetPackage>io.platform.contracts.events</targetPackage>
                     <outputDirectory>${project.basedir}/src/main/java</outputDirectory>

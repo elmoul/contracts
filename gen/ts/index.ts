@@ -6,6 +6,7 @@ export type { paths as AiGatewayPreflightPaths, components as AiGatewayPreflight
 export type { paths as AppManifestPaths, components as AppManifestComponents } from "./app-manifest";
 export type { paths as AppHealthPaths, components as AppHealthComponents } from "./app-health";
 export type { UsageEvent } from "./usage-event";
+export type { DimensionEvent } from "./dimension-event";
 export type { BuildCommand } from "./build-command";
 export type { BuildResult } from "./build-result";
 export type {

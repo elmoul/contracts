@@ -10,6 +10,53 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.5.0 — 2026-07-04
+
+Minor release: adds a new standalone `dimension.event` schema. Purely additive —
+no existing schema touched.
+
+### dimension.event (new schema)
+- Initial schema for D024 business-dimension metering (e.g. PlantPal's plant
+  count). Mirrors Treasury's existing `DimensionDelta` record
+  (`treasury/src/main/java/io/platform/treasury/dimension/`) — `appId`,
+  `userId`, `dimensionKey`, `delta` — plus `eventId` and `timestamp`, added so
+  the wire event carries the same idempotent-consumption and ordering
+  guarantees `usage.event` already has, ahead of any real adapter landing.
+  `delta` is a plain `integer` with no `minimum` constraint (unlike
+  `usage.event`'s `tokensIn`/`tokensOut`) — Treasury's `KeyedLongCounter` and
+  `DimensionCounter` both accept negative deltas by design, to support
+  soft-delete decrements.
+- This schema fills the exact gap `DimensionUpdatePort`'s javadoc calls out:
+  "the dimension-update event schema doesn't exist in contracts yet." No
+  Treasury-side Kafka consumer or app-side producer is part of this release —
+  those land in future, separately reviewed changes once this schema is
+  available to depend on.
+
+### Codegen
+- **Java:** regenerated via the existing `jsonschema2pojo-maven-plugin`
+  `events` execution in `pom.xml` — added `schemas/app/dimension.event.json`
+  alongside `usage.event.json` in that execution's `sourcePaths`. Produced
+  `DimensionEvent.java` in `io.platform.contracts.events`. Verified with `mvn
+  compile` — clean.
+- **TypeScript:** regenerated `dimension-event.ts` via `json-schema-to-typescript`,
+  matching `usage-event.ts`'s generation. Added `DimensionEvent` to `index.ts`.
+  Rebuilt `gen/ts/dist/` via `tsc` per D031 (committed, not gitignored).
+  Verified with `tsc --noEmit --strict` — clean.
+- **Python:** regenerated `platform_contracts/app/dimension_event.py` via
+  `datamodel-code-generator` (pydantic v2), matching `usage_event.py`'s style.
+  Wired into `platform_contracts/__init__.py`. Verified: a payload with a
+  negative `delta` round-trips (`model_dump_json` → `model_validate_json`)
+  without error, confirming the deliberate absence of a `minimum` constraint.
+
+### Tests
+- Added `tests/validate_dimension_event.py`, mirroring
+  `tests/validate_ai_request.py`'s pattern: validates `dimension.event.json`
+  directly as a JSON Schema (not through a language binding) against a
+  known-good event, a known-bad event missing a required field, and a
+  known-good event with a negative `delta` — the one field in this schema that
+  deviates from every other numeric field in the contract set, so it gets its
+  own explicit assertion.
+
 ## v0.4.0 — 2026-07-04
 
 Minor release: adds an optional `media` field to `ai.request`'s `AiRequest` schema
