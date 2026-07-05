@@ -8,7 +8,8 @@
 /**
  * Event emitted over SSE by the state-feed (D029). Consumed by the dashboard, the 3D renderer, and the guest projection — the same schema, three renderers. Discriminate on the 'type' field.
  */
-export type StateEvent = ComponentHealthEvent | LoadEvent | CostTickEvent | CiRunEvent | AppStatusEvent;
+export type StateEvent =
+  ComponentHealthEvent | LoadEvent | CostTickEvent | CiRunEvent | AppStatusEvent | ActivityCountEvent;
 /**
  * Which wall the event was produced on (D011). Optional — absent means host, preserving compatibility with producers that predate this field.
  */
@@ -155,4 +156,27 @@ export interface AppStatusPayload {
    * Deployed version (semver)
    */
   version?: string;
+}
+export interface ActivityCountEvent {
+  type: "activity.count";
+  /**
+   * ISO-8601 timestamp when the event was produced
+   */
+  timestamp: string;
+  payload: ActivityCountPayload;
+  origin?: Origin;
+}
+export interface ActivityCountPayload {
+  /**
+   * Functional identifier of the emitting component
+   */
+  componentId: string;
+  /**
+   * Machine-readable name of what is being counted
+   */
+  activity: string;
+  /**
+   * Count of this activity SINCE THE LAST emission for this (componentId, activity) pair — a delta, not a cumulative total. Consumers aggregate across emissions.
+   */
+  count: number;
 }

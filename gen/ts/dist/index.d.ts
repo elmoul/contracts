@@ -6,7 +6,7 @@ export type { UsageEvent } from "./usage-event";
 export type { DimensionEvent } from "./dimension-event";
 export type { BuildCommand } from "./build-command";
 export type { BuildResult } from "./build-result";
-export type { StateEvent, ComponentHealthEvent, ComponentHealthPayload, LoadEvent, LoadPayload, CostTickEvent, CostTickPayload, CiRunEvent, CiRunPayload, AppStatusEvent, AppStatusPayload, } from "./state-event";
+export type { StateEvent, ComponentHealthEvent, ComponentHealthPayload, LoadEvent, LoadPayload, CostTickEvent, CostTickPayload, CiRunEvent, CiRunPayload, AppStatusEvent, AppStatusPayload, ActivityCountEvent, ActivityCountPayload, } from "./state-event";
 export type { HexagonDescriptor } from "./hexagon-descriptor";
 export type { RegistryEntry } from "./registry-entry";
 export type { ConnectorVocabulary, Verb } from "./connector-vocabulary";

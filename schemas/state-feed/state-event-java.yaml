@@ -243,6 +243,49 @@ components:
           description: Deployed version (semver)
       additionalProperties: false
 
+    ActivityCountEvent:
+      type: object
+      required:
+        - type
+        - timestamp
+        - payload
+      properties:
+        type:
+          type: string
+          enum: ["activity.count"]
+          description: Discriminator value — always "activity.count"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO-8601 timestamp when the event was produced
+        payload:
+          $ref: "#/components/schemas/ActivityCountPayload"
+        origin:
+          $ref: "#/components/schemas/Origin"
+      additionalProperties: false
+
+    ActivityCountPayload:
+      type: object
+      required:
+        - componentId
+        - activity
+        - count
+      properties:
+        componentId:
+          type: string
+          description: Functional identifier of the emitting component
+        activity:
+          type: string
+          description: Machine-readable name of what is being counted
+        count:
+          type: integer
+          minimum: 0
+          description: >-
+            Count of this activity SINCE THE LAST emission for this
+            (componentId, activity) pair — a delta, not a cumulative total.
+            Consumers aggregate across emissions.
+      additionalProperties: false
+
     Origin:
       type: string
       enum: ["host", "hub"]

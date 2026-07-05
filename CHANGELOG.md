@@ -10,6 +10,66 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.7.0 — 2026-07-05
+
+Minor release, additive: new `activity.count` event on `state.event` (sixth `oneOf`
+member). Gives hub activity counters a proper shape — orchestrator and sentinel-hub
+had been repurposing `load` pulses clamped to 100 (`LoadPayload.value` is
+percentage-typed) as a stand-in. Follow-up recorded in spec-orchestrator.md and
+spec-sentinel-hub.md §7 build notes.
+
+### state.event (additive)
+- Added `ActivityCountEvent`/`ActivityCountPayload` to `schemas/state-feed/state.event.json`
+  and its Java codegen wrapper `state-event-java.yaml`, envelope identical to the
+  existing five (`type`/`timestamp`/`payload` required, `origin` optional). `type` is
+  `const "activity.count"`. Payload requires `componentId`, `activity` (a
+  machine-readable name — `tool.call`, `mail.summary`, `scan.message`,
+  `scan.finding`), and `count` (`integer`, `minimum: 0`). `count` is a **delta since
+  the last emission** for a given `(componentId, activity)` pair, not a cumulative
+  total — consumers aggregate; documented directly on the field.
+- No existing event type touched — the five prior `oneOf` members are byte-for-byte
+  unchanged aside from generator regen-timestamp noise.
+
+### Codegen
+- **Java:** regenerated the `events` package via the same `openapi-generator` CLI
+  invocation used since v0.1.1/v0.6.0 (`-g java --library resttemplate
+  --additional-properties=useJakartaEe=true --model-package
+  io.platform.contracts.events`) against the updated `state-event-java.yaml` —
+  produces `ActivityCountEvent`/`ActivityCountPayload`; the ten pre-existing classes
+  diff only on the `@Generated` timestamp. `gen/java/pom.xml` bumped to `0.7.0`.
+- **TypeScript:** `state-event.ts` regenerated via `json-schema-to-typescript`,
+  adding `ActivityCountEvent`/`ActivityCountPayload` to the `StateEvent` union and
+  as named exports; wired into `index.ts`. `dist/` rebuilt via `tsc` per D031
+  (committed). `package.json` bumped to `0.7.0`. `tsc --noEmit` clean via `npm run build`.
+- **Python:** `state_event.py` regenerated via `datamodel-code-generator`
+  (pydantic v2, `--output-model-type pydantic_v2.BaseModel`, no `--field-constraints`
+  — matches the existing file's `conint`/`confloat`/`constr` style), adding
+  `ActivityCountPayload`/`ActivityCountEvent` and extending the `StateEvent`
+  `RootModel` union. `pyproject.toml` bumped to `0.7.0`.
+
+### Tests
+- **Java:** added `StateEventActivityCountTest` — deserializes an
+  `activity.count` event with `origin: hub`, one without `origin`, and confirms
+  Jackson rejects an unknown payload property (`extra`). Full suite: 12 tests green
+  (up from 9), including `StateEventOriginTest` and `RunIdOverflowRegressionTest`.
+  Verified with `mvn clean test` 3x in a row, 12/12 every run (the v0.6.1 lesson:
+  generated sources must land in `target/generated-sources`, never `src/main/java`,
+  or repeated clean builds race).
+- **Python:** added `tests/validate_state_event.py` mirroring
+  `validate_dimension_event.py`'s pattern: known-good `activity.count` event with
+  and without `origin`, known-bad negative `count`, known-bad missing `activity`,
+  known-bad unknown extra payload property. Full suite (5 files, 20 assertions
+  total, up from 15) passes.
+
+### Verification
+- `mvn clean test` in `gen/java`: 3/3 clean runs, 12/12 tests green every time.
+- `gen/ts`: `npx tsc` (via `npm run build`) clean, `dist/` committed.
+- `gen/python`: after tagging, `pip install
+  "git+https://github.com/elmoul/contracts.git@v0.7.0#subdirectory=gen/python"` in a
+  fresh virtualenv, followed by importing `platform_contracts.state_feed.state_event`
+  and constructing an `ActivityCountEvent` — the real acceptance path, not an
+  editable/`.pth` install (D031 lesson from v0.6.2).
+
 ## v0.6.2 — 2026-07-05
 
 Patch release, Python packaging fix only: no schema change.

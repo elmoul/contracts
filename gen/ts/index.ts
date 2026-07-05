@@ -16,6 +16,7 @@ export type {
   CostTickEvent, CostTickPayload,
   CiRunEvent, CiRunPayload,
   AppStatusEvent, AppStatusPayload,
+  ActivityCountEvent, ActivityCountPayload,
 } from "./state-event";
 export type { HexagonDescriptor } from "./hexagon-descriptor";
 export type { RegistryEntry } from "./registry-entry";

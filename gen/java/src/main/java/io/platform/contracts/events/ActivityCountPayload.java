@@ -20,44 +20,43 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * LoadPayload
+ * ActivityCountPayload
  */
 @JsonPropertyOrder({
-  LoadPayload.JSON_PROPERTY_COMPONENT_ID,
-  LoadPayload.JSON_PROPERTY_VALUE,
-  LoadPayload.JSON_PROPERTY_METRIC
+  ActivityCountPayload.JSON_PROPERTY_COMPONENT_ID,
+  ActivityCountPayload.JSON_PROPERTY_ACTIVITY,
+  ActivityCountPayload.JSON_PROPERTY_COUNT
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-05T03:05:37.875350100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
-public class LoadPayload {
+public class ActivityCountPayload {
   public static final String JSON_PROPERTY_COMPONENT_ID = "componentId";
   @jakarta.annotation.Nonnull
   private String componentId;
 
-  public static final String JSON_PROPERTY_VALUE = "value";
+  public static final String JSON_PROPERTY_ACTIVITY = "activity";
   @jakarta.annotation.Nonnull
-  private BigDecimal value;
+  private String activity;
 
-  public static final String JSON_PROPERTY_METRIC = "metric";
-  @jakarta.annotation.Nullable
-  private String metric;
+  public static final String JSON_PROPERTY_COUNT = "count";
+  @jakarta.annotation.Nonnull
+  private Integer count;
 
-  public LoadPayload() {
+  public ActivityCountPayload() {
   }
 
-  public LoadPayload componentId(@jakarta.annotation.Nonnull String componentId) {
+  public ActivityCountPayload componentId(@jakarta.annotation.Nonnull String componentId) {
     
     this.componentId = componentId;
     return this;
   }
 
   /**
-   * Functional identifier of the component being measured
+   * Functional identifier of the emitting component
    * @return componentId
    */
   @jakarta.annotation.Nonnull
@@ -75,56 +74,55 @@ public class LoadPayload {
     this.componentId = componentId;
   }
 
-  public LoadPayload value(@jakarta.annotation.Nonnull BigDecimal value) {
+  public ActivityCountPayload activity(@jakarta.annotation.Nonnull String activity) {
     
-    this.value = value;
+    this.activity = activity;
     return this;
   }
 
   /**
-   * Load percentage (0–100)
-   * minimum: 0
-   * maximum: 100
-   * @return value
+   * Machine-readable name of what is being counted
+   * @return activity
    */
   @jakarta.annotation.Nonnull
-  @JsonProperty(value = JSON_PROPERTY_VALUE, required = true)
+  @JsonProperty(value = JSON_PROPERTY_ACTIVITY, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public BigDecimal getValue() {
-    return value;
+  public String getActivity() {
+    return activity;
   }
 
 
-  @JsonProperty(value = JSON_PROPERTY_VALUE, required = true)
+  @JsonProperty(value = JSON_PROPERTY_ACTIVITY, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setValue(@jakarta.annotation.Nonnull BigDecimal value) {
-    this.value = value;
+  public void setActivity(@jakarta.annotation.Nonnull String activity) {
+    this.activity = activity;
   }
 
-  public LoadPayload metric(@jakarta.annotation.Nullable String metric) {
+  public ActivityCountPayload count(@jakarta.annotation.Nonnull Integer count) {
     
-    this.metric = metric;
+    this.count = count;
     return this;
   }
 
   /**
-   * What is being measured (cpu, memory, rps, etc.)
-   * @return metric
+   * Count of this activity SINCE THE LAST emission for this (componentId, activity) pair — a delta, not a cumulative total. Consumers aggregate across emissions.
+   * minimum: 0
+   * @return count
    */
-  @jakarta.annotation.Nullable
-  @JsonProperty(value = JSON_PROPERTY_METRIC, required = false)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @jakarta.annotation.Nonnull
+  @JsonProperty(value = JSON_PROPERTY_COUNT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public String getMetric() {
-    return metric;
+  public Integer getCount() {
+    return count;
   }
 
 
-  @JsonProperty(value = JSON_PROPERTY_METRIC, required = false)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMetric(@jakarta.annotation.Nullable String metric) {
-    this.metric = metric;
+  @JsonProperty(value = JSON_PROPERTY_COUNT, required = true)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setCount(@jakarta.annotation.Nonnull Integer count) {
+    this.count = count;
   }
 
 
@@ -136,24 +134,24 @@ public class LoadPayload {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    LoadPayload loadPayload = (LoadPayload) o;
-    return Objects.equals(this.componentId, loadPayload.componentId) &&
-        Objects.equals(this.value, loadPayload.value) &&
-        Objects.equals(this.metric, loadPayload.metric);
+    ActivityCountPayload activityCountPayload = (ActivityCountPayload) o;
+    return Objects.equals(this.componentId, activityCountPayload.componentId) &&
+        Objects.equals(this.activity, activityCountPayload.activity) &&
+        Objects.equals(this.count, activityCountPayload.count);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(componentId, value, metric);
+    return Objects.hash(componentId, activity, count);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class LoadPayload {\n");
+    sb.append("class ActivityCountPayload {\n");
     sb.append("    componentId: ").append(toIndentedString(componentId)).append("\n");
-    sb.append("    value: ").append(toIndentedString(value)).append("\n");
-    sb.append("    metric: ").append(toIndentedString(metric)).append("\n");
+    sb.append("    activity: ").append(toIndentedString(activity)).append("\n");
+    sb.append("    count: ").append(toIndentedString(count)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -8,7 +8,8 @@
     { "$ref": "#/definitions/LoadEvent" },
     { "$ref": "#/definitions/CostTickEvent" },
     { "$ref": "#/definitions/CiRunEvent" },
-    { "$ref": "#/definitions/AppStatusEvent" }
+    { "$ref": "#/definitions/AppStatusEvent" },
+    { "$ref": "#/definitions/ActivityCountEvent" }
   ],
   "definitions": {
     "ComponentHealthEvent": {
@@ -233,6 +234,44 @@
         "version": {
           "type": "string",
           "description": "Deployed version (semver)"
+        }
+      }
+    },
+    "ActivityCountEvent": {
+      "title": "ActivityCountEvent",
+      "type": "object",
+      "required": ["type", "timestamp", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "activity.count" },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp when the event was produced"
+        },
+        "payload": { "$ref": "#/definitions/ActivityCountPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
+      }
+    },
+    "ActivityCountPayload": {
+      "title": "ActivityCountPayload",
+      "type": "object",
+      "required": ["componentId", "activity", "count"],
+      "additionalProperties": false,
+      "properties": {
+        "componentId": {
+          "type": "string",
+          "description": "Functional identifier of the emitting component"
+        },
+        "activity": {
+          "type": "string",
+          "description": "Machine-readable name of what is being counted",
+          "examples": ["tool.call", "mail.summary", "scan.message", "scan.finding"]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of this activity SINCE THE LAST emission for this (componentId, activity) pair — a delta, not a cumulative total. Consumers aggregate across emissions."
         }
       }
     },

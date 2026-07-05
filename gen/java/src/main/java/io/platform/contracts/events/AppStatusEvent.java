@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   AppStatusEvent.JSON_PROPERTY_PAYLOAD,
   AppStatusEvent.JSON_PROPERTY_ORIGIN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-04T21:52:00.543013800+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-05T03:05:37.875350100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AppStatusEvent {
   /**
    * Discriminator value — always \&quot;app.status\&quot;

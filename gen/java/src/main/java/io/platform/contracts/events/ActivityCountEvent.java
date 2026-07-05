@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.platform.contracts.events.LoadPayload;
+import io.platform.contracts.events.ActivityCountPayload;
 import io.platform.contracts.events.Origin;
 import java.time.OffsetDateTime;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -28,21 +28,21 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * LoadEvent
+ * ActivityCountEvent
  */
 @JsonPropertyOrder({
-  LoadEvent.JSON_PROPERTY_TYPE,
-  LoadEvent.JSON_PROPERTY_TIMESTAMP,
-  LoadEvent.JSON_PROPERTY_PAYLOAD,
-  LoadEvent.JSON_PROPERTY_ORIGIN
+  ActivityCountEvent.JSON_PROPERTY_TYPE,
+  ActivityCountEvent.JSON_PROPERTY_TIMESTAMP,
+  ActivityCountEvent.JSON_PROPERTY_PAYLOAD,
+  ActivityCountEvent.JSON_PROPERTY_ORIGIN
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-05T03:05:37.875350100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
-public class LoadEvent {
+public class ActivityCountEvent {
   /**
-   * Discriminator value — always \&quot;load\&quot;
+   * Discriminator value — always \&quot;activity.count\&quot;
    */
   public enum TypeEnum {
-    LOAD(String.valueOf("load"));
+    ACTIVITY_COUNT(String.valueOf("activity.count"));
 
     private String value;
 
@@ -81,23 +81,23 @@ public class LoadEvent {
 
   public static final String JSON_PROPERTY_PAYLOAD = "payload";
   @jakarta.annotation.Nonnull
-  private LoadPayload payload;
+  private ActivityCountPayload payload;
 
   public static final String JSON_PROPERTY_ORIGIN = "origin";
   @jakarta.annotation.Nullable
   private Origin origin;
 
-  public LoadEvent() {
+  public ActivityCountEvent() {
   }
 
-  public LoadEvent type(@jakarta.annotation.Nonnull TypeEnum type) {
+  public ActivityCountEvent type(@jakarta.annotation.Nonnull TypeEnum type) {
     
     this.type = type;
     return this;
   }
 
   /**
-   * Discriminator value — always \&quot;load\&quot;
+   * Discriminator value — always \&quot;activity.count\&quot;
    * @return type
    */
   @jakarta.annotation.Nonnull
@@ -115,7 +115,7 @@ public class LoadEvent {
     this.type = type;
   }
 
-  public LoadEvent timestamp(@jakarta.annotation.Nonnull OffsetDateTime timestamp) {
+  public ActivityCountEvent timestamp(@jakarta.annotation.Nonnull OffsetDateTime timestamp) {
     
     this.timestamp = timestamp;
     return this;
@@ -140,7 +140,7 @@ public class LoadEvent {
     this.timestamp = timestamp;
   }
 
-  public LoadEvent payload(@jakarta.annotation.Nonnull LoadPayload payload) {
+  public ActivityCountEvent payload(@jakarta.annotation.Nonnull ActivityCountPayload payload) {
     
     this.payload = payload;
     return this;
@@ -154,18 +154,18 @@ public class LoadEvent {
   @JsonProperty(value = JSON_PROPERTY_PAYLOAD, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public LoadPayload getPayload() {
+  public ActivityCountPayload getPayload() {
     return payload;
   }
 
 
   @JsonProperty(value = JSON_PROPERTY_PAYLOAD, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setPayload(@jakarta.annotation.Nonnull LoadPayload payload) {
+  public void setPayload(@jakarta.annotation.Nonnull ActivityCountPayload payload) {
     this.payload = payload;
   }
 
-  public LoadEvent origin(@jakarta.annotation.Nullable Origin origin) {
+  public ActivityCountEvent origin(@jakarta.annotation.Nullable Origin origin) {
     
     this.origin = origin;
     return this;
@@ -199,11 +199,11 @@ public class LoadEvent {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    LoadEvent loadEvent = (LoadEvent) o;
-    return Objects.equals(this.type, loadEvent.type) &&
-        Objects.equals(this.timestamp, loadEvent.timestamp) &&
-        Objects.equals(this.payload, loadEvent.payload) &&
-        Objects.equals(this.origin, loadEvent.origin);
+    ActivityCountEvent activityCountEvent = (ActivityCountEvent) o;
+    return Objects.equals(this.type, activityCountEvent.type) &&
+        Objects.equals(this.timestamp, activityCountEvent.timestamp) &&
+        Objects.equals(this.payload, activityCountEvent.payload) &&
+        Objects.equals(this.origin, activityCountEvent.origin);
   }
 
   @Override
@@ -214,7 +214,7 @@ public class LoadEvent {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class LoadEvent {\n");
+    sb.append("class ActivityCountEvent {\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("    payload: ").append(toIndentedString(payload)).append("\n");
