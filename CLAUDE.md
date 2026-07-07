@@ -18,6 +18,11 @@ bindings. See README.md/DEPLOYMENT.md for the per-language codegen and test
 steps (Java under `gen/java` via Maven, TS under `gen/ts`, Python under
 `gen/python`).
 
+- Java: `mvn -f gen/java/pom.xml test`
+- TypeScript: `cd gen/ts && npm ci && npx tsc --noEmit`
+- Python schema validators + state-event sync check (one command, stops at first failure):
+  `python tests/run_all.py`
+
 ## Standing invariant (don't relax without an owner ruling)
 Consumers pin a specific GitHub tag (D031 — no package registry yet); a change
 here has zero effect on any consumer until they explicitly re-pin. Before

@@ -1,0 +1,149 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Java / TypeScript / Python — build + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: gen/java/pom.xml
+
+      - name: Java — mvn test (gen/java)
+        run: mvn -B -f gen/java/pom.xml test
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: gen/ts/package-lock.json
+
+      - name: TypeScript — npm ci + tsc --noEmit (gen/ts)
+        working-directory: gen/ts
+        run: |
+          npm ci
+          npx tsc --noEmit
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python — pip install ./gen/python + tests/run_all.py
+        run: |
+          python -m pip install --upgrade pip
+          pip install ./gen/python jsonschema pyyaml
+          python tests/run_all.py
+
+  # Runs only on a version tag push (vX.Y.Z) — a real D031 acceptance test:
+  # each language installs through its actual documented consumer path
+  # against the tag that was just pushed, in a clean environment, not just a
+  # local build. Two past releases (v0.2.1 npm, v0.6.2 Python) shipped on an
+  # untested packaging assumption; this job exists so that can't happen again
+  # silently. See DEPLOYMENT.md "Consuming a tagged release (D031)".
+  tag-acceptance:
+    name: D031 clean-install acceptance (tag push only)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Java — clean mvn install into a throwaway .m2, then consume it
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          mvn -B -f gen/java/pom.xml install
+          mkdir -p /tmp/java-consumer/src/main/java/consumer
+          cat > /tmp/java-consumer/pom.xml <<EOF
+          <project xmlns="http://maven.apache.org/POM/4.0.0">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>consumer</groupId>
+            <artifactId>consumer</artifactId>
+            <version>1.0.0</version>
+            <properties>
+              <maven.compiler.source>21</maven.compiler.source>
+              <maven.compiler.target>21</maven.compiler.target>
+              <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            </properties>
+            <dependencies>
+              <dependency>
+                <groupId>io.platform</groupId>
+                <artifactId>contracts</artifactId>
+                <version>${VERSION}</version>
+              </dependency>
+            </dependencies>
+          </project>
+          EOF
+          cat > /tmp/java-consumer/src/main/java/consumer/Main.java <<'EOF'
+          package consumer;
+          import io.platform.contracts.events.UsageEvent;
+          public class Main {
+            public static void main(String[] args) {
+              System.out.println("resolved " + UsageEvent.class.getName());
+            }
+          }
+          EOF
+          mvn -B -f /tmp/java-consumer/pom.xml compile
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: "TypeScript — file: dependency against this checkout, then consume it"
+        run: |
+          mkdir -p /tmp/ts-consumer
+          cd gen/ts && npm run build && cd -
+          cat > /tmp/ts-consumer/package.json <<EOF
+          {
+            "name": "ts-consumer",
+            "version": "1.0.0",
+            "dependencies": {
+              "@platform/contracts": "file:${GITHUB_WORKSPACE}/gen/ts"
+            },
+            "devDependencies": { "typescript": "^5.0.0" }
+          }
+          EOF
+          cat > /tmp/ts-consumer/tsconfig.json <<'EOF'
+          { "compilerOptions": { "target": "ES2020", "module": "commonjs", "strict": true, "esModuleInterop": true }, "include": ["index.ts"] }
+          EOF
+          cat > /tmp/ts-consumer/index.ts <<'EOF'
+          import { UsageEvent } from "@platform/contracts";
+          const e: UsageEvent | undefined = undefined;
+          console.log("type-checked", typeof e);
+          EOF
+          cd /tmp/ts-consumer
+          npm install
+          npx tsc --noEmit
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python — pip install git+URL#subdirectory= against this tag
+        run: |
+          python -m pip install --upgrade pip
+          pip install "git+https://github.com/${{ github.repository }}.git@${GITHUB_REF_NAME}#subdirectory=gen/python"
+          python -c "import platform_contracts; from platform_contracts.state_feed import state_event; print('imported ok')"

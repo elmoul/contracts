@@ -9,6 +9,7 @@ decisions:
   - D002
   - D007
   - D009
+  - D010
   - D015
   - D022
   - D029
@@ -54,6 +55,7 @@ All cross-hexagon contract schemas (versioned source of truth in `schemas/`).
 - [[D002]] — functional names only; this repo is where that rule is most sacred
 - [[D007]] — hexagonal architecture; ports at real boundaries, no cross-hexagon imports except this repo
 - [[D009]] — the five app contracts every app must implement
+- [[D010]] — app risk classes (low-stakes/health-class/kids-class); `class` field on `app.manifest`/`hexagon.descriptor`/`registry.entry`
 - [[D015]] — dependency root; built first, pinned by all
 - [[D022]] — AI gateway contracts (ai.request/response, ai.preflight.*)
 - [[D029]] — state-feed contracts (state.event, state.projection.guest)

@@ -1,8 +1,14 @@
 # Changelog
 
-All contract versions are tracked here. Each contract is versioned independently (semver).
+All releases are tracked here. In practice this repo is versioned **repo-wide,
+per language binding** — one version number per release, bumped together
+across `gen/java/pom.xml`, `gen/ts/package.json`, and `gen/python/pyproject.toml`
+for whichever of the three languages' generated output actually changed (see
+e.g. v0.6.1, a Java-only patch that left the TS/Python version files
+untouched). It is not independent per-contract semver as originally intended —
+no tooling here computes or enforces a separate version per schema.
 
-Format: `[contract] vX.Y.Z — YYYY-MM-DD — description`
+Format: `## vX.Y.Z — YYYY-MM-DD`, followed by which contract(s) changed and why.
 
 Breaking changes (removals, renames, new required fields) bump major.
 Additive changes (new optional fields) bump minor.
@@ -444,7 +450,7 @@ practice. No schema changes.
   points at `dist/index.d.ts` (was `index.ts`) to match the committed-output model.
 - Verified end-to-end: built `dist/` fresh (`npx tsc`), then in a scratch directory
   outside this repo created a throwaway `package.json` with
-  `"@platform/contracts": "file:C:/Users/moulo/Desktop/platform/contracts/gen/ts"`,
+  `"@platform/contracts": "file:C:/Users/pc/Desktop/platform/contracts/gen/ts"`,
   ran `npm install`, confirmed `require('@platform/contracts')` resolves, and
   confirmed a `.ts` file importing `BuildCommand`/`BuildResult`/`UsageEvent` type-checks
   clean under `tsc --noEmit --strict`. First attempt (with `prepare: tsc` still present)
