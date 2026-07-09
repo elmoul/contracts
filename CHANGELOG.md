@@ -16,6 +16,195 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.9.0 — 2026-07-10
+
+Minor release, new schema: `ai.model-manifest` (gap G5, closing the contracts
+leg of `plantpal-20260709-ai-gateway-full-coverage`, `to: [ai-gateway,
+contracts]` — this release is `contracts`' sub-demand only; `ai-gateway`'s
+consuming leg is separate and not part of this release). Purely additive — a
+new `schemas/ai-gateway/model-manifest.json`, no existing schema touched. **Not
+tagged from this session** — v0.9.0 is recorded here as the version this
+release will carry once the architect reviews and merges the branch
+(`demand/plantpal-model-manifest`); the git tag itself is cut after that, per
+this demand's own instructions.
+
+### ai.model-manifest (new schema)
+
+- Validates a static, per-app AI-capability declaration (proposed to live as
+  `ai-model-manifest.yaml` at each app's repo root, sibling to
+  `app-manifest.yaml`) — the structural fix for the free-text `modelHint`
+  improvisation PlantPal's demand calls out. Not modeled as an OpenAPI
+  document like `ai.request`/`ai.preflight`: this is a repo self-description
+  artifact (spec-contracts.md §4's third catalog row — "Repo self-description
+  → JSON Schema"), the same relationship `hexagon.descriptor.json` has to
+  `HEXAGON.md`'s frontmatter, not a sync HTTP call. Placed under
+  `schemas/ai-gateway/` (the catalog group that already holds
+  `request.yaml`/`preflight.yaml`) rather than a new top-level group, since
+  it's an ai-gateway contract by function even though its file format differs
+  from its siblings.
+- **Shape:** `{ appId, class, capabilities }`. `appId`/`class` reuse the exact
+  patterns/enum already established by `app.manifest`/`hexagon.descriptor`
+  (`class` is D010's risk tier). `capabilities` is an **object keyed by
+  capability name** (`vision-identification`, `annotation`, `reasoning-json`,
+  `chat`, …), not an array — a map both lets the gateway look a capability up
+  directly by name at request time and makes "no capability declared twice"
+  free (JSON object keys are inherently unique; an array would have needed a
+  uniqueness rule bolted on). Capability keys are constrained to kebab-case via
+  `propertyNames` (`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`), matching this repo's
+  existing convention for enum-*value* strings (e.g. `class`'s
+  `health-class`/`kids-class`), not this schema's own field-name casing (see
+  the casing note below).
+- Each capability declaration (`$defs/CapabilityDeclaration`) carries exactly
+  the three axes the demand's §4 asked for, one field each:
+  - `models` (required): the preference-ordered model set for this capability
+    — free-form strings (`"gpt-4o"`, `"claude-sonnet-4-6"`, `"gemma3:4b"`, or a
+    specialist provider name like `"plantnet"`), deliberately not an enum, so
+    a provider roster change never forces a schema bump; `minItems: 1` +
+    `uniqueItems: true` (an empty or self-duplicating preference list is
+    meaningless).
+  - `media` (required, `required | optional | none`): whether this
+    capability's calls carry photos/etc. per `ai.request`'s optional `media`
+    array. Made required with no default (unlike `streamingDesired`) because
+    the gateway needs an explicit answer — inferring "media expected" from a
+    missing array on an incoming call would be a guess, not a declaration.
+  - `downshiftPolicy` (required, `allow | block | skip`, D023): what the
+    gateway does when Treasury's preflight can't clear the top-preference
+    model. `allow` = downshift silently down the list (chat, reasoning
+    tolerate quality loss); `block` = never downshift, return the explicit
+    D023 block response instead (identification: a wrong answer from a
+    downshifted local model is worse than an explicit "try later"); `skip` =
+    drop the call entirely rather than degrade *or* hard-stop (decorative
+    capabilities like visual annotation — matches the demand's own worked
+    example verbatim).
+  - `streamingDesired` (optional, boolean, default `false`): whether this
+    capability wants the future session/streaming flow (demand §3,
+    `POST /ai/session` + `GET /ai/session/{id}/stream}`) once it ships, rather
+    than today's buffered `/ai/request`. Advisory only, not enforced here — a
+    capability may declare this `true` today and keep calling the buffered
+    endpoint until the session flow exists, the same documented asymmetry
+    PlantPal's own demand commits to for chat. Modeled as a plain boolean
+    rather than the demand draft's bare `streaming: desired` marker string —
+    there are only two meaningful states here (wanted vs. not), so a third
+    enum value would have been dead weight.
+- **Casing decision (made explicit per this session's brief, so it isn't
+  "fixed" later without review):** this schema's own field names
+  (`appId`, `downshiftPolicy`, `streamingDesired`) are **camelCase**, matching
+  `ai.request`/`ai.preflight`/`app.manifest` — the schemas this one is a
+  structural sibling of, all of which are camelCase throughout. This is the
+  **opposite** choice from `demand`'s v0.8.0 kebab-case fields
+  (`acceptance-criteria`, `needs-owner`), and deliberately so: that decision
+  preserved an on-disk convention already live in committed `demands/*.md`
+  files before the schema existed. No `ai-model-manifest.yaml` has been
+  committed anywhere yet — there is no pre-existing convention to preserve —
+  so this schema defaults to the repo's dominant camelCase convention instead
+  of inventing a third casing style. The one deliberate exception: capability
+  *names* (the map's keys, e.g. `vision-identification`) are kebab-case,
+  because they're enum-shaped identifier values, not field names — consistent
+  with how `class`'s own enum values (`health-class`) are kebab-case in an
+  otherwise camelCase schema.
+
+### Codegen
+
+- **Java:** new `jsonschema2pojo` execution (`ai-gateway-model-manifest`) in
+  `gen/java/pom.xml`, sharing `AiRequest`/`AiResponse`'s
+  `io.platform.contracts.aigateway` package (no class-name collision:
+  `AiModelManifest`/`CapabilityDeclaration` vs. `AiRequest`/`AiResponse`/
+  `BlockedResponse`). `gen/java/pom.xml` bumped to `0.9.0`.
+  **Not verified in this session — same absent-JDK gap as v0.8.0** (`mvn`,
+  `java` confirmed absent from PATH again). Beyond the routine gap, this
+  execution also carries a **first-time structural risk** for this repo's
+  Java codegen: `capabilities` is the first field in any schema here shaped as
+  a pure dictionary (an object with *no* declared `properties`, only
+  `additionalProperties` pointing at a `$ref`). Every prior Map-typed field in
+  this repo (`connector.invoke.request`'s `params`/`result`, v0.6.0) was a
+  *permissive bag* (`additionalProperties: true`) that needed an explicit
+  `existingJavaType: java.util.Map<String, Object>` override to stop
+  `includeAdditionalProperties=false` from collapsing it to an empty POJO.
+  `capabilities` is different in kind — a schema-typed dictionary, which
+  jsonschema2pojo's documented behavior maps to `Map<String,
+  CapabilityDeclaration>` natively, unrelated to the `includeAdditionalProperties`
+  setting. Deliberately did **not** add an `existingJavaType` override here:
+  doing so risks the opposite failure (short-circuiting generation of
+  `CapabilityDeclaration` itself, since its only `$ref` in this schema is the
+  one inside `capabilities.additionalProperties` — an override could leave
+  `Map<String, CapabilityDeclaration>` pointing at a class jsonschema2pojo
+  never actually generates). Trusting the tool's native map-schema handling is
+  the lower-risk choice, but it is **untested** and flagged as a required
+  follow-up alongside the routine `mvn clean test` gap: confirm
+  `AiModelManifest.getCapabilities()` compiles as `Map<String,
+  CapabilityDeclaration>` (not an empty POJO, not a compile error) before any
+  Java consumer pins this tag.
+- **TypeScript:** `model-manifest.ts` generated via `json-schema-to-typescript`
+  (ephemeral `npx`, not added to `package.json`/lockfile, same one-shot
+  precedent as v0.8.0) — emits `AiModelManifest` (with `capabilities: { [k:
+  string]: CapabilityDeclaration }`) and `CapabilityDeclaration`. Added both
+  to `index.ts`. `dist/` rebuilt via `tsc` per D031 (committed) — picked up
+  the new `model-manifest.d.ts`/`.js` plus the additive one-line diff to
+  `dist/index.d.ts`. `package.json` bumped to `0.9.0`. **Verified:** `npx tsc
+  --noEmit --strict` clean; `npx tsc` (the actual `dist/` rebuild) also clean.
+- **Python:** `platform_contracts/ai_gateway/model_manifest.py` written by hand
+  in the exact style `datamodel-code-generator` (pydantic v2) produces
+  elsewhere in this package (`StrEnum`s for `Class`/`Media`/`DownshiftPolicy`,
+  `class_`/`alias="class"` matching `hexagon_descriptor.py`'s existing
+  `class_` handling, `capabilities: dict[str, CapabilityDeclaration]` — a
+  dictionary is pydantic v2's/`datamodel-code-generator`'s native, unambiguous
+  mapping for this same JSON Schema shape, no Java-style ambiguity here).
+  Wired into `platform_contracts/ai_gateway/__init__.py` and the top-level
+  `platform_contracts/__init__.py` (also corrected its header comment from
+  `v0.8.0`). `pyproject.toml` bumped to `0.9.0`. **Not verified — no Python
+  interpreter was available in this session either** (`python`/`python3`/`py`
+  all resolve only to the Windows Store install-stub, confirmed absent from
+  PATH; no `C:\Python*`/`Program Files\Python*` install found). Unlike the
+  Java gap, this file was never run through the actual generator — it is a
+  hand-written best-effort match to the tool's style, not tool output, and
+  must be spot-checked (at minimum: `datamodel-code-generator` regeneration
+  from `model-manifest.json` diffed against this file, plus the usual
+  round-trip/rejection checks) before any Python consumer pins this tag.
+
+### Tests
+
+- Added `tests/validate_model_manifest.py`, mirroring `validate_demand.py`'s
+  pattern: one known-good full declaration (PlantPal's four capabilities from
+  the demand's own worked example), one known-good declaration proving
+  `streamingDesired`'s optionality, and four known-bad documents (a capability
+  missing required `media`; a capability key that isn't kebab-case; an
+  unrecognized `downshiftPolicy` value; an empty `models` list; missing
+  top-level `appId`/`class`). Wired into `tests/run_all.py` between
+  `validate_demand.py` and `check_state_event_sync.py`.
+- **Verification substitute for the missing Python interpreter:** every
+  fixture in `validate_model_manifest.py` (and the schema's own good/bad cases
+  above) was independently checked against `schemas/ai-gateway/model-manifest.json`
+  using `ajv-cli` (`npx ajv-cli@5 validate --spec=draft2020`, draft 2020-12 —
+  the same draft this schema declares) — all six behave exactly as the Python
+  test asserts (2 valid, 4 rejected with the expected error paths). This
+  confirms the *schema itself* is sound; it does not confirm
+  `jsonschema`+pytest actually runs clean end to end in this repo's own test
+  harness, which is the real gap being flagged, not a substitute for it.
+- Full Python suite (now 8 files) **not run** — no interpreter available; see
+  above. `check_state_event_sync.py` is unaffected by this release (no
+  `state.event` change).
+
+### Verification
+
+- `gen/ts`: `npx tsc --noEmit --strict` clean; `npx tsc` (dist rebuild) clean;
+  `dist/` committed.
+- `gen/java`: **not verified** — no JDK/Maven in this sandbox, same as v0.8.0;
+  additionally carries the first-time Map-shaped-schema risk noted above.
+  Flagged as a required follow-up before any Java consumer pins this tag.
+- `gen/python`: **not verified** — no Python interpreter in this sandbox
+  (checked harder than v0.8.0's session: `python`/`python3`/`py` all absent,
+  no local install found). `model_manifest.py` is hand-written to match the
+  generator's style, not generator output — flagged as a required follow-up,
+  stronger than the routine "re-run against the tagged URL" gap other
+  releases carry.
+- Schema soundness (draft-2020-12 conformance of `model-manifest.json`
+  itself, independent of any language binding) verified via `ajv-cli` against
+  the six fixtures above — see Tests.
+- **D031 real acceptance test (clean install from the tagged URL, all three
+  languages) not run — cannot be, until this release is tagged.** Recorded
+  here so it isn't skipped once tagging happens, per this repo's own standing
+  lesson.
+
 ## v0.8.0 — 2026-07-09
 
 Minor release, new schema group: `demand` + `demand.fulfillment`, fulfilling

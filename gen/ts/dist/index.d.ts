@@ -14,3 +14,4 @@ export type { ConnectorInvokeRequest } from "./connector-invoke-request";
 export type { ConnectorInvokeResponse } from "./connector-invoke-response";
 export type { Demand } from "./demand";
 export type { DemandFulfillment } from "./demand-fulfillment";
+export type { AiModelManifest, CapabilityDeclaration } from "./model-manifest";
