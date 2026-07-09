@@ -1,3 +1,3 @@
-from . import request, preflight
+from . import request, preflight, model_manifest
 
-__all__ = ["request", "preflight"]
+__all__ = ["request", "preflight", "model_manifest"]
