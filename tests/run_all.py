@@ -21,6 +21,7 @@ VALIDATORS = [
     "validate_dimension_event.py",
     "validate_state_event.py",
     "validate_demand.py",
+    "validate_model_manifest.py",
     "check_state_event_sync.py",
 ]
 
