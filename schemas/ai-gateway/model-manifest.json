@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/ai-gateway/model-manifest",
+  "title": "AiModelManifest",
+  "description": "A static, per-app declaration of AI capabilities -> model sets, consumed by ai-gateway at startup (gap G5, plantpal-20260709-ai-gateway-full-coverage demand, D023). Lives in the app's own repo (proposed: ai-model-manifest.yaml at repo root, sibling to app-manifest.yaml) -- this schema validates that file's shape, the same relationship hexagon.descriptor.json has to HEXAGON.md's frontmatter. Not an OpenAPI document: this is a repo self-description artifact (spec-contracts.md 4's third row), not a sync HTTP call, so it is plain JSON Schema like hexagon.descriptor/registry.entry rather than an ai-gateway request/response shape. Replaces free-text modelHint improvisation: the gateway validates an incoming modelHint against the declared model set for the requested capability (unknown -> 400, closing G6's silent-Anthropic-fallback hole), and keys guardrails/downshift behavior off this file instead of per-call-site logic.",
+  "type": "object",
+  "required": ["appId", "class", "capabilities"],
+  "properties": {
+    "appId": {
+      "type": "string",
+      "description": "Functional app identifier (D002) -- same shape as app.manifest's name / hexagon.descriptor's functionalName.",
+      "pattern": "^[a-z][a-z0-9-]+$",
+      "examples": ["plantpal"]
+    },
+    "class": {
+      "type": "string",
+      "enum": ["low-stakes", "health-class", "kids-class"],
+      "description": "D010 risk class tier, same enum as app.manifest/hexagon.descriptor. Informs how strictly the gateway should treat this app's downshift/block declarations (e.g. a health-class app declaring downshift: allow on a diagnostic capability is a stronger signal to review than the same declaration from a low-stakes app) -- advisory to the gateway/control-plane, not schema-enforced here."
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Map keyed by capability name, one entry per AI capability this app uses. A map (not an array) so the gateway can look up a capability directly by name and so the schema itself forbids declaring the same capability twice.",
+      "minProperties": 1,
+      "propertyNames": {
+        "description": "Machine-readable capability identifier, kebab-case (matches this repo's existing enum-value convention, e.g. app.manifest's class values), not camelCase like this schema's own field names.",
+        "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+        "examples": ["vision-identification", "annotation", "reasoning-json", "chat"]
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/CapabilityDeclaration"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "CapabilityDeclaration": {
+      "type": "object",
+      "title": "CapabilityDeclaration",
+      "description": "One capability's model set and policy. Every field is required (except media/streamingDesired, which default meaningfully to their most conservative value) so the gateway never has to guess a policy the app never actually declared.",
+      "required": ["models", "media", "downshiftPolicy"],
+      "properties": {
+        "models": {
+          "type": "array",
+          "description": "The model set for this capability, in preference order -- first entry is tried first. Entries are free-form provider/model identifiers (e.g. \"gpt-4o\", \"claude-sonnet-4-6\", \"gemma3:4b\", or a specialist provider name like \"plantnet\"), not an enum: the gateway's own provider registry is the source of truth for which identifiers are currently routable, and this repo does not want a schema bump every time a provider adds a model.",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true,
+          "examples": [["gpt-4o", "claude-sonnet-4-6", "gpt-4.1", "gemma3:4b", "plantnet"]]
+        },
+        "media": {
+          "type": "string",
+          "enum": ["required", "optional", "none"],
+          "description": "Whether this capability's calls carry media (photos, etc.) per ai.request's optional `media` array. \"required\": every call must include media (e.g. vision-identification); \"optional\": media may or may not be present; \"none\": this capability is text-only. No default -- declared explicitly so the gateway never has to infer whether a missing `media` array on an incoming ai.request is an error or expected."
+        },
+        "streamingDesired": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this capability wants the streaming session flow (demand section 3, ai-gateway's POST /ai/session + GET /ai/session/{id}/stream) once it exists, rather than the buffered /ai/request path. Advisory to ai-gateway/capacity-planning, not enforced by this schema -- a capability may declare streamingDesired: true today and keep calling the buffered endpoint until the session flow ships (documented asymmetry, same pattern PlantPal's own demand commits to for chat)."
+        },
+        "downshiftPolicy": {
+          "type": "string",
+          "enum": ["allow", "block", "skip"],
+          "description": "D023 per-capability policy for what the gateway does when Treasury's preflight can't authorize the top-preference model and a cheaper/local model further down `models` is available. \"allow\": downshift silently to the next model in preference order (acceptable quality loss, e.g. chat, reasoning). \"block\": never downshift -- return the explicit block response instead (D023, never silent); use when a degraded model's wrong answer is worse than an explicit \"try later\" (e.g. a 4B local model misidentifying a plant). \"skip\": omit this capability's call entirely rather than degrade or block -- for decorative/non-essential capabilities (e.g. visual annotation) where neither a wrong answer nor a hard stop is warranted."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
