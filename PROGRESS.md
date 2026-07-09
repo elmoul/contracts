@@ -233,3 +233,11 @@
 **Next step:** Push `main` (no new tag — no schema/gen change this session). Next content session should pick one of the two vault-promotion items above once the owner rules on it. Once GitHub Actions has run `verify.yml` for real (next push), spot-check the Actions tab once to confirm the workflow syntax holds up outside local `yaml.safe_load` parsing.
 
 **Next step:** None pending from this session. `orchestrator` and `sentinel-hub` can pin `v0.7.0` and switch their hub activity counters from repurposed `load` pulses to `activity.count`, tagging `componentId`/`activity` per their own instrumentation and treating `count` as a since-last-emission delta.
+
+## 2026-07-09 — Session 15 (adopt platform demand system — coordination only, no schema/gen change)
+
+**State:** Adopted the platform demand system per `../DEMAND_SYSTEM.md`. Coordination-only: created `demands/` (+ `fulfilled/`, `archive/`, `README.md`), added a "Demand system" section to `CLAUDE.md`. No `schemas/`/`gen/` changes, no version bump, no tag. One standalone `chore(demands)` commit to `main`.
+
+**Candidate demands:** none. `contracts` is the dependency root and depends on nothing — every open "Next step" in this file is a downstream note about what *consumers* should do after pinning a release, not a need `contracts` is blocked on. (The two outstanding items are the §5/§6 vault-promotion notes in Session 14, which are owner write-gate actions, not cross-repo demands.)
+
+**Next step:** None pending. Per `DEMAND_SYSTEM.md` §98 rollout order, this repo is also slated to draft the bootstrap demand for the `demand` + `demand.fulfillment` schemas — not in this session's scope (steps 2–5 only); a future session raises it once the owner gives the go-ahead.
