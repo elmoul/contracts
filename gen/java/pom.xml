@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -172,6 +172,32 @@
                                 <sourcePath>${project.basedir}/../../schemas/demand-coordinator/demand.fulfillment.json</sourcePath>
                             </sourcePaths>
                             <targetPackage>io.platform.contracts.demandcoordinator</targetPackage>
+                            <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
+                            <annotationStyle>jackson2</annotationStyle>
+                            <includeAdditionalProperties>false</includeAdditionalProperties>
+                            <includeConstructors>true</includeConstructors>
+                            <generateBuilders>false</generateBuilders>
+                            <useTitleAsClassname>true</useTitleAsClassname>
+                            <dateTimeType>java.time.OffsetDateTime</dateTimeType>
+                            <useJakartaValidation>true</useJakartaValidation>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>ai-gateway-model-manifest</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${project.basedir}/../../schemas/ai-gateway/model-manifest.json</sourcePath>
+                            </sourcePaths>
+                            <!-- Same package as AiRequest/AiResponse (generated via openapi-generator from
+                                 request.yaml/preflight.yaml) -- model-manifest.json is a plain JSON Schema, not an
+                                 OpenAPI document, so it goes through jsonschema2pojo like control-plane/connector/
+                                 demand-coordinator, but shares the ai-gateway package since it's the same contract
+                                 group. No class-name collision: AiModelManifest/CapabilityDeclaration vs
+                                 AiRequest/AiResponse/BlockedResponse. -->
+                            <targetPackage>io.platform.contracts.aigateway</targetPackage>
                             <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
                             <annotationStyle>jackson2</annotationStyle>
                             <includeAdditionalProperties>false</includeAdditionalProperties>
