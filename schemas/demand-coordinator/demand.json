@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/demand-coordinator/demand",
+  "title": "Demand",
+  "description": "The machine-readable envelope for the YAML frontmatter every repo's demands/*.md carries (DEMAND_SYSTEM.md §5) — a repo's outbox record of a cross-repo need it must not fix itself. The markdown body beneath the frontmatter stays free-form human detail (What we need / Why / What we do once closed); only the envelope validates against this schema. Field casing follows the convention already live in committed demand files (kebab-case for multi-word fields), not this repo's usual camelCase — this schema formalizes an existing on-disk YAML convention rather than inventing a new one. Demand files written before this schema existed (e.g. PlantPal's first) will not validate; the demand-coordinator's ingest keeps a tolerant fallback for those, per its own spec.",
+  "type": "object",
+  "required": ["id", "date", "from", "to", "capability", "acceptance-criteria", "needs-owner", "status"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier, never reused: <from-repo>-<YYYYMMDD>-<slug>.",
+      "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$",
+      "examples": ["demand-coordinator-20260709-demand-schema", "plantpal-20260709-ai-gateway-full-ai-coverage"]
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "The date the demand was raised."
+    },
+    "from": {
+      "type": "string",
+      "description": "The origin repo's functional name (D002) — same shape as app.manifest's name / hexagon.descriptor's functionalName.",
+      "pattern": "^[a-z][a-z0-9-]+$",
+      "examples": ["plantpal", "demand-coordinator"]
+    },
+    "to": {
+      "type": "array",
+      "description": "Target repo(s), functional names. More than one entry means a multi-hexagon demand — the coordinator sequences it into ordered sub-demands.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]+$"
+      },
+      "minItems": 1,
+      "examples": [["contracts"], ["ai-gateway", "contracts"]]
+    },
+    "capability": {
+      "type": "string",
+      "description": "One line: what the origin needs to exist. Precise per-target detail belongs in the markdown body, not here."
+    },
+    "acceptance-criteria": {
+      "type": "array",
+      "description": "How the origin will know this is truly done — one entry per criterion. Promoted out of free-form markdown into structured frontmatter so the coordinator (and eventually an AI-triage pass) can check completion mechanically instead of re-parsing prose.",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "needs-owner": {
+      "type": "boolean",
+      "description": "True if any part of this demand requires an owner ruling or design decision before any agent can act on it."
+    },
+    "status": {
+      "type": "string",
+      "description": "Origin-owned lifecycle field. Deliberately excludes the coordinator-internal states (ingested/evaluated/ready/in-progress/done-claimed/pending-approval) — those live in the coordinator's own ledger, not the origin's file.",
+      "enum": ["open", "satisfied", "archived"]
+    }
+  },
+  "additionalProperties": false
+}

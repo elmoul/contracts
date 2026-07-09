@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.7.0</version>
+    <version>0.8.0</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -151,6 +151,27 @@
                                 <sourcePath>${project.basedir}/../../schemas/connector/connector.invoke.response.json</sourcePath>
                             </sourcePaths>
                             <targetPackage>io.platform.contracts.connector</targetPackage>
+                            <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
+                            <annotationStyle>jackson2</annotationStyle>
+                            <includeAdditionalProperties>false</includeAdditionalProperties>
+                            <includeConstructors>true</includeConstructors>
+                            <generateBuilders>false</generateBuilders>
+                            <useTitleAsClassname>true</useTitleAsClassname>
+                            <dateTimeType>java.time.OffsetDateTime</dateTimeType>
+                            <useJakartaValidation>true</useJakartaValidation>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>demand-coordinator</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${project.basedir}/../../schemas/demand-coordinator/demand.json</sourcePath>
+                                <sourcePath>${project.basedir}/../../schemas/demand-coordinator/demand.fulfillment.json</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>io.platform.contracts.demandcoordinator</targetPackage>
                             <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
                             <annotationStyle>jackson2</annotationStyle>
                             <includeAdditionalProperties>false</includeAdditionalProperties>

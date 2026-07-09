@@ -20,6 +20,7 @@ VALIDATORS = [
     "validate_connector.py",
     "validate_dimension_event.py",
     "validate_state_event.py",
+    "validate_demand.py",
     "check_state_event_sync.py",
 ]
 

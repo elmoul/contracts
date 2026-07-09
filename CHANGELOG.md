@@ -16,6 +16,114 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.8.0 — 2026-07-09
+
+Minor release, new schema group: `demand` + `demand.fulfillment`, fulfilling
+`demand-coordinator`'s bootstrap demand
+(`demand-coordinator-20260709-demand-schema`, see `demands/fulfilled/`). Purely
+additive — a new `schemas/demand-coordinator/` group, no existing schema
+touched.
+
+### demand, demand.fulfillment (new schemas)
+- New `schemas/demand-coordinator/` group, sibling to `control-plane`'s
+  (`hexagon.descriptor.json` + `registry.entry.json` precedent). `demand`
+  validates the YAML frontmatter every repo's `demands/*.md` carries
+  (DEMAND_SYSTEM.md §5): `id`, `date`, `from`, `to[]`, `capability`,
+  `acceptance-criteria[]`, `needs-owner`, `status` (`open | satisfied |
+  archived` — deliberately excludes the coordinator-internal lifecycle states,
+  which live in the coordinator's own ledger per spec-demand-coordinator.md §5,
+  not the origin's file). `id` and `from`/`to` entries are pattern-constrained
+  (`^[a-z][a-z0-9-]+-\d{8}-[a-z0-9-]+$` for ids, `^[a-z][a-z0-9-]+$` for
+  functional names, reusing `hexagon.descriptor`'s convention) — this is the
+  schema's whole point per the demand: catch a typo'd target/field name at
+  authoring time instead of the coordinator's tolerant parser silently
+  bucketing it as unstructured. `acceptance-criteria` is new structure, not
+  present in the interim envelope (DEMAND_SYSTEM.md §5 keeps it as a markdown
+  body section) — promoted to an array of strings so the coordinator can check
+  completion mechanically. `demand.fulfillment` validates
+  `demands/fulfilled/<demand-id>-report.md`'s frontmatter: `demandId`,
+  `subDemand` (optional — present only for one target's report within a
+  multi-hexagon join), `worker`, `status` (`done | blocked` — `done` is a
+  claim, not a verdict, matching DEMAND_SYSTEM.md §4's "never self-certify"
+  rule; `blocked` exists so a stalled worker reports explicitly per D023
+  rather than going silent), `summaryRef` (path to the human-readable summary,
+  usually the report file itself).
+- **Deliberate casing split, called out so it isn't "fixed" later without
+  review:** `demand`'s multi-word fields (`acceptance-criteria`,
+  `needs-owner`) are kebab-case, matching the convention already live in
+  committed demand files (e.g. `demand-coordinator`'s own bootstrap demand) —
+  this schema formalizes an existing on-disk YAML convention, it doesn't
+  invent one. `demand.fulfillment`'s `demandId`/`subDemand` are camelCase,
+  matching the interim convention spec-demand-coordinator.md §7 already states
+  verbatim for this specific envelope. The two schemas are each internally
+  consistent with their own precedent but inconsistent with each other; a
+  future session may want an owner ruling to reconcile them, but neither
+  precedent was mine to overrule unilaterally.
+- Demand files written before this schema existed (DEMAND_SYSTEM.md's own
+  example of PlantPal's first live demand, written with no frontmatter at all)
+  will not validate — expected, per the coordinator's own ingest design, which
+  keeps a tolerant fallback for exactly this case.
+
+### Codegen
+- **Java:** new `jsonschema2pojo` execution (`demand-coordinator`, plain
+  object schemas, package `io.platform.contracts.demandcoordinator`)
+  generating `Demand`/`DemandFulfillment`, wired into `gen/java/pom.xml`
+  alongside the `control-plane`/`connector` executions.
+  `gen/java/pom.xml` bumped to `0.8.0`. **Not verified in this session** — no
+  JDK/Maven is available in this sandbox (confirmed: `mvn`, `java` absent from
+  PATH, no local `.m2`/JDK install found). The execution block matches the
+  `control-plane` execution byte-for-byte apart from source paths and target
+  package, which is a low-risk shape (plain object schemas, no `oneOf`, no
+  `int64`/Map-typed fields needing jsonschema2pojo extensions), but this is a
+  real gap against this repo's own "verify, don't assume" standing lesson
+  (D031). **Flagged as a required follow-up**: run `mvn clean test` in
+  `gen/java` from an environment with Java 21 + Maven before any Java consumer
+  (e.g. `demand-coordinator` itself) pins this tag in anger.
+- **TypeScript:** `demand.ts`/`demand-fulfillment.ts` generated via
+  `json-schema-to-typescript` (installed ephemerally into `gen/ts/node_modules`
+  for this session — not added to `package.json`/`package-lock.json`, since it's
+  a one-shot generator invocation, not a runtime or build dependency of the
+  published package). Added `Demand`/`DemandFulfillment` to `index.ts`.
+  `dist/` rebuilt via `tsc` per D031 (committed) — picked up the two new files
+  plus line-ending normalization noise on unrelated `dist/` files (no content
+  diff, same as the v0.4.0 precedent). `package.json` bumped to `0.8.0`.
+  Verified: `tsc --noEmit --strict` clean.
+- **Python:** `platform_contracts/demand_coordinator/{demand,
+  demand_fulfillment}.py` via `datamodel-code-generator` (pydantic v2,
+  `--collapse-root-models` so pattern-constrained array items resolve to
+  `list[constr(...)]` rather than a synthetic `RootModel` wrapper class,
+  matching `hexagon_descriptor.py`'s existing style for `decisions`). Wired
+  into `platform_contracts/__init__.py`. `pyproject.toml` bumped to `0.8.0`
+  (also corrected the `__init__.py` header comment, which had drifted to
+  `v0.6.0` since the last untouched release).
+
+### Tests
+- Added `tests/validate_demand.py`, mirroring `validate_control_plane.py`'s
+  pattern: known-good documents for both schemas (including a
+  `demand.fulfillment` with `subDemand` set, for the multi-hexagon-join case,
+  and one with `status: blocked`), and known-bad documents per schema (missing
+  required fields, a coordinator-internal `status` value rejected on
+  `demand`, a malformed `id` missing its embedded `YYYYMMDD` segment, a
+  worker-unreportable `status` value rejected on `demand.fulfillment`). Wired
+  into `tests/run_all.py`. Full suite (7 files) passes.
+
+### Verification
+- `python tests/run_all.py`: all 7 validators pass, including the new one.
+- `gen/ts`: `npx tsc --noEmit --strict` clean; `dist/` rebuilt and committed.
+- `gen/python`: `pip install ./gen/python` into a fresh scratch virtualenv,
+  followed by importing `platform_contracts.demand_coordinator.{demand,
+  demand_fulfillment}` and round-tripping a `Demand`/`DemandFulfillment` pair
+  (`model_dump_json(by_alias=True)` → `model_validate_json`), plus confirming a
+  known-bad document (missing `id`, coordinator-internal `status`) is rejected.
+  `pip show platform-contracts` confirms `0.8.0`. **Not yet run against the
+  real tagged URL** (`pip install
+  "git+https://github.com/elmoul/contracts.git@v0.8.0#subdirectory=gen/python"`)
+  — that is the actual D031 acceptance test and can only run after this
+  release is tagged and pushed; noted here so it isn't skipped.
+- **Java: not verified** — see Codegen note above. This is a gap against this
+  repo's own D031 standing invariant and is called out explicitly rather than
+  silently assumed correct.
+
 ## v0.7.0 — 2026-07-05
 
 Minor release, additive: new `activity.count` event on `state.event` (sixth `oneOf`

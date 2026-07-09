@@ -1,4 +1,4 @@
-# Generated Python bindings for platform-contracts v0.6.0
+# Generated Python bindings for platform-contracts v0.8.0
 # Do not edit by hand — regenerate from schemas/ using datamodel-code-generator.
 
 from platform_contracts.app import manifest, health, usage_event, dimension_event
@@ -11,6 +11,7 @@ from platform_contracts.connector import (
     connector_invoke_request,
     connector_invoke_response,
 )
+from platform_contracts.demand_coordinator import demand, demand_fulfillment
 
 __all__ = [
     "manifest",
@@ -27,4 +28,6 @@ __all__ = [
     "connector_vocabulary",
     "connector_invoke_request",
     "connector_invoke_response",
+    "demand",
+    "demand_fulfillment",
 ]
