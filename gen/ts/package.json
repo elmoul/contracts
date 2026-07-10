@@ -1,6 +1,6 @@
 {
   "name": "@platform/contracts",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "Generated TypeScript bindings for platform contracts. Do not edit by hand — regenerate from schemas/.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

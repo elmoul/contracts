@@ -7,6 +7,7 @@ export type { paths as AppManifestPaths, components as AppManifestComponents } f
 export type { paths as AppHealthPaths, components as AppHealthComponents } from "./app-health";
 export type { UsageEvent } from "./usage-event";
 export type { DimensionEvent } from "./dimension-event";
+export type { TelemetryLogRecord } from "./telemetry";
 export type { BuildCommand } from "./build-command";
 export type { BuildResult } from "./build-result";
 export type {
