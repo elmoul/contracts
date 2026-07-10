@@ -200,7 +200,23 @@
                             <targetPackage>io.platform.contracts.aigateway</targetPackage>
                             <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
                             <annotationStyle>jackson2</annotationStyle>
-                            <includeAdditionalProperties>false</includeAdditionalProperties>
+                            <!-- Override of this plugin's project-wide includeAdditionalProperties=false, for this
+                                 execution only: model-manifest.json's "capabilities" property is a pure dictionary
+                                 (an object with no "properties" of its own, only "additionalProperties": {$ref:
+                                 CapabilityDeclaration}). jsonschema2pojo 1.2.1 only emits the Map-typed
+                                 additionalProperties field (and only then walks the $ref to generate
+                                 CapabilityDeclaration) when includeAdditionalProperties is true; with the
+                                 project-wide false it silently produced an empty stub class and never generated
+                                 CapabilityDeclaration at all (confirmed contracts v0.9.0 defect). Every schema in
+                                 this file that has real "properties" also declares "additionalProperties": false
+                                 explicitly, which jsonschema2pojo honors regardless of this flag (verified: no
+                                 spurious additionalProperties field appears on AiModelManifest or
+                                 CapabilityDeclaration), so this override only takes effect on the one genuine
+                                 dictionary type. Wire format is unaffected: the generated Capabilities wrapper's
+                                 map is exposed via @JsonAnyGetter/@JsonAnySetter, which Jackson (de)serializes
+                                 flattened into the JSON object exactly like a plain map, not nested under an
+                                 "additionalProperties" key. -->
+                            <includeAdditionalProperties>true</includeAdditionalProperties>
                             <includeConstructors>true</includeConstructors>
                             <generateBuilders>false</generateBuilders>
                             <useTitleAsClassname>true</useTitleAsClassname>
