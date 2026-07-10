@@ -1,13 +1,77 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://platform/contracts/app/telemetry",
-  "title": "TelemetryConventions",
-  "description": "STUB — Metric and log field conventions for the observability Towers. Defines the required field names and types that all platform hexagons must emit. To be specced when observability spec is finalized.",
+  "title": "TelemetryLogRecord",
+  "description": "Structured JSON log record every platform hexagon must emit to stdout for Promtail/Loki ingestion. Formalizes observability's telemetry conventions (observability/docs/telemetry-conventions.md). The parallel Prometheus metric label and naming conventions are declared alongside this in $defs (PrometheusMetricLabels, MetricName) for documentation and cross-checking — they are not code-generated as a runtime type since Prometheus labels are attached via the metrics client API (Micrometer, prometheus_client, ...), never built as a JSON document the way a log line is.",
   "type": "object",
+  "required": ["timestamp", "level", "message", "component_id"],
+  "additionalProperties": false,
   "properties": {
-    "appId": { "type": "string" },
-    "level": { "type": "string", "enum": ["DEBUG", "INFO", "WARN", "ERROR"] },
-    "message": { "type": "string" },
-    "timestamp": { "type": "string", "format": "date-time" }
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601/RFC3339 timestamp of the log line. UTC only."
+    },
+    "level": {
+      "type": "string",
+      "enum": ["DEBUG", "INFO", "WARN", "ERROR"],
+      "description": "Log severity."
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable summary of the log line."
+    },
+    "component_id": {
+      "type": "string",
+      "description": "Functional identifier of the emitting hexagon (D002): lowercase hyphenated, no theme words. Same value as the Prometheus component_id label ($defs/PrometheusMetricLabels) and as state.event's componentId (schemas/state-feed/state.event.json) — this is the join key across Prometheus, Loki, and state-feed (Phase C headline bridge). Deliberately snake_case here (and on the Prometheus label) to match Prometheus/Loki field-naming convention, unlike this repo's usual camelCase JSON fields.",
+      "examples": ["ai-gateway", "ci-runner", "treasury", "observability", "contracts"]
+    },
+    "appId": {
+      "type": "string",
+      "description": "Present when handling a request in the context of a specific product app (D009). camelCase to match this repo's other JSON fields, deliberately inconsistent with the snake_case component_id/env/app_id Prometheus-style fields.",
+      "examples": ["plantpal"]
+    },
+    "traceId": {
+      "type": "string",
+      "description": "Reserved for future OpenTelemetry trace correlation. Not yet populated by any hexagon."
+    }
+  },
+  "$defs": {
+    "PrometheusMetricLabels": {
+      "title": "PrometheusMetricLabels",
+      "description": "Labels every metric emitted by a platform hexagon must carry, attached via the metrics client API — not a JSON document any hexagon constructs or serializes. additionalProperties is deliberately true: this declares the reserved minimum label set, not an exhaustive one — individual metrics may carry further labels beyond these.",
+      "type": "object",
+      "required": ["component_id", "env"],
+      "additionalProperties": true,
+      "properties": {
+        "component_id": {
+          "type": "string",
+          "description": "Functional hexagon name (D002). Same identifier used in this schema's own component_id field and in state.event.componentId.",
+          "examples": ["ai-gateway", "ci-runner", "treasury", "observability", "contracts"]
+        },
+        "env": {
+          "type": "string",
+          "enum": ["local", "staging", "prod"],
+          "description": "Injected by Prometheus itself via external_labels (docker/prometheus/prometheus.yml) — hexagons do not emit this label themselves."
+        },
+        "app_id": {
+          "type": "string",
+          "description": "Present only for metrics tied to a specific product app (D009). Omit for platform infrastructure metrics.",
+          "examples": ["plantpal"]
+        }
+      }
+    },
+    "MetricName": {
+      "title": "MetricName",
+      "type": "string",
+      "description": "Naming pattern for every Prometheus metric emitted by a platform hexagon: platform_<hexagon>_<name>_<unit>, using a standard Prometheus unit suffix (_total for a counter, _seconds for a duration histogram, _bytes for a size, _info for a gauge with metadata). Hyphens in the hexagon's functional name (D002) are written as underscores, since Prometheus metric names cannot contain hyphens.",
+      "pattern": "^platform_[a-z0-9]+(_[a-z0-9]+)*_(total|seconds|bytes|info)$",
+      "examples": [
+        "platform_ai_gateway_requests_total",
+        "platform_treasury_preflight_duration_seconds",
+        "platform_ci_runner_pipeline_runs_total",
+        "platform_observability_scrape_errors_total"
+      ]
+    }
   }
 }

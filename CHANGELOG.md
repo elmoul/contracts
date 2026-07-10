@@ -16,6 +16,142 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.10.0 — 2026-07-10
+
+Minor release, new schema realized from a stub (STUB → full schema, same
+precedent as v0.3.0's control-plane pair): `schemas/app/telemetry.json`,
+fulfilling `observability`'s demand
+(`demands/fulfilled/observability-20260710-telemetry-schema-report.md`,
+`demand/observability-20260710-telemetry-schema`). All three bindings wired;
+branch `demand/observability-telemetry-schema`, pushed, **not merged to
+`main`, no tag cut** — architect's call, per the v0.9.0/v0.9.1 precedent.
+
+### schemas/app/telemetry.json (STUB → full schema)
+
+Formalizes the conventions already documented and already followed by every
+hexagon emitting metrics/logs today, per
+`observability/docs/telemetry-conventions.md`:
+
+- **Root (`TelemetryLogRecord`):** the structured JSON log line every hexagon
+  emits to stdout for Promtail/Loki ingestion. Required: `timestamp`
+  (date-time, UTC), `level` (`DEBUG`/`INFO`/`WARN`/`ERROR`), `message`,
+  `component_id`. Optional: `appId` (D009), `traceId` (reserved for future
+  OTel correlation). `additionalProperties: false`.
+- **`$defs/PrometheusMetricLabels`:** the label set every Prometheus metric
+  must carry — required `component_id`, `env` (`local`/`staging`/`prod`,
+  Prometheus-injected via `external_labels`, hexagons never emit it
+  themselves); optional `app_id` (D009). `additionalProperties: true`
+  deliberately — this is the *reserved minimum* label set, not an exhaustive
+  one; individual metrics may carry further labels.
+- **`$defs/MetricName`:** the `platform_<hexagon>_<name>_<unit>` naming
+  pattern as a regex (`^platform_[a-z0-9]+(_[a-z0-9]+)*_(total|seconds|bytes|info)$`),
+  covering the four standard Prometheus unit suffixes.
+- **`component_id` is the deliberate exception to this repo's camelCase JSON
+  convention** — snake_case on both the log record and the Prometheus labels,
+  to match Prometheus/Loki field-naming convention (`appId`/`traceId` stay
+  camelCase). This is the join key across Prometheus, Loki, and
+  `state.event.componentId` (schemas/state-feed/state.event.json) that the
+  observability Phase C headline bridge depends on — documented explicitly in
+  both fields' descriptions so it isn't "corrected" to camelCase later.
+- **`PrometheusMetricLabels`/`MetricName` are deliberately unreferenced from
+  the root schema** — Prometheus labels are attached via the metrics client
+  API (Micrometer, `prometheus_client`), never built as a JSON document the
+  way a log line is. They exist in `$defs` purely for documentation and
+  direct-by-pointer validation (see `tests/validate_telemetry.py`), not as a
+  combined root envelope that would misrepresent the wire format (no hexagon
+  emits one JSON document containing both a log record and a label set).
+
+### Codegen — a genuine, expected per-tool divergence, not a defect
+
+- **Java:** new `sourcePath` in the existing `events` `jsonschema2pojo`
+  execution (`gen/java/pom.xml`), package `io.platform.contracts.events`.
+  Generates one class, `TelemetryLogRecord` — jsonschema2pojo only walks
+  schema nodes reachable from the file's root, so the two unreferenced `$defs`
+  generate no class. Hand-wired by exact analogy to the existing
+  `usage.event.json`/`dimension.event.json` entries in the same execution
+  (same plugin-wide config, no per-execution override needed — unlike the
+  v0.9.0/v0.9.1 `model-manifest.json` case, this schema's only
+  `additionalProperties: true` node is the unreferenced-and-therefore-ungenerated
+  `PrometheusMetricLabels`, so the project-wide `includeAdditionalProperties:
+  false` never comes into play here). **Verified for real, unlike
+  v0.8.0/v0.9.0/v0.9.1** (this sandbox had Docker where those didn't):
+  `docker run --rm -v "<repo>:/repo" -w /repo/gen/java maven:3.9-eclipse-temurin-21
+  mvn -B clean test` — `BUILD SUCCESS`, `Tests run: 12, Failures: 0, Errors: 0`
+  (unchanged from v0.9.1 — no existing test touches `TelemetryLogRecord`).
+  Inspected the generated source directly: `TelemetryLogRecord.java` carries
+  all four required fields (`timestamp: OffsetDateTime`, `level: Level` enum
+  with the four values, `message: String`, `componentId: String` — Jackson
+  `@JsonProperty("component_id")` mapping the snake_case wire name to the
+  camelCase Java field), plus optional `appId`/`traceId`; confirmed
+  `PrometheusMetricLabels`/`MetricName` generated **no** class in
+  `io/platform/contracts/events/` (only `DimensionEvent.java`,
+  `TelemetryLogRecord.java`, `UsageEvent.java` present) — the unreferenced-
+  `$defs` design behaves identically in Java and TypeScript.
+- **TypeScript:** `gen/ts/telemetry.ts` generated via `json-schema-to-typescript`
+  (`npx json-schema-to-typescript@13`), confirming the same reachability
+  behavior as Java — only `TelemetryLogRecord` is emitted, no
+  `PrometheusMetricLabels`/`MetricName` interface. Re-exported from
+  `index.ts`; `gen/ts/dist/` rebuilt fresh per D031. **Verified for real**:
+  `npx tsc --noEmit --strict` clean in `gen/ts`, and — the actual D031
+  acceptance pattern — a scratch project outside this repo depending on
+  `"@platform/contracts": "file:C:/Users/pc/Desktop/platform/contracts/gen/ts"`,
+  `npm install`, then a `.ts` file importing and constructing a
+  `TelemetryLogRecord` passed `tsc --noEmit --strict` clean.
+- **Python:** `gen/python/platform_contracts/app/telemetry.py` generated via
+  `datamodel-code-generator` (pydantic v2, `--collapse-root-models`), wired
+  into `platform_contracts/__init__.py` (both the `from ... import` line and
+  `__all__`, plus the version-comment header). **Genuine divergence from
+  Java/TS, not a bug:** `datamodel-code-generator` processes the whole
+  `$defs` block regardless of root reachability, so — unlike Java/TS — it
+  *does* generate `PrometheusMetricLabels` and `MetricName` (as a pydantic
+  `RootModel[str]`) as real importable classes, alongside `TelemetryLogRecord`
+  and the `Level`/`Env` enums. Left as-is rather than forced into artificial
+  cross-language symmetry: Python callers get typed helpers for the
+  Prometheus label/metric-name conventions "for free"; Java/TS callers get
+  only what they'd actually construct (a log record). **Verified for real**
+  in a fresh scratch virtualenv (`pip install ./gen/python`): imported
+  `TelemetryLogRecord`, `PrometheusMetricLabels`, `MetricName`, `Level`, `Env`;
+  constructed known-good instances of each; confirmed a bad `level`, a bad
+  `env`, and a malformed metric name are all rejected with `ValidationError`;
+  re-ran the *existing* `platform_contracts` import (`import
+  platform_contracts`) and the full `tests/run_all.py` suite in the same venv
+  — all pre-existing validators still pass, no regression from the
+  `__init__.py` edit. The real git-URL-tag install (`pip install
+  "git+...@v0.10.0#subdirectory=gen/python"`) is **not yet run** — no tag
+  exists yet (architect's call, as above); do this once the tag is cut, per
+  the standing D031 invariant.
+
+### Tests
+
+- Added `tests/validate_telemetry.py` (14 assertions: 3 for the root log
+  record, 4 for `PrometheusMetricLabels`, 7 for `MetricName` — 4 good, 3 bad),
+  wired into `tests/run_all.py` between `validate_dimension_event.py` and
+  `validate_state_event.py`. Validates the two `$defs` directly via JSON
+  pointer (`schema["$defs"]["PrometheusMetricLabels"]`), same technique used
+  to confirm the schema is sound with `ajv` (`ajv/dist/2020` + `ajv-formats`,
+  installed to a scratch dir) before any codegen was attempted.
+- Full `python tests/run_all.py` re-run after the `validate_telemetry.py`
+  addition: all validators (including every pre-existing one) still pass.
+
+### Toolchain reality this session
+
+Unlike v0.8.0/v0.9.0 (no `mvn`/`java`/Python at all) and v0.9.1 (Java only via
+Docker, no local Python), **this sandbox had `py` (Python 3.11.9), Node/npm,
+and Docker** — no unverified leg this release. `py` + a scratch venv installed
+`datamodel-code-generator`/`pydantic`/`jsonschema` for the real Python
+generation/round-trip/full-suite-regression check; Node/npm ran the real
+`json-schema-to-typescript` generation, `tsc --noEmit --strict`, and a D031
+`file:`-dependency consumer check; `docker run maven:3.9-eclipse-temurin-21`
+ran the real `mvn clean test` and let the generated `TelemetryLogRecord.java`
+be inspected directly. One correction made mid-session: the first Docker
+attempt mounted only `gen/java`, which broke the `../../schemas/app/*.json`
+relative `sourcePath`s in `pom.xml` (`NullPointerException` in
+`jsonschema2pojo`'s `URLUtil.parseURL` — a sandbox mounting mistake, not a
+schema or `pom.xml` defect); mounting the whole repo and setting the working
+directory to `gen/java` inside the container fixed it, and the *existing*
+`usage.event`/`dimension.event` sources would have hit the identical failure
+under the same wrong mount, confirming it wasn't specific to this change.
+
 ## v0.9.1 — 2026-07-10
 
 Patch release, Java binding only: fixes the two v0.9.0 defects reported by
