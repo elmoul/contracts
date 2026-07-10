@@ -19,6 +19,7 @@ VALIDATORS = [
     "validate_control_plane.py",
     "validate_connector.py",
     "validate_dimension_event.py",
+    "validate_telemetry.py",
     "validate_state_event.py",
     "validate_demand.py",
     "validate_model_manifest.py",
