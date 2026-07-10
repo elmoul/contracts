@@ -22,9 +22,25 @@ Minor release, new schema realized from a stub (STUB → full schema, same
 precedent as v0.3.0's control-plane pair): `schemas/app/telemetry.json`,
 fulfilling `observability`'s demand
 (`demands/fulfilled/observability-20260710-telemetry-schema-report.md`,
-`demand/observability-20260710-telemetry-schema`). All three bindings wired;
-branch `demand/observability-telemetry-schema`, pushed, **not merged to
-`main`, no tag cut** — architect's call, per the v0.9.0/v0.9.1 precedent.
+`demand/observability-20260710-telemetry-schema`). All three bindings wired.
+Branch `demand/observability-telemetry-schema` reviewed and merged to `main`
+(`9eb777c`, architect's call, at the owner's explicit request), tagged
+`v0.10.0`. **Post-tag D031 acceptance test run for real against the pushed
+tag, all three languages, no unverified leg:**
+- **Python:** fresh venv, `pip install "git+https://github.com/elmoul/contracts.git@v0.10.0#subdirectory=gen/python"`
+  — installed cleanly; imported `TelemetryLogRecord`/`PrometheusMetricLabels`/
+  `MetricName`/`Level`/`Env` from the tagged install and re-ran the same
+  construct/reject round-trip checks used pre-tag — all passed.
+- **Java:** fresh `git clone` + `git checkout v0.10.0` (independent of this
+  working tree), `mvn -B clean install -DskipTests` into a scratch `.m2`
+  (`docker run maven:3.9-eclipse-temurin-21`) — `BUILD SUCCESS`, installed
+  `io.platform:contracts:0.10.0`. A second, fully independent scratch Maven
+  project depending on that coordinate (`<version>0.10.0</version>`, no
+  path/reactor relationship to this repo) compiled and ran code constructing
+  a `TelemetryLogRecord` — `BUILD SUCCESS`, printed the constructed object.
+- **TypeScript:** the `file:`-dependency form of D031 (the one mechanism that
+  doesn't require a pushed tag) was already verified pre-tag, on the branch —
+  see below.
 
 ### schemas/app/telemetry.json (STUB → full schema)
 

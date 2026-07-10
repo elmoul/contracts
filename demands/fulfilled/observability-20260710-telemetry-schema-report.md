@@ -14,11 +14,11 @@ assembles and delivers the summary once the owner approves.
 
 ## What shipped
 
-Branch `demand/observability-telemetry-schema`, pushed to `origin`, not
-merged to `main`, no tag cut (recorded in `CHANGELOG.md` as the upcoming
-`v0.10.0` — the architect tags after review/merge, per the v0.9.0/v0.9.1
-precedent this repo has followed for every schema-adding session since
-2026-07-10 session 17).
+Branch `demand/observability-telemetry-schema` reviewed and merged to `main`
+(`9eb777c`), tagged `v0.10.0` — **update, post-initial-report:** the owner
+explicitly authorized the merge and tag in this same session, so this closed
+faster than the v0.9.0/v0.9.1 precedent (which left both pending for a
+separate architect pass). `v0.10.0` is now pinnable per D031.
 
 ### Final schema shape
 
@@ -72,8 +72,8 @@ $defs.MetricName (documentation/validation only — not root-reachable)
 
 ## What observability (the origin) needs to know
 
-1. **Consume via:** pin `v0.10.0` per D031 once this branch is reviewed,
-   merged, and tagged — the architect cuts the tag, not this session.
+1. **Consume via:** pin `v0.10.0` per D031 — tagged and pushed, ready to pin
+   now.
 2. **Schema matches `docs/telemetry-conventions.md` with no deltas** —
    checked field-by-field against the doc during authoring (types, required/
    optional split, enum values, the naming-pattern examples, the
@@ -120,10 +120,11 @@ Docker** — no unverified leg on this release.
   confirmed a bad `level`, a bad `env`, and a malformed metric name are all
   rejected with `ValidationError`; re-ran `import platform_contracts` and the
   full `tests/run_all.py` suite (including every pre-existing validator) in
-  the same venv — all pass, no regression from the `__init__.py` edit. The
-  real git-URL-tag install (`pip install "git+...@v0.10.0#subdirectory=gen/python"`)
-  is **not yet run** — no tag exists yet; do this once the tag is cut, per
-  the standing D031 invariant.
+  the same venv — all pass, no regression from the `__init__.py` edit.
+  **Post-tag, the real D031 git-URL install was also run for real**: a
+  separate fresh venv, `pip install "git+https://github.com/elmoul/contracts.git@v0.10.0#subdirectory=gen/python"`
+  — installed cleanly, and the same construct/reject round-trip checks
+  passed against the tagged install.
 - **Java: fully verified.** `schemas/app/telemetry.json` was added as a third
   `sourcePath` in the existing `events` `jsonschema2pojo` execution
   (`gen/java/pom.xml`), by exact analogy to the existing `usage.event.json`/
@@ -147,25 +148,29 @@ Docker** — no unverified leg on this release.
   resolution — a sandbox mounting mistake, not a schema/`pom.xml` defect;
   fixed by mounting the whole repo. Noted in `CHANGELOG.md` in case a future
   session hits the same mount mistake.)
-- **D031 real acceptance test (clean install from the tagged URL) not run for
-  Java/Python — cannot be, until this release is tagged.** TS's
-  `file:`-dependency form of the D031 pattern (the one mechanism that doesn't
-  require a pushed tag) was run for real, as noted above. Java's local `mvn
-  clean test` above is the pre-tag equivalent check, same as every prior
-  release's practice; the real `mvn install` against a pinned tag checkout
-  still needs to happen once this is tagged.
+- **D031 real acceptance test — run for all three languages, post-tag.** TS's
+  `file:`-dependency form was run pre-tag (the one mechanism that doesn't need
+  one). Post-tag, for Java: an independent fresh `git clone` + `git checkout
+  v0.10.0` (no relationship to this working tree), `mvn -B clean install
+  -DskipTests` into a scratch `.m2`, then a second, fully independent scratch
+  Maven project declaring `io.platform:contracts:0.10.0` as an ordinary
+  dependency compiled and ran code constructing a `TelemetryLogRecord` —
+  `BUILD SUCCESS`. For Python: a fresh venv,
+  `pip install "git+https://github.com/elmoul/contracts.git@v0.10.0#subdirectory=gen/python"`
+  — installed cleanly, round-trip checks passed. No unverified leg anywhere
+  in this release.
 
 ## Acceptance criteria — self-check against the demand
 
-- [x] `contracts/schemas/app/telemetry.json` published (on this branch),
+- [x] `contracts/schemas/app/telemetry.json` published (merged to `main`),
       declaring the Prometheus label set, the metric naming pattern, and the
       Loki log fields, no longer a stub.
 - [x] Matches `docs/telemetry-conventions.md` with no deltas to call out.
 - [x] Bindings wired for all three languages.
 - [x] Tests added (`tests/validate_telemetry.py`, 14 assertions) and wired
       into `tests/run_all.py`.
-- [x] CHANGELOG entry written as `v0.10.0` (tag **not** cut — architect's
-      call, per instructions/precedent).
+- [x] CHANGELOG entry written; `v0.10.0` tagged and pushed (owner explicitly
+      authorized the merge/tag this session).
 - [x] TypeScript binding compiled/tested for real, including the D031
       `file:`-dependency consumption pattern.
 - [x] Python binding executed/round-tripped for real, including negative
