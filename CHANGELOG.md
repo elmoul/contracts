@@ -16,6 +16,83 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.9.1 — 2026-07-10
+
+Patch release, Java binding only: fixes the two v0.9.0 defects reported by
+`ai-gateway` (the first real Java consumer of the `ai.model-manifest` binding,
+evidence in `../ai-gateway/demands/fulfilled/plantpal-20260709-ai-gateway-full-coverage-report.md`).
+**No schema file changed** — the wire format (what JSON/YAML documents
+validate) is byte-for-byte identical to v0.9.0; TS and Python bindings are
+untouched apart from the version strings. Branch `fix/java-binding-v0.9.1`;
+tag to be cut by the architect after review, per house convention.
+
+### Defect 1 — `gen/java/pom.xml` non-parseable by Maven (blocked ALL Java artifacts)
+
+- **Root cause:** the `ai-gateway-model-manifest` execution added in v0.9.0
+  carried an XML comment containing a literal `--` sequence
+  ("…request.yaml/preflight.yaml) -- model-manifest.json…"). XML forbids `--`
+  inside a comment body, so Maven failed with "Non-parseable POM … in comment
+  after two dashes (--)" before doing anything — no Java artifact of v0.9.0
+  could be produced by any consumer.
+- **Fix:** reworded the comment (`--` → `;`); no semantic change to the build.
+
+### Defect 2 — `capabilities` generated as an empty stub, `CapabilityDeclaration` never generated
+
+- **Root cause:** `capabilities` in `model-manifest.json` is a pure dictionary
+  — an object with **no** `properties` of its own, only
+  `additionalProperties: {$ref: #/$defs/CapabilityDeclaration}`. jsonschema2pojo
+  (1.2.1) only emits the map-typed `additionalProperties` field — and only then
+  walks the `$ref` to generate the value class — when
+  `includeAdditionalProperties` is `true`. The plugin-wide
+  `<includeAdditionalProperties>false</includeAdditionalProperties>` therefore
+  silently produced an empty `Capabilities` class (zero fields) and never
+  generated `CapabilityDeclaration` at all. Reproduced in isolation with a
+  minimal schema before touching the config.
+- **Fix:** per-execution override `<includeAdditionalProperties>true</includeAdditionalProperties>`
+  scoped to the `ai-gateway-model-manifest` execution only (all other
+  executions keep the plugin-wide `false`). Safe because every schema in
+  `model-manifest.json` with real `properties` also declares
+  `additionalProperties: false` explicitly, which jsonschema2pojo honors
+  regardless of the flag — verified no spurious any-getter/any-setter appears
+  on `AiModelManifest` or `CapabilityDeclaration`. The map is exposed on the
+  generated `Capabilities` wrapper via `@JsonAnyGetter`/`@JsonAnySetter`
+  (`Map<String, CapabilityDeclaration>`), which Jackson (de)serializes
+  flattened into the JSON object — exactly the wire shape the schema validates,
+  not nested under any extra key.
+- Rejected alternatives: restructuring the schema (would risk wire-format
+  drift for zero Java gain) and `existingJavaType` on the property (types the
+  field as a bare `Map` but does **not** force generation of
+  `CapabilityDeclaration` from `$defs`, which is only reachable via the
+  `additionalProperties` `$ref`).
+
+### Verification — real builds, not analogy
+
+- `mvn -B clean package` in a fresh `maven:3.9-eclipse-temurin-21` Docker
+  container mounting this repo (`-w /work/gen/java`): **BUILD SUCCESS** —
+  POM parses, all 6 jsonschema2pojo executions + openapi-generator run,
+  `Compiling 40 source files`, `Tests run: 12, Failures: 0, Errors: 0,
+  Skipped: 0`, `Building jar: target/contracts-0.9.1.jar`. Run twice (once
+  after each fix, once after the version bump).
+- Generated sources inspected under `target/generated-sources/jsonschema2pojo/
+  io/platform/contracts/aigateway/`: `Capabilities` exposes
+  `Map<String, CapabilityDeclaration>`; `CapabilityDeclaration` has
+  `Set<String> models` (from `uniqueItems: true`), `Media media`
+  (enum REQUIRED/OPTIONAL/NONE), `Boolean streamingDesired = false`,
+  `DownshiftPolicy downshiftPolicy` (enum ALLOW/BLOCK/SKIP).
+- Wire format proof: `git diff` confirms no file under `schemas/` changed;
+  `npx tsc --noEmit` in `gen/ts` clean (exit 0); full `python tests/run_all.py`
+  (in a `python:3.12-slim` container) — all validators passed, including
+  `validate_model_manifest.py`'s 8 fixtures.
+- **Not run:** the D031 clean-install-from-tag acceptance test — impossible
+  until the architect cuts the `v0.9.1` tag; must be run post-tag before any
+  consumer re-pins.
+
+### Known leftover (pre-existing, unchanged)
+
+- `gen/ts/package-lock.json` still says `0.7.0` — v0.8.0 and v0.9.0 both left
+  it stale, so this release follows precedent rather than regenerating the
+  lockfile in a patch. Worth a cleanup in the next minor.
+
 ## v0.9.0 — 2026-07-10
 
 Minor release, new schema: `ai.model-manifest` (gap G5, closing the contracts
