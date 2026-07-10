@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.9.1</version>
+    <version>0.10.0</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -78,6 +78,13 @@
                              generated via openapi-generator from schemas/state-feed/state-event-java.yaml. -->
                         <sourcePath>${project.basedir}/../../schemas/app/usage.event.json</sourcePath>
                         <sourcePath>${project.basedir}/../../schemas/app/dimension.event.json</sourcePath>
+                        <!-- telemetry.json's root is the Loki structured-log-record shape
+                             (TelemetryLogRecord); its $defs/PrometheusMetricLabels and
+                             $defs/MetricName are deliberately unreferenced from root (Prometheus
+                             labels are attached via the metrics client API, never built as a JSON
+                             document) and so generate no Java class — documentation/validation-only,
+                             consistent with the schema's own description. -->
+                        <sourcePath>${project.basedir}/../../schemas/app/telemetry.json</sourcePath>
                     </sourcePaths>
                     <targetPackage>io.platform.contracts.events</targetPackage>
                     <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
