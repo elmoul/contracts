@@ -4,7 +4,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 /**
- * The machine-readable envelope for the YAML frontmatter every repo's demands/fulfilled/<demand-id>-report.md carries (DEMAND_SYSTEM.md §5) — a worker's report back on a demand it was dispatched. The markdown body beneath stays free-form, written for the origin's next session to read. Field casing here is camelCase (demandId, subDemand), matching the interim convention spec-demand-coordinator.md §7 already established for this specific envelope — deliberately not the kebab-case used by the sibling `demand` schema, which instead matches already-committed demand-file frontmatter. `done` is a claim, not a verdict: the coordinator marks it pending-approval and only the owner's approval (never self-certification) makes it real.
+ * The machine-readable envelope for the YAML frontmatter every repo's demands/fulfilled/<demand-id>-report.md carries (DEMAND_SYSTEM.md §5) — a worker's report back on a demand it was dispatched. The markdown body beneath stays free-form, written for the origin's next session to read. Field casing here is camelCase (demandId, subDemand), matching the interim convention spec-demand-coordinator.md §7 already established for this specific envelope — deliberately not the kebab-case used by the sibling `demand` schema, which instead matches already-committed demand-file frontmatter. `done` is a claim, not a verdict: the coordinator marks it pending-approval and only the owner's approval (never self-certification) makes it real. `shipped`/`date`/`summaryRef` are all optional by design (v0.11.0 reconciliation, demand-coordinator-20260710-contracts-fulfillment-envelope-drift): DEMAND_SYSTEM.md §5 documents `shipped`/`date` as the real convention and the fleet writes them, not `summaryRef` — a report file's own path conventionally *is* the summary.
  */
 export interface DemandFulfillment {
     /**
@@ -24,7 +24,15 @@ export interface DemandFulfillment {
      */
     status: "done" | "blocked";
     /**
-     * Path, relative to this repo's root, to the human-readable summary for the origin's next session to read. Typically this same report file, but may point elsewhere (e.g. a PROGRESS.md section) when the fuller narrative lives there.
+     * Path, relative to this repo's root, to the human-readable summary for the origin's next session to read. Typically this same report file, but may point elsewhere (e.g. a PROGRESS.md section) when the fuller narrative lives there. Optional — the report file's own path conventionally already is this summary.
      */
-    summaryRef: string;
+    summaryRef?: string;
+    /**
+     * What this fulfillment actually shipped — tags, versions, or branch@commit refs. Optional; real fulfillment reports carry rich free-text entries here (e.g. a git tag, a "no version bump" note).
+     */
+    shipped?: string[];
+    /**
+     * The date this fulfillment report was written, YYYY-MM-DD. Optional.
+     */
+    date?: string;
 }

@@ -179,6 +179,17 @@ files under `schemas/`. For OpenAPI documents (`ai.request`), add
 `--input-file-type openapi`. Wire any new module into
 `platform_contracts/__init__.py`.
 
+For any schema with an `enum`, add `--target-python-version 3.11
+--use-specialized-enum`: every generated `Status`/`Level`/`Env`-style enum in
+this repo is `StrEnum`, matching `requires-python = ">=3.11"` in
+`pyproject.toml`, but a plain `datamodel-codegen` invocation on at least one
+locally-installed version (0.68.1, confirmed in the `v0.11.0` session) emits
+a bare `Enum` instead — a silent convention drift that no existing test
+catches, since schema-level validation doesn't care about the Python enum
+base class. Diff the regenerated file against the previous one before
+committing if you're unsure which behavior your installed version defaults
+to.
+
 Verify: `pip install ./gen/python` in a scratch venv, then
 `python -c "import platform_contracts"` plus a round-trip
 (`model_dump_json()` → `model_validate_json()`) on any newly generated model.

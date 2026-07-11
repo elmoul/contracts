@@ -16,6 +16,82 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.11.0 — 2026-07-11
+
+Minor release, all three bindings: reconciles
+`schemas/demand-coordinator/demand.fulfillment.json` with
+`DEMAND_SYSTEM.md` §5 and real fleet usage, fulfilling `demand-coordinator`'s
+demand
+(`demands/fulfilled/demand-coordinator-20260710-contracts-fulfillment-envelope-drift-report.md`,
+`demand-coordinator-20260710-contracts-fulfillment-envelope-drift`).
+
+### schemas/demand-coordinator/demand.fulfillment.json (additive)
+
+Owner ruling (recorded in the demand, resolve via schema, not fleet
+migration): the schema was out of step with both the doc and reality, not the
+other way around. Across the 12 real fulfillment reports in the fleet today,
+0 set `summaryRef` (required until now), 7 set `date`, most set `shipped` —
+`DEMAND_SYSTEM.md` §5 documents `shipped`/`date` as the convention and never
+mentions `summaryRef` at all.
+
+- **`summaryRef` required → optional.** A report file's own path
+  conventionally already is the summary.
+- **New optional `shipped`** (`array` of `string`) — tags, versions, or
+  branch@commit refs, matching what the fleet already writes (free-text
+  entries like `"v0.10.0"` or `"demand/observability-telemetry-schema@9eb777c"`).
+- **New optional `date`** (`string`, `format: date`) — the report's write
+  date.
+- `additionalProperties: false` unchanged — additive structure, not a
+  loosening of the schema's shape discipline, per the demand's acceptance
+  criteria.
+- `required` is now just `["demandId", "worker", "status"]`.
+
+### tests/validate_demand.py
+
+Added `GOOD_FULFILLMENT_SHIPPED_DATE_NO_SUMMARY_REF` (exercises `shipped`/
+`date` with no `summaryRef` at all) and dropped the now-stale "missing
+summaryRef" half of `BAD_FULFILLMENT`'s failure reason — that document is
+invalid solely on its bad `status` value now.
+
+### Codegen — all three regenerated from the one schema change
+
+- **Java:** `mvn -B -f gen/java/pom.xml clean test` — `DemandFulfillment.java`
+  regenerated via the existing `demand-coordinator` jsonschema2pojo execution
+  (no config changes needed), `summaryRef` no longer in the `(Required)`
+  javadoc, `shipped` (`List<String>`) and `date` (`String`) added.
+  `BUILD SUCCESS`, `Tests run: 12, Failures: 0, Errors: 0` (unchanged — no
+  existing test touches `DemandFulfillment`).
+- **TypeScript:** `npx json-schema-to-typescript
+  ../../schemas/demand-coordinator/demand.fulfillment.json -o
+  demand-fulfillment.ts`, re-built `dist/` (`npm run build`, committed per
+  D031). `summaryRef?: string`, `shipped?: string[]`, `date?: string` added
+  to the `DemandFulfillment` interface. `npx tsc --noEmit --strict` clean.
+- **Python:** `datamodel-codegen --input
+  ../../schemas/demand-coordinator/demand.fulfillment.json --input-file-type
+  jsonschema --output
+  platform_contracts/demand_coordinator/demand_fulfillment.py
+  --output-model-type pydantic_v2.BaseModel --target-python-version 3.11
+  --use-specialized-enum`. The last two flags are load-bearing: without them
+  this installed `datamodel-code-generator` (0.68.1) emits a plain `Enum` for
+  `Status` instead of the `StrEnum` every other generated module in this repo
+  uses (`demand.py`, `telemetry.py`, `model_manifest.py`,
+  `hexagon_descriptor.py`, `registry_entry.py`) — caught by diffing against
+  the prior file before committing, not by any test (no existing test
+  round-trips `DemandFulfillment.status` through JSON, so a plain `Enum`
+  would still validate; it would just silently diverge from convention).
+  `summaryRef: str | None`, `shipped: list[str] | None`, `date: date_aliased
+  | None` (datemodel-codegen aliases the field's `date` type import to avoid
+  shadowing the field name `date`) all default to `None`. Full
+  `python tests/run_all.py` — all validators pass, including the new
+  `validate_demand.py` fixture.
+
+### D031 acceptance — pending tag
+
+Not yet run: requires a pushed `v0.11.0` tag (Java fresh-`.m2` install, TS
+`file:`-dependency install already verifiable pre-tag, Python fresh-venv
+git-URL install). Per the standing invariant, no consumer should re-pin until
+this has run for real against the pushed tag.
+
 ## v0.10.0 — 2026-07-10
 
 Minor release, new schema realized from a stub (STUB → full schema, same

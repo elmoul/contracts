@@ -64,11 +64,22 @@ GOOD_FULFILLMENT_SUB_DEMAND = {
     "summaryRef": "demands/fulfilled/plantpal-20260709-ai-gateway-full-ai-coverage-report.md",
 }
 
+# v0.11.0: summaryRef is optional (demand-coordinator-20260710-contracts-fulfillment-envelope-drift)
+# — shipped/date are the real fleet convention (DEMAND_SYSTEM.md §5); this exercises both without
+# summaryRef at all.
+GOOD_FULFILLMENT_SHIPPED_DATE_NO_SUMMARY_REF = {
+    "demandId": "observability-20260710-telemetry-schema",
+    "worker": "contracts",
+    "status": "done",
+    "shipped": ["v0.10.0"],
+    "date": "2026-07-10",
+}
+
 BAD_FULFILLMENT = {
     "demandId": "demand-coordinator-20260709-demand-schema",
     "worker": "contracts",
     "status": "in-progress",  # not a worker-reportable status
-    # missing summaryRef
+    "summaryRef": "demands/fulfilled/demand-coordinator-20260709-demand-schema-report.md",
 }
 
 
@@ -111,10 +122,15 @@ def main() -> int:
         GOOD_FULFILLMENT_SUB_DEMAND,
         "demand.fulfillment: multi-hexagon sub-demand report (known-good)",
     )
+    expect_valid(
+        fulfillment_schema,
+        GOOD_FULFILLMENT_SHIPPED_DATE_NO_SUMMARY_REF,
+        "demand.fulfillment: shipped+date, no summaryRef (known-good, proves v0.11.0 optionality)",
+    )
     expect_invalid(
         fulfillment_schema,
         BAD_FULFILLMENT,
-        "demand.fulfillment: bad status + missing summaryRef (known-bad)",
+        "demand.fulfillment: bad status (known-bad)",
     )
     return 0
 
