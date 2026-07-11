@@ -95,32 +95,41 @@ local-build side.
   drift committed).
 - **Python:** real `pip`-installed toolchain in this repo's own `.venv`,
   full `tests/run_all.py` run, not just the one new fixture.
-- **D031 real acceptance test — NOT yet run.** No tag exists yet. Per the
-  standing invariant, this must be run for real against the pushed
-  `v0.11.0` tag (Java: fresh `.m2` install from a clean clone; Python: fresh
-  venv + git-URL pip install; TS: the `file:`-dependency form can be
-  exercised pre-tag, matching the v0.10.0 precedent) before any consumer
-  re-pins.
+- **D031 real acceptance test — run for all three languages, post-tag, owner
+  authorized the push/tag in this same session.**
+  - **Java:** independent fresh `git clone --branch v0.11.0` (no relationship
+    to this working tree), `mvn -B clean install -DskipTests` into a scratch
+    `.m2` — `BUILD SUCCESS`, installed `io.platform:contracts:0.11.0`. A
+    second, fully independent scratch Maven project declaring that
+    coordinate as an ordinary dependency compiled and ran code constructing
+    a `DemandFulfillment` with `summaryRef` left unset — `BUILD SUCCESS`,
+    printed object confirms `summaryRef=<null>` and `shipped=[v0.11.0]`,
+    `date=2026-07-11` populated.
+  - **Python:** fresh venv, `pip install
+    "git+https://github.com/elmoul/contracts.git@v0.11.0#subdirectory=gen/python"`
+    — installed cleanly. Constructed a `DemandFulfillment` with `shipped`/
+    `date` and no `summaryRef`, confirmed `summaryRef is None`, confirmed
+    `status == "done"` (string equality, proving `StrEnum` behavior),
+    round-tripped via `model_dump_json()` → `model_validate_json()`, and
+    confirmed a bad `status` value is still rejected with `ValidationError`.
+  - **TypeScript:** scratch project depending on `"@platform/contracts":
+    "file:<checkout>/gen/ts"`, `npm install`, then a `.ts` file constructing
+    a `DemandFulfillment` object literal with `summaryRef` omitted —
+    `npx tsc --noEmit --strict` clean (exit 0).
+  - No unverified leg anywhere in this release.
 
 ## Acceptance criteria — self-check against the demand
 
 - [x] `demand.fulfillment.json` gains optional `shipped` (array of strings)
       and `date` (`format: date`); `summaryRef` no longer required.
       `additionalProperties: false` unchanged.
-- [x] New `contracts` tag prepared with the updated schema + regenerated
+- [x] New `contracts` tag shipped with the updated schema + regenerated
       Java/TS/Python bindings, per the existing per-language versioning
-      convention (`v0.11.0`, minor — additive only). **Tag not yet cut/pushed
-      — pending explicit go-ahead, per this repo's own tagging/push
-      convention (owner or session operator authorizes the actual `git tag`
-      + `git push --tags` step separately from the code change).**
+      convention (`v0.11.0`, minor — additive only). Tag cut and pushed
+      (`git tag v0.11.0 && git push origin main --tags`), owner explicitly
+      authorized the push/tag this session. **`v0.11.0` is now pinnable per
+      D031.**
 - [x] `DEMAND_SYSTEM.md` §5 needed no correction — confirmed; not touched.
-
-## Open items for the architect / next session
-
-1. **Tag/push still pending.** Schema, bindings, tests, and CHANGELOG are
-   done and verified locally; `git tag v0.11.0 && git push origin main
-   --tags` per `DEPLOYMENT.md`'s release checklist, then the post-tag D031
-   acceptance run, are the only remaining steps.
 
 ## Fixed in passing
 
