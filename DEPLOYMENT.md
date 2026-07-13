@@ -211,6 +211,13 @@ Verify: `pip install ./gen/python` in a scratch venv, then
    (v0.2.1 npm, v0.6.2 Python) shipped on an untested packaging assumption;
    don't repeat that.
 5. `git tag vX.Y.Z && git push origin main --tags`.
+6. **Raise the release-notification demands (D043 — see CLAUDE.md's Release
+   checklist section for the full rule).** Always a demand `to: [<origin>]`
+   ("re-pin and adopt"); on a breaking release, also a demand to every
+   consumer of the changed schema(s) ("adopt or explain by when"), enumerated
+   via control-plane's `GET /registry` consumer graph (D014). The tag is not
+   done until these are raised and pushed as their own standalone coordination
+   commit(s), per `DEMAND_SYSTEM.md` §3.
 
 ## No runtime dependencies
 
