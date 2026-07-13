@@ -91,12 +91,27 @@ criteria) and `BAD_USED_CONTRACT_IDS` (the three audited free-text forms),
 each exercised against `hexagon.descriptor.json` via the existing
 `expect_valid`/`expect_invalid` helpers.
 
-### D031 acceptance — pending tag
+### D031 acceptance — post-tag, run for real, all three languages
 
-Not yet run: requires a pushed `v0.12.0` tag (Java fresh-`.m2` install, TS
-`file:`-dependency install already verifiable pre-tag, Python fresh-venv
-git-URL install). Per the standing invariant, no consumer should re-pin until
-this has run for real against the pushed tag.
+`v0.12.0` tagged and pushed; **post-tag D031 acceptance test run for real
+against the pushed tag, all three languages, no unverified leg:**
+
+- **Java:** fresh `git clone --branch v0.12.0` (independent of this working
+  tree), `mvn -B clean install -DskipTests` into a scratch `.m2` —
+  `BUILD SUCCESS`, installed `io.platform:contracts:0.12.0`. A second, fully
+  independent scratch Maven project depending on that coordinate compiled and
+  ran code constructing a `Contracts` with `used: ["ai.preflight.request",
+  "state.event"]` — `BUILD SUCCESS`, printed object confirms the value.
+- **Python:** fresh venv, `pip install
+  "git+https://github.com/elmoul/contracts.git@v0.12.0#subdirectory=gen/python"`
+  — installed cleanly; constructed a `HexagonDescriptor`, round-tripped
+  (`model_dump_json()` → `model_validate_json()`), and confirmed the new
+  `contracts.used` pattern rejects a free-text entry (`ValidationError`
+  raised for `"ai.request / ai.response / ai.blocked"`).
+- **TypeScript:** `file:`-dependency scratch project pointed at the tagged
+  checkout's `gen/ts` (its committed `dist/` per D031), `npx tsc --noEmit
+  --strict` clean against a `HexagonDescriptor` literal with a real
+  `contracts.used` array.
 
 ## v0.11.0 — 2026-07-11
 
