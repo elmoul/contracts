@@ -71,8 +71,11 @@
         },
         "used": {
           "type": "array",
-          "description": "Per-contract names consumed, not per-repo — contracts version independently and the D015 rebuild set is computed per contract from this field.",
-          "items": { "type": "string" },
+          "description": "Per-contract names consumed, not per-repo — contracts version independently and the D015 rebuild set is computed per contract from this field. Each entry is a machine-readable contract id (dot/hyphen-separated lowercase segments), not free text — this is what makes the D015 rebuild set mechanically computable.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*([.-][a-z0-9]+)*$"
+          },
           "examples": [["ai.preflight", "usage.event", "state.event"]]
         }
       },

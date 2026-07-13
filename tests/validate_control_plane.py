@@ -36,6 +36,25 @@ BAD_DESCRIPTOR = {
     "deps": [],
 }
 
+# contracts.used items pattern (conventions-20260713-descriptor-used-contracts-pattern):
+# real ids from across the fleet today must validate...
+GOOD_USED_CONTRACT_IDS = [
+    "state.event",
+    "ai.preflight.request",
+    "build-command",
+    "registry.entry",
+    "usage.event",
+    "state.event.activity.count",
+]
+
+# ...and the audited free-text entries found in the fleet (sentinel-hub, publishing)
+# must be rejected — this is the defect the pattern exists to catch.
+BAD_USED_CONTRACT_IDS = [
+    "ai.request / ai.response / ai.blocked",
+    "ai.preflight (blocked-response shape only, via ai-gateway's 402)",
+    "state.event (activity.count)",
+]
+
 GOOD_REGISTRY_ENTRY = {
     "functionalName": "treasury",
     "kind": "runtime",
@@ -82,6 +101,15 @@ def main() -> int:
     expect_invalid(descriptor_schema, BAD_DESCRIPTOR, "hexagon.descriptor: missing name + bad side (known-bad)")
     expect_valid(registry_schema, GOOD_REGISTRY_ENTRY, "registry.entry: treasury (known-good)")
     expect_invalid(registry_schema, BAD_REGISTRY_ENTRY, "registry.entry: bad side + missing required fields (known-bad)")
+
+    for contract_id in GOOD_USED_CONTRACT_IDS:
+        doc = {**GOOD_DESCRIPTOR, "contracts": {**GOOD_DESCRIPTOR["contracts"], "used": [contract_id]}}
+        expect_valid(descriptor_schema, doc, f"hexagon.descriptor: contracts.used real id {contract_id!r} (known-good)")
+
+    for contract_id in BAD_USED_CONTRACT_IDS:
+        doc = {**GOOD_DESCRIPTOR, "contracts": {**GOOD_DESCRIPTOR["contracts"], "used": [contract_id]}}
+        expect_invalid(descriptor_schema, doc, f"hexagon.descriptor: contracts.used free-text {contract_id!r} (known-bad)")
+
     return 0
 
 

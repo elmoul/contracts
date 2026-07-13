@@ -16,6 +16,88 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.12.0 — 2026-07-13
+
+Breaking release, all three bindings: fulfills `conventions`' demand
+(`demands/fulfilled/conventions-20260713-descriptor-used-contracts-pattern-report.md`,
+`conventions-20260713-descriptor-used-contracts-pattern`) to pattern-constrain
+`hexagon.descriptor.json`'s `contracts.used` array items with a machine-readable
+contract-id shape.
+
+### schemas/control-plane/hexagon.descriptor.json (breaking)
+
+- **`contracts.used` items: `{type: string}` → `{type: string, pattern:
+  "^[a-z][a-z0-9]*([.-][a-z0-9]+)*$"}`.** A 2026-07-13 platform registry audit
+  found real free-text entries in the fleet (`sentinel-hub`: `"ai.request /
+  ai.response / ai.blocked"`; `publishing`: `"ai.preflight (blocked-response
+  shape only, via ai-gateway's 402)"`; others shaped like `"state.event
+  (activity.count)"`), which make the field's own stated purpose — the D015
+  rebuild set ("who consumes contract X") — mechanically unanswerable. The
+  pattern is the schema-side half of `conventions`' repo-side
+  `used-contracts-format` validator rule; the two are intentionally redundant
+  (the validator catches repos on an older contracts pin or repos `conventions`
+  never runs against; the schema catches every consumer, in every binding,
+  independent of whether the validator runs).
+- Verified the pattern accepts every real contract id in fleet use today
+  (`state.event`, `ai.preflight.request`, `build-command`, `registry.entry`,
+  `usage.event`, `state.event.activity.count`) and rejects all three audited
+  free-text forms above — see the new `GOOD_USED_CONTRACT_IDS` /
+  `BAD_USED_CONTRACT_IDS` cases in `tests/validate_control_plane.py`.
+
+**Owner ruling (recorded per the demand's acceptance criteria):** breaking, not
+additive. `sentinel-hub`'s and `publishing`'s existing non-conforming
+descriptors will fail validation against this schema — accepted, since the
+field is meaningless as a machine-readable rebuild-set input otherwise. Those
+two repos' `HEXAGON.md` frontmatter needs a follow-up fix once they re-pin;
+out of scope here (`contracts` doesn't reach into consumer repos).
+
+**Versioning:** bumped minor (0.11.0 → 0.12.0), not the major digit — this
+repo's own precedent (see v0.2.0 below) reserves an actual major-version bump
+for a `1.0.0` stability declaration, which is a separate decision from
+classifying a given change as breaking while the package sits at `0.y.z`. This
+release *is* the scenario that precedent flagged as the real trigger for that
+future 1.0 conversation (unlike v0.2.0's, this one has real fleet documents —
+not yet running code — that will fail validation), but declaring platform-wide
+`contracts` stability is a bigger decision than this demand asked for and is
+left to an explicit owner call, not inferred here.
+
+### Codegen — all three regenerated from the one schema change
+
+- **Java:** `mvn -B -f gen/java/pom.xml clean test` — `Contracts.java`
+  regenerated via the existing `control-plane` jsonschema2pojo execution (no
+  config changes needed). Confirmed (again — same as `functionalName`'s and
+  `decisions`' existing `pattern` constraints) that jsonschema2pojo 1.2.1 does
+  not emit a `@Pattern` annotation for this field even with
+  `useJakartaValidation=true`; the updated description is the only visible
+  diff in the generated class. No runtime enforcement change on the Java side.
+- **TypeScript:** regenerated `hexagon-descriptor.ts` via
+  `json-schema-to-typescript`, rebuilt `dist/` (D031 — committed, not
+  gitignored). `used: string[]` is unchanged type-wise — the tool doesn't
+  encode `pattern` into the type system, same as `functionalName`. Verified
+  with `tsc --noEmit --strict`.
+- **Python:** regenerated `platform_contracts/control_plane/hexagon_descriptor.py`
+  via `datamodel-codegen` (`--target-python-version 3.11
+  --use-specialized-enum`, matching this repo's `StrEnum` convention).
+  `Contracts.used` is now `list[constr(pattern=r'^[a-z][a-z0-9]*([.-][a-z0-9]+)*$')]`
+  — Python is the one binding that actually enforces the constraint at
+  parse/construction time, consistent with how `functionalName`/`decisions`
+  already behave. Verified with a `model_dump_json()` → `model_validate_json()`
+  round-trip and a rejected known-bad `used` entry.
+
+### tests/validate_control_plane.py
+
+Added `GOOD_USED_CONTRACT_IDS` (the six real ids from the demand's acceptance
+criteria) and `BAD_USED_CONTRACT_IDS` (the three audited free-text forms),
+each exercised against `hexagon.descriptor.json` via the existing
+`expect_valid`/`expect_invalid` helpers.
+
+### D031 acceptance — pending tag
+
+Not yet run: requires a pushed `v0.12.0` tag (Java fresh-`.m2` install, TS
+`file:`-dependency install already verifiable pre-tag, Python fresh-venv
+git-URL install). Per the standing invariant, no consumer should re-pin until
+this has run for real against the pushed tag.
+
 ## v0.11.0 — 2026-07-11
 
 Minor release, all three bindings: reconciles
