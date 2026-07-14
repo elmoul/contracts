@@ -338,3 +338,12 @@ Fulfillment session for `ai-gateway-20260714-contracts-skip-shape` (`to: [contra
 - Next step: none — this closes the D043 release-notification duty for v0.13.0; no further action expected on contracts' side.
 - Standing: D043 release checklist keeps working as designed — verify future releases still raise the origin demand and close loops this way.
 - Vault-sync: none
+
+## 2026-07-14 — Session 26 (worktree v0.13.0 for Python Docker build-contexts)
+
+Owner-dispatched: architect found `sentinel-hub` and `orchestrator` both still pinned to `contracts` v0.7.0 (python), which predates the additive `skipped` field (v0.13.0) — their pydantic `AiResponse` model has `extra='forbid'`, so any live `ai-gateway` call now 500s with `ValidationError: skipped Extra inputs are not permitted`. Their `docker-compose.local.yml` Python service builds point `additional_contexts` at `../contracts-worktrees/<tag>/gen/python`, so the v0.13.0 checkout had to exist before either repo could re-pin.
+
+- **State:** `git worktree add ../contracts-worktrees/v0.13.0 v0.13.0` — checkout at `a55cd9c` (tag v0.13.0), detached HEAD, matches the existing v0.3.0–v0.11.0 worktrees. Verified `gen/python/pyproject.toml` reads `version = "0.13.0"` and `gen/python/platform_contracts/ai_gateway/request.py`'s `AiResponse` carries the `skipped: bool | None = False` field plus `result`/`model`/`provider` as optional — matches the v0.13.0 CHANGELOG entry. Did not modify anything under `gen/`/`schemas/`; worktree creation produces no commit in the main repo (`git status` confirms working tree clean both before and after). Did not touch `sentinel-hub`, `orchestrator`, or `runtime` — those repos' own sessions re-pin and adopt.
+- **Next step:** `sentinel-hub` and `orchestrator` re-pin their Python `contracts` dependency to v0.13.0 (via the now-existing worktree's `gen/python`) and drop any workaround for the `skipped` field being unrecognized. Not this repo's action to take further.
+- **Standing:** Same as Session 21's note — worktrees are the established distribution mechanism for build-contexts (Java/Python Docker) and TS `file:` pins; add one per new consumed tag, never edit files inside a worktree.
+- **Vault-sync:** none — no schema/version change, no owner ruling, no port/layout change; a pure local-checkout operation enabling two other repos' own re-pin work.
