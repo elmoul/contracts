@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   BlockedResponse.JSON_PROPERTY_CEILING,
   BlockedResponse.JSON_PROPERTY_CONSUMED
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:41.969387100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-14T05:52:58.887587400+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class BlockedResponse {
   public static final String JSON_PROPERTY_REASON = "reason";
   @jakarta.annotation.Nonnull

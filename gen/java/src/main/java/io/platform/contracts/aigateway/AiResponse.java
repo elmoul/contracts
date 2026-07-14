@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * AiResponse
+ * The outcome of an ai.request call. Normally a completed call: result/model/provider are present and tokensIn/tokensOut/computedCost reflect real usage. When &#x60;skipped&#x60; is true, the call was intentionally omitted — Treasury pre-flight returned DOWNSHIFT for a capability whose ai.model-manifest CapabilityDeclaration declares &#x60;downshiftPolicy: skip&#x60; — rather than completed, downshifted-and-called, or blocked: result/model/provider are absent, tokensIn/tokensOut/computedCost are 0, and no usage.event is emitted on the Kafka side (no work was actually metered). Still a 200 response — &#x60;skipped&#x60; is the only new signal, no new status code. 
  */
 @JsonPropertyOrder({
   AiResponse.JSON_PROPERTY_RESULT,
@@ -34,20 +34,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   AiResponse.JSON_PROPERTY_PROVIDER,
   AiResponse.JSON_PROPERTY_TOKENS_IN,
   AiResponse.JSON_PROPERTY_TOKENS_OUT,
-  AiResponse.JSON_PROPERTY_COMPUTED_COST
+  AiResponse.JSON_PROPERTY_COMPUTED_COST,
+  AiResponse.JSON_PROPERTY_SKIPPED
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-02T05:22:41.969387100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-14T05:52:58.887587400+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AiResponse {
   public static final String JSON_PROPERTY_RESULT = "result";
-  @jakarta.annotation.Nonnull
+  @jakarta.annotation.Nullable
   private String result;
 
   public static final String JSON_PROPERTY_MODEL = "model";
-  @jakarta.annotation.Nonnull
+  @jakarta.annotation.Nullable
   private String model;
 
   public static final String JSON_PROPERTY_PROVIDER = "provider";
-  @jakarta.annotation.Nonnull
+  @jakarta.annotation.Nullable
   private String provider;
 
   public static final String JSON_PROPERTY_TOKENS_IN = "tokensIn";
@@ -62,81 +63,85 @@ public class AiResponse {
   @jakarta.annotation.Nonnull
   private BigDecimal computedCost;
 
+  public static final String JSON_PROPERTY_SKIPPED = "skipped";
+  @jakarta.annotation.Nullable
+  private Boolean skipped = false;
+
   public AiResponse() {
   }
 
-  public AiResponse result(@jakarta.annotation.Nonnull String result) {
+  public AiResponse result(@jakarta.annotation.Nullable String result) {
     
     this.result = result;
     return this;
   }
 
   /**
-   * The AI-generated response text
+   * The AI-generated response text. Absent when &#x60;skipped&#x60; is true.
    * @return result
    */
-  @jakarta.annotation.Nonnull
-  @JsonProperty(value = JSON_PROPERTY_RESULT, required = true)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_RESULT, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getResult() {
     return result;
   }
 
 
-  @JsonProperty(value = JSON_PROPERTY_RESULT, required = true)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setResult(@jakarta.annotation.Nonnull String result) {
+  @JsonProperty(value = JSON_PROPERTY_RESULT, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setResult(@jakarta.annotation.Nullable String result) {
     this.result = result;
   }
 
-  public AiResponse model(@jakarta.annotation.Nonnull String model) {
+  public AiResponse model(@jakarta.annotation.Nullable String model) {
     
     this.model = model;
     return this;
   }
 
   /**
-   * Actual model used — may differ from modelHint after downshift
+   * Actual model used — may differ from modelHint after downshift. Absent when &#x60;skipped&#x60; is true. 
    * @return model
    */
-  @jakarta.annotation.Nonnull
-  @JsonProperty(value = JSON_PROPERTY_MODEL, required = true)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_MODEL, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getModel() {
     return model;
   }
 
 
-  @JsonProperty(value = JSON_PROPERTY_MODEL, required = true)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setModel(@jakarta.annotation.Nonnull String model) {
+  @JsonProperty(value = JSON_PROPERTY_MODEL, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setModel(@jakarta.annotation.Nullable String model) {
     this.model = model;
   }
 
-  public AiResponse provider(@jakarta.annotation.Nonnull String provider) {
+  public AiResponse provider(@jakarta.annotation.Nullable String provider) {
     
     this.provider = provider;
     return this;
   }
 
   /**
-   * AI provider that handled this request
+   * AI provider that handled this request. Absent when &#x60;skipped&#x60; is true.
    * @return provider
    */
-  @jakarta.annotation.Nonnull
-  @JsonProperty(value = JSON_PROPERTY_PROVIDER, required = true)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_PROVIDER, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public String getProvider() {
     return provider;
   }
 
 
-  @JsonProperty(value = JSON_PROPERTY_PROVIDER, required = true)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setProvider(@jakarta.annotation.Nonnull String provider) {
+  @JsonProperty(value = JSON_PROPERTY_PROVIDER, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setProvider(@jakarta.annotation.Nullable String provider) {
     this.provider = provider;
   }
 
@@ -147,7 +152,7 @@ public class AiResponse {
   }
 
   /**
-   * Input tokens consumed
+   * Input tokens consumed. 0 when &#x60;skipped&#x60; is true.
    * minimum: 0
    * @return tokensIn
    */
@@ -173,7 +178,7 @@ public class AiResponse {
   }
 
   /**
-   * Output tokens produced
+   * Output tokens produced. 0 when &#x60;skipped&#x60; is true.
    * minimum: 0
    * @return tokensOut
    */
@@ -199,7 +204,7 @@ public class AiResponse {
   }
 
   /**
-   * Cost in USD for this call, as computed by the gateway
+   * Cost in USD for this call, as computed by the gateway. 0 when &#x60;skipped&#x60; is true.
    * minimum: 0
    * @return computedCost
    */
@@ -218,6 +223,31 @@ public class AiResponse {
     this.computedCost = computedCost;
   }
 
+  public AiResponse skipped(@jakarta.annotation.Nullable Boolean skipped) {
+    
+    this.skipped = skipped;
+    return this;
+  }
+
+  /**
+   * True when the gateway intentionally omitted the call (downshiftPolicy: skip on the requested capability — see ai.model-manifest). Absent or false means a normal completed call; existing consumers that never check this field see no behavior change. 
+   * @return skipped
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_SKIPPED, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean getSkipped() {
+    return skipped;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_SKIPPED, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSkipped(@jakarta.annotation.Nullable Boolean skipped) {
+    this.skipped = skipped;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -233,12 +263,13 @@ public class AiResponse {
         Objects.equals(this.provider, aiResponse.provider) &&
         Objects.equals(this.tokensIn, aiResponse.tokensIn) &&
         Objects.equals(this.tokensOut, aiResponse.tokensOut) &&
-        Objects.equals(this.computedCost, aiResponse.computedCost);
+        Objects.equals(this.computedCost, aiResponse.computedCost) &&
+        Objects.equals(this.skipped, aiResponse.skipped);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(result, model, provider, tokensIn, tokensOut, computedCost);
+    return Objects.hash(result, model, provider, tokensIn, tokensOut, computedCost, skipped);
   }
 
   @Override
@@ -251,6 +282,7 @@ public class AiResponse {
     sb.append("    tokensIn: ").append(toIndentedString(tokensIn)).append("\n");
     sb.append("    tokensOut: ").append(toIndentedString(tokensOut)).append("\n");
     sb.append("    computedCost: ").append(toIndentedString(computedCost)).append("\n");
+    sb.append("    skipped: ").append(toIndentedString(skipped)).append("\n");
     sb.append("}");
     return sb.toString();
   }

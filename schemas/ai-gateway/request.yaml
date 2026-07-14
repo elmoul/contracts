@@ -96,35 +96,51 @@ components:
 
     AiResponse:
       type: object
+      description: >
+        The outcome of an ai.request call. Normally a completed call: result/model/provider
+        are present and tokensIn/tokensOut/computedCost reflect real usage. When `skipped` is
+        true, the call was intentionally omitted — Treasury pre-flight returned DOWNSHIFT for a
+        capability whose ai.model-manifest CapabilityDeclaration declares
+        `downshiftPolicy: skip` — rather than completed, downshifted-and-called, or blocked:
+        result/model/provider are absent, tokensIn/tokensOut/computedCost are 0, and no
+        usage.event is emitted on the Kafka side (no work was actually metered). Still a 200
+        response — `skipped` is the only new signal, no new status code.
       required:
-        - result
-        - model
-        - provider
         - tokensIn
         - tokensOut
         - computedCost
       properties:
         result:
           type: string
-          description: The AI-generated response text
+          description: The AI-generated response text. Absent when `skipped` is true.
         model:
           type: string
-          description: Actual model used — may differ from modelHint after downshift
+          description: >
+            Actual model used — may differ from modelHint after downshift. Absent when
+            `skipped` is true.
         provider:
           type: string
-          description: AI provider that handled this request
+          description: AI provider that handled this request. Absent when `skipped` is true.
         tokensIn:
           type: integer
           minimum: 0
-          description: Input tokens consumed
+          description: Input tokens consumed. 0 when `skipped` is true.
         tokensOut:
           type: integer
           minimum: 0
-          description: Output tokens produced
+          description: Output tokens produced. 0 when `skipped` is true.
         computedCost:
           type: number
           minimum: 0
-          description: Cost in USD for this call, as computed by the gateway
+          description: Cost in USD for this call, as computed by the gateway. 0 when `skipped` is true.
+        skipped:
+          type: boolean
+          default: false
+          description: >
+            True when the gateway intentionally omitted the call (downshiftPolicy: skip on the
+            requested capability — see ai.model-manifest). Absent or false means a normal
+            completed call; existing consumers that never check this field see no behavior
+            change.
       additionalProperties: false
 
     BlockedResponse:

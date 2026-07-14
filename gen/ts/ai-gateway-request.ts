@@ -60,19 +60,25 @@ export interface components {
                 mimeType: string;
             }[];
         };
+        /** @description The outcome of an ai.request call. Normally a completed call: result/model/provider are present and tokensIn/tokensOut/computedCost reflect real usage. When `skipped` is true, the call was intentionally omitted — Treasury pre-flight returned DOWNSHIFT for a capability whose ai.model-manifest CapabilityDeclaration declares `downshiftPolicy: skip` — rather than completed, downshifted-and-called, or blocked: result/model/provider are absent, tokensIn/tokensOut/computedCost are 0, and no usage.event is emitted on the Kafka side (no work was actually metered). Still a 200 response — `skipped` is the only new signal, no new status code. */
         AiResponse: {
-            /** @description The AI-generated response text */
-            result: string;
-            /** @description Actual model used — may differ from modelHint after downshift */
-            model: string;
-            /** @description AI provider that handled this request */
-            provider: string;
-            /** @description Input tokens consumed */
+            /** @description The AI-generated response text. Absent when `skipped` is true. */
+            result?: string;
+            /** @description Actual model used — may differ from modelHint after downshift. Absent when `skipped` is true. */
+            model?: string;
+            /** @description AI provider that handled this request. Absent when `skipped` is true. */
+            provider?: string;
+            /** @description Input tokens consumed. 0 when `skipped` is true. */
             tokensIn: number;
-            /** @description Output tokens produced */
+            /** @description Output tokens produced. 0 when `skipped` is true. */
             tokensOut: number;
-            /** @description Cost in USD for this call, as computed by the gateway */
+            /** @description Cost in USD for this call, as computed by the gateway. 0 when `skipped` is true. */
             computedCost: number;
+            /**
+             * @description True when the gateway intentionally omitted the call (downshiftPolicy: skip on the requested capability — see ai.model-manifest). Absent or false means a normal completed call; existing consumers that never check this field see no behavior change.
+             * @default false
+             */
+            skipped: boolean;
         };
         /** @description Returned with HTTP 402 when Treasury blocks the request (D023). The reason field is always present — block state is never silent. */
         BlockedResponse: {

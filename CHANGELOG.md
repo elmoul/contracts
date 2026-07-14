@@ -16,6 +16,131 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.13.0 — 2026-07-14
+
+Additive release, all three bindings: fulfills `ai-gateway`'s demand
+(`demands/fulfilled/ai-gateway-20260714-contracts-skip-shape-report.md`,
+`ai-gateway-20260714-contracts-skip-shape`) — a shape for "call intentionally
+omitted" on `ai.response`.
+
+### schemas/ai-gateway/request.yaml — `AiResponse` (additive)
+
+`ai-gateway`'s `BrokerService.skippedResponse()` was overloading the completed-
+call shape with sentinel values (`model:"skipped"`, `provider:"none"`, zero
+tokens/cost) whenever Treasury's pre-flight returned `DOWNSHIFT` for a
+capability whose `ai.model-manifest` `CapabilityDeclaration.downshiftPolicy`
+is `skip` (v0.9.0+) — a documented stopgap, not a `contracts`-sanctioned shape.
+Applied the demand's own recommended shape verbatim (its owner-delegated
+ruling, 2026-07-14):
+
+- **New optional field `skipped: boolean` (default `false`).** `true` means
+  the gateway intentionally omitted the call; absent/`false` is a normal
+  completed call — an existing consumer that never reads this field sees no
+  behavior change.
+- **`result`, `model`, `provider` moved from required to optional** — absent
+  when `skipped` is `true` (documented in each field's description, not
+  schema-enforced — see below). `tokensIn`, `tokensOut`, `computedCost` stay
+  required, valued `0` on a skipped call; no `usage.event` is expected on the
+  Kafka side for a skipped call (no work was actually metered).
+- Still a 200 response — no new status code, no fourth `ai.preflight.response`
+  decision, per the demand's explicit rationale.
+
+**Not done: JSON Schema conditional-required (`if: {skipped: true} then:
+{not required: [result, ...]}`) to mechanically enforce "skipped implies
+result/model/provider absent."** Judged not worth the added schema complexity
+for what is fundamentally a producer-side convention (`ai-gateway` is the only
+producer); "moved to optional" already lets both shapes validate, which is
+the acceptance criterion the demand actually asked for. A future session can
+add the conditional if a consumer needs it schema-enforced rather than
+documented.
+
+**Versioning:** minor bump (0.12.0 → 0.13.0), not major. Same precedent as
+`v0.11.0`'s `summaryRef` required→optional: loosening a `required` array is a
+backward-compatible widening of the accepted set (every document that was
+valid before is still valid), unlike a removal/rename/new-required-field. The
+CHANGELOG's own major-bump criteria ("new required fields") isn't triggered
+here — `skipped` is optional and `result`/`model`/`provider` became *less*
+constrained, not more.
+
+### Codegen — all three regenerated from the one schema change
+
+- **Java:** regenerated `AiResponse.java`, `AiRequest.java`,
+  `AiRequestMediaInner.java`, `BlockedResponse.java` via the documented direct
+  `openapi-generator-cli` invocation (`--library resttemplate`, `-i
+  schemas/ai-gateway/request.yaml -g java ... -o gen/java`) — same command
+  `DEPLOYMENT.md` already prescribes for this OpenAPI document.
+  `result`/`model`/`provider` are now `@jakarta.annotation.Nullable` with
+  `required = false` / `JsonInclude.Include.USE_DEFAULTS` (was `@Nonnull`
+  /`required = true`/`Include.ALWAYS`); new `skipped` field defaults to
+  `Boolean.FALSE`. `PreflightRequest`/`PreflightResponse` (a separate schema
+  file) untouched. `mvn -B -f gen/java/pom.xml clean test` —
+  `BUILD SUCCESS`, `Tests run: 12, Failures: 0, Errors: 0` (no existing test
+  touches `AiResponse`, so this is a compile-correctness check, not a
+  behavior regression check — covered instead by the new
+  `tests/validate_ai_request.py` assertions, schema-level).
+- **TypeScript:** regenerated `ai-gateway-request.ts` via `openapi-typescript`,
+  rebuilt `dist/` (D031 — committed, not gitignored). `result`/`model`/
+  `provider` are now `?:` (optional); `skipped` came out as non-optional
+  `boolean` (not `skipped?:`) — `openapi-typescript` treats a field carrying a
+  JSON Schema `default` as always-present in the type (the default fills it
+  in), which is its documented convention elsewhere in this repo too, not a
+  regression. `npx tsc --noEmit --strict` clean. Also trued up
+  `gen/ts/package-lock.json`'s version fields (0.12.0 → 0.13.0, via `npm
+  install --package-lock-only`) as part of this release rather than leaving it
+  for a later hygiene pass (the leftover flagged since v0.10.0 was already
+  closed in the 2026-07-14 hygiene session; this keeps it current going
+  forward). `npm ci` clean, 0 vulnerabilities.
+- **Python:** regenerated `platform_contracts/ai_gateway/request.py` via
+  `datamodel-codegen --input-file-type openapi` (no enum in this schema, so
+  the `--use-specialized-enum`/`--target-python-version` flags don't apply
+  here). `result: str | None`, `model: str | None`, `provider: str | None`
+  (all default `None`); `skipped: bool | None` default `False`. `tokensIn`/
+  `tokensOut`/`computedCost` unchanged (still required, `Field(...)`).
+
+### tests/validate_ai_request.py
+
+Renamed in scope (was `AiRequest`-only, now also covers `AiResponse`). Added
+`GOOD_COMPLETED_RESPONSE` (result/model/provider present, `skipped` absent —
+proves the pre-existing completed-call shape still validates unchanged),
+`GOOD_SKIPPED_RESPONSE` (result/model/provider absent, tokens/cost zeroed,
+`skipped: true`), and `BAD_RESPONSE_MISSING_TOKENS_IN` (proves `tokensIn` is
+still genuinely required — the loosening only touched `result`/`model`/
+`provider`). Deliberately does *not* assert `skipped: true` + `result` present
+as invalid — that combination is schema-legal by design (see the "not done"
+note above); asserting it invalid would test a constraint the schema doesn't
+actually enforce.
+
+### D031 acceptance — post-tag, run for real, all three languages
+
+`v0.13.0` tagged and pushed; **post-tag D031 acceptance test run for real
+against the pushed tag, all three languages, no unverified leg:**
+
+- **Java:** fresh `git clone --branch v0.13.0` (independent of this working
+  tree), `mvn -B clean install -DskipTests` into a scratch `.m2` —
+  `BUILD SUCCESS`, installed `io.platform:contracts:0.13.0`. A second, fully
+  independent scratch Maven project depending on that coordinate compiled and
+  ran code constructing an `AiResponse` two ways — a completed call (all six
+  original fields set, `skipped` left null) and a skipped call
+  (`result`/`model`/`provider` left null, `tokensIn`/`tokensOut` `0`,
+  `computedCost` `BigDecimal.ZERO`, `skipped` `true`) — `BUILD SUCCESS`, both
+  objects printed and inspected.
+- **Python:** fresh venv, `pip install
+  "git+https://github.com/elmoul/contracts.git@v0.13.0#subdirectory=gen/python"`
+  — installed cleanly; constructed `AiResponse` both ways (completed and
+  skipped), round-tripped each (`model_dump_json()` →
+  `model_validate_json()`), and confirmed a document missing `tokensIn`
+  raises `ValidationError` against the installed package.
+- **TypeScript:** `file:`-dependency scratch project pointed at the tagged
+  checkout's committed `dist/`, importing `AiGatewayRequestComponents` and
+  constructing both response shapes; `tsc --noEmit --strict` clean. All
+  scratch clones/venvs/projects deleted after verification.
+
+### Toolchain reality
+
+Local Maven 3.9.16 + JDK 21, Node/npm, and the pre-provisioned `.venv` with
+`datamodel-code-generator` 0.68.1 all available this session — no unverified
+leg, same as sessions 19–22.
+
 ## v0.12.0 — 2026-07-13
 
 Breaking release, all three bindings: fulfills `conventions`' demand
