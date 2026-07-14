@@ -332,3 +332,9 @@ Fulfillment session for `ai-gateway-20260714-contracts-skip-shape` (`to: [contra
 - **Next step:** Both the fulfillment report and the re-pin demand await the owner's coordinator approval — not this session's action to take. `ai-gateway`'s next session (once approved) re-pins to v0.13.0 and swaps `BrokerService.skippedResponse()`'s sentinel-value stopgap for `skipped: true`, per both reports' "what we do once closed."
 - **Standing:** This is the template for D043 going forward — every future `contracts` tag now raises its origin demand (and, on a breaking release, the fleet-wide consumer demands) as part of the same session that cuts the tag, not a later audit.
 - **Vault-sync:** none — no owner ruling made, no spec contradiction, no repo/port layout change; a routine additive schema release plus its own repo's already-vault-recorded D043 duty. `contracts`' own CLAUDE.md/spec/HEXAGON.md needed no edits.
+
+## Session 25 — loop-close: ai-gateway repin+skip-shape demand satisfied
+- State: coordinator's `/satisfied/contracts` confirmed ai-gateway re-pinned to v0.13.0 and adopted `AiResponse.skipped` (all 4 acceptance criteria met, 87/87 tests green in ai-gateway per its fulfillment report); demand envelope archived to `demands/archive/2026-07-14-ai-gateway-repin-skip-shape.md`.
+- Next step: none — this closes the D043 release-notification duty for v0.13.0; no further action expected on contracts' side.
+- Standing: D043 release checklist keeps working as designed — verify future releases still raise the origin demand and close loops this way.
+- Vault-sync: none
