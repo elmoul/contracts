@@ -23,6 +23,7 @@ VALIDATORS = [
     "validate_state_event.py",
     "validate_demand.py",
     "validate_model_manifest.py",
+    "validate_ai_job.py",
     "check_state_event_sync.py",
 ]
 
