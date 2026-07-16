@@ -9,7 +9,10 @@
     { "$ref": "#/definitions/CostTickEvent" },
     { "$ref": "#/definitions/CiRunEvent" },
     { "$ref": "#/definitions/AppStatusEvent" },
-    { "$ref": "#/definitions/ActivityCountEvent" }
+    { "$ref": "#/definitions/ActivityCountEvent" },
+    { "$ref": "#/definitions/JobProgressEvent" },
+    { "$ref": "#/definitions/AgentRunEvent" },
+    { "$ref": "#/definitions/DesignMissionEvent" }
   ],
   "definitions": {
     "ComponentHealthEvent": {
@@ -272,6 +275,170 @@
           "type": "integer",
           "minimum": 0,
           "description": "Count of this activity SINCE THE LAST emission for this (componentId, activity) pair — a delta, not a cumulative total. Consumers aggregate across emissions."
+        }
+      }
+    },
+    "JobProgressEvent": {
+      "title": "JobProgressEvent",
+      "type": "object",
+      "required": ["type", "timestamp", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "job.progress" },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp when the event was produced"
+        },
+        "payload": { "$ref": "#/definitions/JobProgressPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
+      }
+    },
+    "JobProgressPayload": {
+      "title": "JobProgressPayload",
+      "description": "Emitted by media-generation for each job lifecycle transition (D047).",
+      "type": "object",
+      "required": ["jobId", "capability", "status", "queueDepth"],
+      "additionalProperties": false,
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Matches the jobId from the originating ai.job.request."
+        },
+        "capability": {
+          "type": "string",
+          "enum": ["text-to-image", "image-to-3d"],
+          "description": "The generation capability this job requests, same enum as ai.job.request's capability."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["queued", "admitted", "loading", "running", "succeeded", "failed", "cancelled"],
+          "description": "Current lifecycle status, same enum as ai.job.status's status."
+        },
+        "queueDepth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of jobs queued (including this one) at emission time."
+        },
+        "progressPct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Best-effort completion percentage while running. Absent when not meaningful (e.g. still queued)."
+        },
+        "vramFreeMb": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Free VRAM in megabytes at emission time (admission headroom; the overflow tell)."
+        }
+      }
+    },
+    "AgentRunEvent": {
+      "title": "AgentRunEvent",
+      "type": "object",
+      "required": ["type", "timestamp", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "agent.run" },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp when the event was produced"
+        },
+        "payload": { "$ref": "#/definitions/AgentRunPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
+      }
+    },
+    "AgentRunPayload": {
+      "title": "AgentRunPayload",
+      "description": "Emitted by agent-runner for each dispatched Claude Code session's lifecycle transition (D048).",
+      "type": "object",
+      "required": ["runId", "repo", "phase"],
+      "additionalProperties": false,
+      "properties": {
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this run, from agent-runner's own ledger."
+        },
+        "repo": {
+          "type": "string",
+          "description": "Functional name (D002) of the repo the session ran in.",
+          "pattern": "^[a-z][a-z0-9-]+$",
+          "examples": ["media-generation", "design-studio"]
+        },
+        "demandId": {
+          "type": "string",
+          "description": "The id of the demand this session was dispatched to fulfill (same shape as demand.id / demand.fulfillment's demandId). Absent for owner-commissioned sessions not tied to a specific demand.",
+          "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$",
+          "examples": ["demand-coordinator-20260709-demand-schema"]
+        },
+        "phase": {
+          "type": "string",
+          "enum": ["launched", "finished", "failed", "stopped"],
+          "description": "Lifecycle phase of the dispatched session."
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Wall-clock session duration in milliseconds. Present on finished/failed/stopped, absent on launched."
+        },
+        "tokensUsed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total tokens consumed by the session so far, parsed from Claude Code's JSON output."
+        }
+      }
+    },
+    "DesignMissionEvent": {
+      "title": "DesignMissionEvent",
+      "type": "object",
+      "required": ["type", "timestamp", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "design.mission" },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp when the event was produced"
+        },
+        "payload": { "$ref": "#/definitions/DesignMissionPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
+      }
+    },
+    "DesignMissionPayload": {
+      "title": "DesignMissionPayload",
+      "description": "Emitted by design-studio for each mission stage/gate transition (D051).",
+      "type": "object",
+      "required": ["missionId", "targetRepo", "regime", "stage"],
+      "additionalProperties": false,
+      "properties": {
+        "missionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this mission, from design-studio's own ledger."
+        },
+        "targetRepo": {
+          "type": "string",
+          "description": "Functional name (D002) of the hexagon this mission designs for.",
+          "pattern": "^[a-z][a-z0-9-]+$",
+          "examples": ["dashboard", "portfolio"]
+        },
+        "regime": {
+          "type": "string",
+          "enum": ["console-class", "inhabited-class"],
+          "description": "Which design regime/checklist this mission is gated by (D053): D036 information-first console law, or the Inhabited Interface doctrine."
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["harvest", "interview", "brief", "theme-gate", "coverage-gate", "plan-gate", "executing", "feel-gate", "closed"],
+          "description": "Current stage of the mission state machine."
+        },
+        "gateOutcome": {
+          "type": "string",
+          "enum": ["approved", "rejected"],
+          "description": "Owner's recorded decision, present when this event reports a gate outcome."
         }
       }
     },
