@@ -6,34 +6,45 @@
 
 ## Current state (as of 2026-07-16)
 
-- **v0.13.0 is current** (tagged 2026-07-14): additive optional `skipped`
-  field on `AiResponse` (`schemas/ai-gateway/request.yaml`); `result`/
-  `model`/`provider` moved required → optional, absent when `skipped` is
-  `true`. Fulfills ai-gateway's demand
-  (`ai-gateway-20260714-contracts-skip-shape`).
-- All three language bindings (Java/TS/Python) regenerated for v0.13.0; D031
-  post-tag acceptance re-verified clean on all three, no unverified leg.
-- Live build-context worktrees: `../contracts-worktrees/{v0.7.0,v0.11.0,v0.13.0}`.
-  Older worktrees (v0.3.0-v0.6.2) were pruned 2026-07-16 as part of the
-  platform-wide cleanup wave; their git tags are untouched and still
-  resolvable.
-- **D043 release-notification duty** — first exercised on v0.13.0: origin
-  re-pin demand raised to ai-gateway (`contracts-20260714-ai-gateway-repin-skip-shape`)
-  and archived to `demands/archive/` per the coordinator's `/satisfied/contracts`
-  (see Session 25 below). **Flagged discrepancy:** `platform-vault/PLATFORM_STATE.md`
-  (refreshed through 2026-07-15) still records ai-gateway's own Java pin at
-  v0.11.0 with the v0.13.0 re-pin "not yet adopted" — the coordinator's
-  satisfied-signal and ai-gateway's actual repo state disagree. Not
-  adjudicated here; flagging for owner/vault reconciliation.
-- **Real-world lesson from this release:** an additive schema change can still
-  break strict-pydantic (`extra='forbid'`) Python consumers pinned to an older
-  tag — sentinel-hub and orchestrator both hit live 500s on 2026-07-14 until
-  re-pinned to v0.13.0 (Session 26 below; also recorded in the platform
-  vault's late-evening addendum the same date).
-- `demands/` currently holds: `README.md`, `archive/` (one closed-loop
-  demand), `fulfilled/` (seven reports, most still awaiting demand-coordinator
-  owner approval) — clean resting state, nothing stale (structural audit was
-  Session 23, archived; counts here re-checked 2026-07-16).
+- **v0.14.0 is current** (tagged 2026-07-16): Wave 6 "Media & Agents"
+  dependency-root release (`docs/MEDIA_AGENTS_WAVE_PACK.md` §5.1,
+  D047/D048/D051/D053) — new `schemas/ai-gateway/job.yaml`
+  (`ai.job.request`/`ai.job.status`) and three new `state.event` payload
+  types (`job.progress`, `agent.run`, `design.mission`). Full detail in
+  CHANGELOG.md; see Session 27 below for the release session itself.
+- All three language bindings regenerated for v0.14.0. D031 acceptance this
+  session covered **Java only** — fresh `.m2` install from the tagged
+  worktree, jar contents inspected directly (`jar tf`) to confirm the new
+  classes actually shipped, not just a green `BUILD SUCCESS` — matching the
+  wave's own W1 gate ("tag + one consumer pin proven"). TypeScript/Python
+  D031 acceptance were **not** independently re-run this release — flagged
+  as an open leg in both CHANGELOG.md and Session 27 below.
+- Live build-context worktrees:
+  `../contracts-worktrees/{v0.7.0,v0.11.0,v0.13.0,v0.14.0}`. Older worktrees
+  (v0.3.0-v0.6.2) were pruned 2026-07-16 as part of the platform-wide
+  cleanup wave; their git tags are untouched and still resolvable.
+- **D043 release-notification duty — exercised a second time (v0.14.0), and
+  for the first time with no single downstream-consumer origin to re-pin.**
+  v0.13.0 fulfilled `ai-gateway`'s own filed demand, so the origin was
+  obvious. v0.14.0 is a wave-commissioned dependency-root release (the ask
+  is wave pack §5.1 prose, landed via `platform-vault`'s own W0 session, not
+  a demand filed from any one consumer's outbox) — `ai-gateway`,
+  `state-feed`, and `dashboard` are all just wave-scheduled consumers
+  (§5.2/§5.6), none of them "the origin" any more than the others. Raised
+  `demands/2026-07-16-platform-vault-w1-gate.md`
+  (`contracts-20260716-platform-vault-w1-gate`, `to: [platform-vault]`,
+  `needs-owner: true`) instead — closes the W1 gate back to the wave's
+  landing session and explicitly flags the origin-identification ambiguity
+  for an owner ruling, rather than raising the fleet-wide re-pin demands a
+  literal reading of the release brief pointed at (which D043 forbids for
+  an additive release — "no fleet-wide everyone-bump"). See Session 27.
+- `demands/` now holds: `README.md`, `archive/` (one closed-loop demand),
+  `fulfilled/` (seven reports), and one new **open** demand
+  (`2026-07-16-platform-vault-w1-gate.md`) awaiting the coordinator/owner.
+- **Still standing from v0.13.0, unresolved:** the ai-gateway Java-pin
+  register/actual-state discrepancy flagged 2026-07-15 (below), and the
+  additive-schema-vs-strict-pydantic lesson from the same release (Session
+  26 below) — neither is this session's to adjudicate.
 
 ## 2026-07-14 — Session 24 (v0.13.0 — ai.response `skipped` field, fulfilling ai-gateway's demand)
 
@@ -82,3 +93,89 @@ Owner-dispatched: architect found `sentinel-hub` and `orchestrator` both still p
 - **Vault-sync:** none — no owner ruling, no schema/version/port change, no
   cross-repo-visible artifact moved (PROGRESS/CHANGELOG reorganization is
   internal to this repo's own docs).
+
+## 2026-07-16 — Session 27 (v0.14.0 — Wave 6 job envelope + 3 state-event types; batch C release finalization)
+
+Release-finalization session for Wave 6 "Media & Agents" W1
+(`docs/MEDIA_AGENTS_WAVE_PACK.md` §5.1, D047/D048/D051/D053). Batches A+B
+(schema authoring, the D023 error-required-on-failed amendment, all three
+binding regens, test coverage — commits `c400f53`..`a4a9f02`) landed earlier
+the same day; this session did the release mechanics only: version bump,
+CHANGELOG, tag, worktree, `.m2` install, and the D043 duty.
+
+- **State:** Version bumped 0.13.0 → 0.14.0 across `gen/java/pom.xml`,
+  `gen/ts/package.json`, `gen/ts/package-lock.json` (both version fields —
+  continuing the v0.13.0 precedent of trueing this file up),
+  `gen/python/pyproject.toml`. `CHANGELOG.md` v0.14.0 entry added, written
+  from the actual diffs (`git show` on all 7 pending commits, the raw
+  `schemas/ai-gateway/job.yaml` and `schemas/state-feed/state.event.json`
+  content), not transcribed from a summary — every claim in it
+  (BUILD SUCCESS/12 tests, zero `com.google.gson` imports, "all validators
+  passed", the 5-enum StrEnum conversion by name) was independently
+  re-verified this session: `./.venv/Scripts/python.exe tests/run_all.py`
+  (repo's own pre-provisioned venv — the global toolchain's `python312` is
+  missing `pyyaml`, flagged for whoever next needs it), `mvn -B -f
+  gen/java/pom.xml clean test` (BUILD SUCCESS, 12/12), `grep -rl
+  com.google.gson gen/java/src` (zero hits). Committed as `3a210cf`
+  ("release: v0.14.0 ..."). Tagged `v0.14.0` on that commit. Worktree
+  `../contracts-worktrees/v0.14.0` created (D042 mechanism), confirmed
+  `<version>0.14.0</version>`. `mvn -f
+  .../contracts-worktrees/v0.14.0/gen/java/pom.xml clean install
+  -DskipTests`: BUILD SUCCESS, installed to
+  `~/.m2/repository/io/platform/contracts/0.14.0/`; contents verified with
+  `jar tf` — `AiJobRequest`, `AiJobStatus`, `JobProgressEvent`,
+  `AgentRunEvent`, `DesignMissionEvent` (+ nested enums) all actually
+  present, not just a green build (this repo's own v0.9.0 history has a
+  BUILD-SUCCESS-but-empty-stub precedent). This satisfies the wave's W1
+  gate, "tag + one consumer pin proven" (`MEDIA_AGENTS_WAVE_PACK.md` §6).
+  TypeScript/Python D031 acceptance (`file:` scratch project; fresh-venv
+  git-URL install) were **not** run this session — out of the scope this
+  release's own instructions set for STEP 2, and arguably consistent with
+  the wave's "one consumer" framing, but flagged rather than silently
+  assumed covered.
+- **D043 duty — the one deliberate deviation from this session's own initial
+  brief, flagged in full:** the release brief this session started from
+  asked for a single demand file that nonetheless targeted three consumers
+  with explicit sequencing (`state-feed` first, then `dashboard`, then
+  `ai-gateway`) plus notes on `media-generation`/`agent-runner`/
+  `design-studio` and the Python hub repos — a fleet-wide fan-out. Cross-
+  checked against `CLAUDE.md`'s actual "Release checklist (per tag) — D043"
+  section, `DEPLOYMENT.md`'s numbered step 6, `PLATFORM_DECISIONS.md`'s D043
+  entry itself, and the fulfillment report that put the checklist in place
+  (`demands/fulfilled/platform-vault-20260713-contracts-release-notification-duty-report.md`)
+  — all four independently agree: **an additive release raises exactly one
+  demand, to the origin, and explicitly not a fleet-wide "everyone bump."**
+  v0.14.0 is additive. Further cross-checked
+  `docs/MEDIA_AGENTS_WAVE_PACK.md` §5 and found `ai-gateway`'s (§5.2) and
+  `state-feed`/`dashboard`'s (§5.6) re-pins are each already the wave pack's
+  **own separately-scheduled demand**, due at their own later wave turn
+  (W5, W7) — not something W1 should pre-empt. Followed the real checklist
+  instead of the literal brief: raised exactly one demand,
+  `demands/2026-07-16-platform-vault-w1-gate.md`
+  (`contracts-20260716-platform-vault-w1-gate`, `to: [platform-vault]`,
+  `needs-owner: true` — flags the origin-identification judgment call itself
+  for a ruling, since D043 was never tested against a dependency-root
+  release with no single filed origin demand behind it). Frontmatter
+  validated for real against `schemas/demand-coordinator/demand.json`
+  (`jsonschema` 4.26.0, Draft 2020-12) before committing — passes. Committed
+  standalone as `aa183a3` ("chore(demands): raise D043 release-notification
+  demand to platform-vault (v0.14.0)"), per `DEMAND_SYSTEM.md` §3.
+- **Pushed:** `git push origin main --tags` — `ad985bc..aa183a3 main -> main`
+  plus new tag `v0.14.0`. Verified no other local tag was pushed
+  incidentally (`git ls-remote --tags origin` diffed against local `git tag
+  -l` first — v0.1.0-v0.13.0 already matched remote). Post-push: `git
+  status` clean, up to date with `origin/main`, 0 ahead/0 behind.
+- **Next step:** Awaiting the coordinator/owner on
+  `contracts-20260716-platform-vault-w1-gate` — both its stated acceptance
+  criteria and its `needs-owner: true` origin-identification question.
+  `ai-gateway` (W5) and `state-feed`+`dashboard` (W7) own their own re-pins
+  next, per the wave pack, not a contracts follow-up.
+- **Standing:** When a release's own brief and this repo's actual D043
+  checklist disagree, the checklist wins — this is the second time that's
+  been true this repo's history (see Session 24's owner-ruling-conflict note
+  for the first). D043's "the origin" is well-defined for a
+  demand-fulfillment release; it is *not* yet well-defined for a
+  wave-commissioned dependency-root release — that gap is now flagged
+  in-band (this demand's `needs-owner: true`) rather than quietly resolved
+  by guessing.
+- **Vault-sync:** demand raised contracts-20260716-platform-vault-w1-gate.
