@@ -16,6 +16,160 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.14.0 — 2026-07-16
+
+Additive release, all three bindings: Wave 6 "Media & Agents" dependency-root
+release (`docs/MEDIA_AGENTS_WAVE_PACK.md` §5.1, decisions D047/D048/D051/D053)
+— per the wave's own build plan, nothing else in the pack builds until this
+tag lands (§6, gate W1: "tag + one consumer pin proven"). New async job
+envelope for `ai-gateway` → `media-generation` generation calls, plus three
+new `state.event` payload types for the wave's three new hexagons
+(`media-generation`, `agent-runner`, `design-studio`), none of which exist as
+repos yet.
+
+### schemas/ai-gateway/job.yaml — `ai.job.request` / `ai.job.status` (new group)
+
+New OpenAPI 3.1 document, `POST /ai/jobs` (submit, 202) / `GET /ai/jobs/{id}`
+(poll), mirroring `request.yaml`'s existing shape:
+
+- **`AiJobRequest`** — `jobId` (caller-generated UUID, for polling/correlating
+  before the 202 returns), `appId` (D002 functional-name pattern; hub-side
+  callers like `design-studio`/`agent-runner` identify the same way as apps —
+  no separate class taxonomy), `capability` (`text-to-image` | `image-to-3d`;
+  `video` deliberately excluded, no model/spec commitment yet per
+  `spec-media-generation.md` §8), `input` (`prompt`/`imageRef`, both optional
+  at the schema level — which one is meaningful depends on `capability`;
+  `media-generation` cross-checks the combination, this schema does not),
+  `params` (permissive object, same idiom as `connector.invoke.request`'s
+  `params` — the capability adapter validates its own shape), `jobClass`
+  (`interactive` | `batch`, the night-window policy named in the wave pack's
+  §5.7 `conventions` brief). All six required.
+- **`AiJobStatus`** — `jobId`, `status` (7-value lifecycle enum:
+  `queued|admitted|loading|running|succeeded|failed|cancelled`),
+  `progressPct`, `resultRefs[]`, `error` (`$ref JobError`), `usage` (`$ref
+  JobUsage`), `submittedAt` (required), `startedAt`, `finishedAt` — flat
+  sibling timestamp fields per the existing `CiRunPayload` idiom, not a
+  nested `timestamps` object. **`error` is conditionally required when
+  `status: failed`** (JSON Schema `if`/`then`, added same release — mirrors
+  `preflight.yaml`'s `PreflightResponse` if/then for `block`, D023's "never
+  silent" pattern applied to job failures). `JobError` requires `code` +
+  `message`; `JobUsage` (`durationMs`, `vramPeakMb`) is best-effort, may be
+  partially populated on a job that failed mid-run.
+- Routes through `ai-gateway` per D022 (unchanged — no direct
+  `media-generation` calls); local GPU jobs meter at **$0** (D047).
+
+### state.event — three new payload types (additive `oneOf` members, 6 → 9)
+
+Same envelope idiom as the existing six (`type`/`timestamp`/`payload`
+required, `origin` optional, `additionalProperties: false`); mirrored into
+`state-event-java.yaml` so both files stay structurally identical
+(`tests/check_state_event_sync.py`: 9 event types in sync).
+
+- **`job.progress`** (D047, emitted by `media-generation`): `jobId`,
+  `capability`, `status` (same two enums as `ai.job.*`), `queueDepth`
+  (required), `progressPct?`, `vramFreeMb?` — VRAM headroom at emission time
+  ("the overflow tell" per D047's rationale, citing the 2026-07-11
+  texture-stage VRAM-overflow incident).
+- **`agent.run`** (D048, emitted by `agent-runner`): `runId`, `repo` (D002
+  functional-name pattern), `demandId?` (same pattern as `demand.id` —
+  absent for owner-commissioned sessions not tied to a demand), `phase`
+  (`launched|finished|failed|stopped`, required), `durationMs?`,
+  `tokensUsed?` (parsed from Claude Code's JSON output).
+- **`design.mission`** (D051, emitted by `design-studio`): `missionId`,
+  `targetRepo` (D002 pattern), `regime` (`console-class|inhabited-class` —
+  D053's two-regime custodianship, verbatim), `stage` (9-value mission
+  state-machine enum, `harvest` → ... → `closed`, required), `gateOutcome?`
+  (`approved|rejected`, present only when the event reports a gate).
+
+**The documented re-pin trap applies here** (this repo's `oneOf` is a strict
+union): a consumer with a strict validator pinned to a pre-v0.14.0 tag
+rejects all three new `type` values as unknown. Per the wave pack §5.6,
+`state-feed` re-pins **before** any producer emits them — `media-generation`,
+`agent-runner`, and `design-studio` don't exist as repos yet, so nothing
+emits today, but the re-pin-first ordering is load-bearing once they do.
+`dashboard`'s own re-pin (to render `job.progress`/`agent.run`/
+`design.mission`) is likewise its own separately-scheduled demand (wave pack
+§5.6), not raised by this release — see the D043 demand note below.
+
+### Codegen — all three regenerated
+
+- **Java:** `openapi-generator-cli` 7.23.0, `--library resttemplate`
+  (Jackson; confirmed zero `com.google.gson` imports). New
+  `io.platform.contracts.aigateway`: `AiJobRequest`, `AiJobRequestInput`,
+  `AiJobStatus`, `JobError`, `JobUsage`. New `io.platform.contracts.events`:
+  `JobProgressEvent`/`Payload`, `AgentRunEvent`/`Payload`,
+  `DesignMissionEvent`/`Payload`; the 12 pre-existing classes in that package
+  pick up only a refreshed `@Generated` timestamp — no functional change.
+  `AiJobStatus`'s `error`-required-when-`failed` if/then isn't surfaced as a
+  Java annotation (same precedent as `PreflightResponse`'s
+  `reason`/`decision:block`) — stays `@Nullable`/`required=false`;
+  enforcement is JSON-Schema-level only. `mvn -f gen/java/pom.xml clean test`:
+  BUILD SUCCESS, 12/12.
+- **TypeScript:** `json-schema-to-typescript` for `state-event.ts` (3 new
+  interfaces, existing 6 untouched); `openapi-typescript` for the new
+  `ai-gateway-job.ts` (same paths/components shape as the existing
+  `ai-gateway-request.ts`/`ai-gateway-preflight.ts` siblings). Re-exported
+  from `index.ts`; `dist/` rebuilt (`npm run build`). `npx tsc --noEmit`
+  clean (`tsconfig.json`'s `strict: true` inherited). **Flagged, not fixed
+  here:** `json-schema-to-typescript`/`openapi-typescript` are still unpinned
+  in `gen/ts/package.json` (only `typescript` itself is) — this run resolved
+  `openapi-typescript` 7.13.0 fresh via `npx`; a pre-existing gap, not
+  introduced by this release (future demand candidate per the wave pack's own
+  ledger, not this wave).
+- **Python:** `datamodel-codegen --target-python-version 3.11
+  --use-specialized-enum` (the two load-bearing flags per `DEPLOYMENT.md` —
+  installed `datamodel-code-generator` 0.68.1 emits plain `Enum` without
+  them). New `platform_contracts/ai_gateway/job.py`
+  (`AiJobRequest`/`AiJobRequestInput`/`AiJobStatus`/`JobError`/`JobUsage`),
+  wired into `platform_contracts/__init__.py`. **Regen side-effect on
+  `state_event.py`, noted rather than avoided:** regenerating with the two
+  flags converted its **five pre-existing enums** (`Status`, `Phase`,
+  `Conclusion`, `Status1`, `Origin`) from plain `Enum` to `StrEnum`, in
+  addition to the six new ones (`Capability`, `Status2`, `Phase1`, `Regime`,
+  `Stage`, `GateOutcome`) coming out correctly as `StrEnum` from the start.
+  This brings the file in line with `DEPLOYMENT.md`'s stated repo-wide
+  convention ("every generated `Status`/`Level`/`Env`-style enum in this repo
+  is `StrEnum`") — it had silently drifted to plain `Enum` since its last
+  regen. **Behaviorally additive, not a break:** a `StrEnum` member compares
+  equal to its plain-string value and serializes identically, so existing
+  `== "value"` comparisons and JSON round-trips are unaffected (confirmed by
+  hand this session); the one consumer-visible change is that
+  `isinstance(x, str)` now also returns `True` for these members, which no
+  test in this repo relies on being `False`. Other pre-existing plain-`Enum`
+  files with the same legacy drift (`ai_gateway/preflight.py`,
+  `app/health.py`, `app/manifest.py`, `ci_runner/build_result.py`,
+  `connector/connector_invoke_response.py`,
+  `connector/connector_vocabulary.py`) are **left untouched** — their schemas
+  didn't change this release, so regenerating them was out of scope; flagged
+  here so a future session doesn't "fix" them as a surprise mid-release.
+
+Added `tests/validate_ai_job.py` (`AiJobRequest` text-to-image + image-to-3d
+known-good; missing `jobClass`, unknown `capability`, unexpected `input`
+property, and `status: failed` with no `error` known-bad; `AiJobStatus`
+queued-minimal/succeeded-full/failed-with-error known-good). Extended
+`tests/validate_state_event.py` with valid+invalid cases for `job.progress`,
+`agent.run`, and `design.mission`, matching the existing density. Both wired
+into `tests/run_all.py`; full suite green (`python tests/run_all.py`).
+
+**Versioning:** minor bump (0.13.0 → 0.14.0) — a new schema group, three new
+additive `oneOf` members, and a conditionally-required field on a
+same-release-new schema (no prior `AiJobStatus` consumer exists to break).
+
+**D031 acceptance — Java only this release, per the wave's own W1 gate**
+("tag + **one** consumer pin proven", `MEDIA_AGENTS_WAVE_PACK.md` §6): fresh
+`.m2` install from the tagged worktree verified (below) — the binding
+`ai-gateway` needs for its own W5 session. TypeScript (`file:` scratch
+project) and Python (fresh venv, git-URL install) D031 acceptance were **not**
+independently re-run this release — flagged so whichever session needs those
+bindings next (`dashboard`, hub consumers) knows the leg is still open,
+rather than assuming it was covered here.
+
+**Found during this release, not actioned (wave pack's own deferral):**
+`contracts`' CI does not regenerate-and-diff `gen/` vs `schemas/` (CON-1's
+regen-drift guard remains a hand-verified invariant); `gen/ts` codegen tools
+remain unpinned in `package.json`. Both pre-exist this release and are
+recorded as a future demand candidate, not fixed here.
+
 ## v0.13.0 — 2026-07-14
 
 Additive release, all three bindings: fulfills `ai-gateway`'s demand
