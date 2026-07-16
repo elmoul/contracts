@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   ActivityCountEvent.JSON_PROPERTY_PAYLOAD,
   ActivityCountEvent.JSON_PROPERTY_ORIGIN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-05T03:05:37.875350100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-16T11:05:53.385113100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class ActivityCountEvent {
   /**
    * Discriminator value — always \&quot;activity.count\&quot;

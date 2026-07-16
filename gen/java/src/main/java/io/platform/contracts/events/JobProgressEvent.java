@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.platform.contracts.events.ComponentHealthPayload;
+import io.platform.contracts.events.JobProgressPayload;
 import io.platform.contracts.events.Origin;
 import java.time.OffsetDateTime;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -28,21 +28,21 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * ComponentHealthEvent
+ * JobProgressEvent
  */
 @JsonPropertyOrder({
-  ComponentHealthEvent.JSON_PROPERTY_TYPE,
-  ComponentHealthEvent.JSON_PROPERTY_TIMESTAMP,
-  ComponentHealthEvent.JSON_PROPERTY_PAYLOAD,
-  ComponentHealthEvent.JSON_PROPERTY_ORIGIN
+  JobProgressEvent.JSON_PROPERTY_TYPE,
+  JobProgressEvent.JSON_PROPERTY_TIMESTAMP,
+  JobProgressEvent.JSON_PROPERTY_PAYLOAD,
+  JobProgressEvent.JSON_PROPERTY_ORIGIN
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-16T11:05:53.385113100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
-public class ComponentHealthEvent {
+public class JobProgressEvent {
   /**
-   * Discriminator value — always \&quot;component.health\&quot;
+   * Discriminator value — always \&quot;job.progress\&quot;
    */
   public enum TypeEnum {
-    COMPONENT_HEALTH(String.valueOf("component.health"));
+    JOB_PROGRESS(String.valueOf("job.progress"));
 
     private String value;
 
@@ -81,23 +81,23 @@ public class ComponentHealthEvent {
 
   public static final String JSON_PROPERTY_PAYLOAD = "payload";
   @jakarta.annotation.Nonnull
-  private ComponentHealthPayload payload;
+  private JobProgressPayload payload;
 
   public static final String JSON_PROPERTY_ORIGIN = "origin";
   @jakarta.annotation.Nullable
   private Origin origin;
 
-  public ComponentHealthEvent() {
+  public JobProgressEvent() {
   }
 
-  public ComponentHealthEvent type(@jakarta.annotation.Nonnull TypeEnum type) {
+  public JobProgressEvent type(@jakarta.annotation.Nonnull TypeEnum type) {
     
     this.type = type;
     return this;
   }
 
   /**
-   * Discriminator value — always \&quot;component.health\&quot;
+   * Discriminator value — always \&quot;job.progress\&quot;
    * @return type
    */
   @jakarta.annotation.Nonnull
@@ -115,7 +115,7 @@ public class ComponentHealthEvent {
     this.type = type;
   }
 
-  public ComponentHealthEvent timestamp(@jakarta.annotation.Nonnull OffsetDateTime timestamp) {
+  public JobProgressEvent timestamp(@jakarta.annotation.Nonnull OffsetDateTime timestamp) {
     
     this.timestamp = timestamp;
     return this;
@@ -140,7 +140,7 @@ public class ComponentHealthEvent {
     this.timestamp = timestamp;
   }
 
-  public ComponentHealthEvent payload(@jakarta.annotation.Nonnull ComponentHealthPayload payload) {
+  public JobProgressEvent payload(@jakarta.annotation.Nonnull JobProgressPayload payload) {
     
     this.payload = payload;
     return this;
@@ -154,18 +154,18 @@ public class ComponentHealthEvent {
   @JsonProperty(value = JSON_PROPERTY_PAYLOAD, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public ComponentHealthPayload getPayload() {
+  public JobProgressPayload getPayload() {
     return payload;
   }
 
 
   @JsonProperty(value = JSON_PROPERTY_PAYLOAD, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setPayload(@jakarta.annotation.Nonnull ComponentHealthPayload payload) {
+  public void setPayload(@jakarta.annotation.Nonnull JobProgressPayload payload) {
     this.payload = payload;
   }
 
-  public ComponentHealthEvent origin(@jakarta.annotation.Nullable Origin origin) {
+  public JobProgressEvent origin(@jakarta.annotation.Nullable Origin origin) {
     
     this.origin = origin;
     return this;
@@ -199,11 +199,11 @@ public class ComponentHealthEvent {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ComponentHealthEvent componentHealthEvent = (ComponentHealthEvent) o;
-    return Objects.equals(this.type, componentHealthEvent.type) &&
-        Objects.equals(this.timestamp, componentHealthEvent.timestamp) &&
-        Objects.equals(this.payload, componentHealthEvent.payload) &&
-        Objects.equals(this.origin, componentHealthEvent.origin);
+    JobProgressEvent jobProgressEvent = (JobProgressEvent) o;
+    return Objects.equals(this.type, jobProgressEvent.type) &&
+        Objects.equals(this.timestamp, jobProgressEvent.timestamp) &&
+        Objects.equals(this.payload, jobProgressEvent.payload) &&
+        Objects.equals(this.origin, jobProgressEvent.origin);
   }
 
   @Override
@@ -214,7 +214,7 @@ public class ComponentHealthEvent {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ComponentHealthEvent {\n");
+    sb.append("class JobProgressEvent {\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("    payload: ").append(toIndentedString(payload)).append("\n");
