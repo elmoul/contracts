@@ -15,13 +15,20 @@ jobClass (known-bad, required field), an unknown capability enum value
 input's additionalProperties: false).
 
 AiJobStatus coverage: a freshly-queued status carrying only the required
-fields (known-good, proves progressPct/resultRefs/error/usage/startedAt/
-finishedAt are all truly optional), a succeeded status with resultRefs +
-usage + full timestamps (known-good), a failed status with a populated error
-(known-good), a missing required submittedAt (known-bad), an unknown status
-enum value (known-bad), an out-of-range progressPct (known-bad), and an
-error object missing its required `message` (known-bad, proves JobError's own
-required fields).
+fields (known-good, proves progressPct/resultRefs/usage/startedAt/finishedAt
+are all truly optional, and that `error` is optional outside status=failed),
+a succeeded status with resultRefs + usage + full timestamps (known-good), a
+failed status with a populated error (known-good), a missing required
+submittedAt (known-bad), an unknown status enum value (known-bad), an
+out-of-range progressPct (known-bad), and an error object missing its
+required `message` (known-bad, proves JobError's own required fields).
+
+Also covers the D023 conditional-requirement added to `AiJobStatus` (mirrors
+preflight.yaml's `PreflightResponse` "reason required when decision: block"
+pattern): a failed status with no `error` at all is rejected (known-bad, proves
+the new `if: status == failed / then: required: [error]` clause), and the
+existing failed-with-error case above doubles as the "still valid when
+present" side of that same rule.
 
 Run: python tests/validate_ai_job.py
 """
@@ -130,6 +137,14 @@ BAD_STATUS_ERROR_MISSING_MESSAGE = {
     "submittedAt": "2026-07-16T09:00:00Z",
 }
 
+BAD_STATUS_FAILED_MISSING_ERROR = {
+    "jobId": "3b241101-e2bb-4255-8caf-4136c566a962",
+    "status": "failed",
+    "submittedAt": "2026-07-16T01:00:00Z",
+    "startedAt": "2026-07-16T01:00:02Z",
+    "finishedAt": "2026-07-16T01:00:03Z",
+}
+
 
 def load_components() -> dict:
     return yaml.safe_load(JOB_SPEC.read_text(encoding="utf-8"))["components"]
@@ -184,11 +199,12 @@ def main() -> int:
 
     expect_valid(status_schema, GOOD_QUEUED_STATUS, "ai.job.status: freshly-queued, only required fields (known-good, proves optionality)")
     expect_valid(status_schema, GOOD_SUCCEEDED_STATUS, "ai.job.status: succeeded with resultRefs/usage/full timestamps (known-good)")
-    expect_valid(status_schema, GOOD_FAILED_STATUS, "ai.job.status: failed with populated error (known-good)")
+    expect_valid(status_schema, GOOD_FAILED_STATUS, "ai.job.status: failed with populated error (known-good; also proves D023 conditional-required 'with error is valid' side)")
     expect_invalid(status_schema, BAD_STATUS_MISSING_SUBMITTED_AT, "ai.job.status: missing required submittedAt (known-bad)")
     expect_invalid(status_schema, BAD_STATUS_UNKNOWN_ENUM, "ai.job.status: unknown status enum value (known-bad)")
     expect_invalid(status_schema, BAD_STATUS_PROGRESS_OUT_OF_RANGE, "ai.job.status: progressPct exceeds 100 (known-bad)")
     expect_invalid(status_schema, BAD_STATUS_ERROR_MISSING_MESSAGE, "ai.job.status: error missing required message (known-bad)")
+    expect_invalid(status_schema, BAD_STATUS_FAILED_MISSING_ERROR, "ai.job.status: failed with no error at all (known-bad, D023 conditional-required)")
     return 0
 
 

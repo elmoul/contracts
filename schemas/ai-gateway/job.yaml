@@ -190,6 +190,13 @@ components:
           format: date-time
           description: When the job reached a terminal status (succeeded/failed/cancelled).
       additionalProperties: false
+      if:
+        properties:
+          status:
+            const: failed
+      then:
+        required:
+          - error
 
     JobError:
       type: object
