@@ -6,7 +6,7 @@
 /**
  * Event emitted over SSE by the state-feed (D029). Consumed by the dashboard, the 3D renderer, and the guest projection — the same schema, three renderers. Discriminate on the 'type' field.
  */
-export type StateEvent = ComponentHealthEvent | LoadEvent | CostTickEvent | CiRunEvent | AppStatusEvent | ActivityCountEvent;
+export type StateEvent = ComponentHealthEvent | LoadEvent | CostTickEvent | CiRunEvent | AppStatusEvent | ActivityCountEvent | JobProgressEvent | AgentRunEvent | DesignMissionEvent;
 /**
  * Which wall the event was produced on (D011). Optional — absent means host, preserving compatibility with producers that predate this field.
  */
@@ -175,4 +175,114 @@ export interface ActivityCountPayload {
      * Count of this activity SINCE THE LAST emission for this (componentId, activity) pair — a delta, not a cumulative total. Consumers aggregate across emissions.
      */
     count: number;
+}
+export interface JobProgressEvent {
+    type: "job.progress";
+    /**
+     * ISO-8601 timestamp when the event was produced
+     */
+    timestamp: string;
+    payload: JobProgressPayload;
+    origin?: Origin;
+}
+/**
+ * Emitted by media-generation for each job lifecycle transition (D047).
+ */
+export interface JobProgressPayload {
+    /**
+     * Matches the jobId from the originating ai.job.request.
+     */
+    jobId: string;
+    /**
+     * The generation capability this job requests, same enum as ai.job.request's capability.
+     */
+    capability: "text-to-image" | "image-to-3d";
+    /**
+     * Current lifecycle status, same enum as ai.job.status's status.
+     */
+    status: "queued" | "admitted" | "loading" | "running" | "succeeded" | "failed" | "cancelled";
+    /**
+     * Number of jobs queued (including this one) at emission time.
+     */
+    queueDepth: number;
+    /**
+     * Best-effort completion percentage while running. Absent when not meaningful (e.g. still queued).
+     */
+    progressPct?: number;
+    /**
+     * Free VRAM in megabytes at emission time (admission headroom; the overflow tell).
+     */
+    vramFreeMb?: number;
+}
+export interface AgentRunEvent {
+    type: "agent.run";
+    /**
+     * ISO-8601 timestamp when the event was produced
+     */
+    timestamp: string;
+    payload: AgentRunPayload;
+    origin?: Origin;
+}
+/**
+ * Emitted by agent-runner for each dispatched Claude Code session's lifecycle transition (D048).
+ */
+export interface AgentRunPayload {
+    /**
+     * Unique identifier for this run, from agent-runner's own ledger.
+     */
+    runId: string;
+    /**
+     * Functional name (D002) of the repo the session ran in.
+     */
+    repo: string;
+    /**
+     * The id of the demand this session was dispatched to fulfill (same shape as demand.id / demand.fulfillment's demandId). Absent for owner-commissioned sessions not tied to a specific demand.
+     */
+    demandId?: string;
+    /**
+     * Lifecycle phase of the dispatched session.
+     */
+    phase: "launched" | "finished" | "failed" | "stopped";
+    /**
+     * Wall-clock session duration in milliseconds. Present on finished/failed/stopped, absent on launched.
+     */
+    durationMs?: number;
+    /**
+     * Total tokens consumed by the session so far, parsed from Claude Code's JSON output.
+     */
+    tokensUsed?: number;
+}
+export interface DesignMissionEvent {
+    type: "design.mission";
+    /**
+     * ISO-8601 timestamp when the event was produced
+     */
+    timestamp: string;
+    payload: DesignMissionPayload;
+    origin?: Origin;
+}
+/**
+ * Emitted by design-studio for each mission stage/gate transition (D051).
+ */
+export interface DesignMissionPayload {
+    /**
+     * Unique identifier for this mission, from design-studio's own ledger.
+     */
+    missionId: string;
+    /**
+     * Functional name (D002) of the hexagon this mission designs for.
+     */
+    targetRepo: string;
+    /**
+     * Which design regime/checklist this mission is gated by (D053): D036 information-first console law, or the Inhabited Interface doctrine.
+     */
+    regime: "console-class" | "inhabited-class";
+    /**
+     * Current stage of the mission state machine.
+     */
+    stage: "harvest" | "interview" | "brief" | "theme-gate" | "coverage-gate" | "plan-gate" | "executing" | "feel-gate" | "closed";
+    /**
+     * Owner's recorded decision, present when this event reports a gate outcome.
+     */
+    gateOutcome?: "approved" | "rejected";
 }
