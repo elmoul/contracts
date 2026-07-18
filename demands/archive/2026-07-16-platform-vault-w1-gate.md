@@ -9,7 +9,7 @@ acceptance-criteria:
   - "PLATFORM_GANTT.md's Wave 6 entry (or MEDIA_AGENTS_WAVE_PACK.md §6's W1 row) records W1 as complete, not just \"landing/planned\""
   - Wave sessions W2+ are understood to be unblocked now that the dependency root (§5.1) has shipped
 needs-owner: true
-status: open
+status: archived
 ---
 
 # Demand — close W1: `contracts` v0.14.0 tagged, wave dependency root landed
