@@ -8,7 +8,7 @@ acceptance-criteria:
   - "PLATFORM_STATE.md's `contracts` row reads v0.15.0, citing this release and Wave 7 session B-2"
   - "the plantpal consumer-pin assessment below (v0.7.0 -> v0.15.0, all six used contracts) is available to whoever sequences plantpal's own repin session, without needing to re-derive it from CHANGELOG.md"
 needs-owner: true
-status: open
+status: archived
 ---
 
 # Demand — close B-2: `contracts` v0.15.0 tagged, Companion turn contract landed
