@@ -4,9 +4,41 @@
 > verbatim to `docs/archive/PROGRESS-2026-07-02_2026-07-14.md` in the
 > 2026-07-16 docs compaction pass; full history also in git log.
 
-## Current state (as of 2026-07-16)
+## Current state (as of 2026-07-21)
 
-- **v0.14.0 is current** (tagged 2026-07-16): Wave 6 "Media & Agents"
+- **v0.15.0 is current** (tagged 2026-07-21): Wave 7 session B-2 — landed the
+  **Companion turn contract** (`stage.companion.turn`,
+  `schemas/stage/companion.turn.yaml`) verbatim from plantpal's proven Wave 7
+  A-4 implementation (`CompanionController`/`CompanionServiceImpl`), per
+  doctrine §12 ("spec from working code, never the abstract"). Brand-new
+  `stage/` domain — additive-only, mechanically verified (`git diff --stat --
+  schemas/` against the pre-release tree touches nothing but the new file).
+  Deliberately NOT landed (named in CHANGELOG so the boundary stays governed):
+  the intent-bus resolution contract, the card-anatomy serialization format,
+  the state→material mapping-table format — none has a working
+  implementation to land from yet. All three bindings regenerated and
+  D031-verified against the real tagged worktree
+  (`../contracts-worktrees/v0.15.0`) — Java (`.m2` install + `jar tf`
+  confirming the three new classes actually packaged), TypeScript
+  (`file:`-scratch consumer project, `tsc --noEmit --strict` clean), Python
+  (scratch-venv `pip install` + round-trip). Full
+  `python tests/run_all.py` (11 validators + state-event sync) green. Per
+  D054 (already ruled this exact ambiguity for v0.14.0), this release's D043
+  origin is `platform-vault` — raised
+  `demands/2026-07-21-platform-vault-b2-companion-turn-landed.md`
+  (`contracts-20260721-platform-vault-b2-companion-turn-landed`, continuing
+  the linked list, `prev: contracts-20260716-platform-vault-w1-gate`),
+  carrying the **plantpal consumer-pin assessment** as its actual deliverable:
+  plantpal (Java, pinned v0.7.0) uses six contracts
+  (`app.health`/`app.manifest`/`ai.request`/`ai.response`/
+  `dimension.event`/`state.event`); walked v0.7.0 → v0.15.0 against exactly
+  those six and found every change additive (four unchanged outright,
+  `ai.response`'s v0.13.0 `skipped` widening plantpal never triggers,
+  `state.event`'s new `oneOf` members plantpal only produces from, never
+  consumes as a union) — **a safe micro-session, not a real migration**. The
+  repin itself is not executed here — owner-sequenced, per this session's own
+  brief.
+- **v0.14.0** (tagged 2026-07-16): Wave 6 "Media & Agents"
   dependency-root release (`docs/MEDIA_AGENTS_WAVE_PACK.md` §5.1,
   D047/D048/D051/D053) — new `schemas/ai-gateway/job.yaml`
   (`ai.job.request`/`ai.job.status`) and three new `state.event` payload
@@ -179,3 +211,98 @@ CHANGELOG, tag, worktree, `.m2` install, and the D043 duty.
   in-band (this demand's `needs-owner: true`) rather than quietly resolved
   by guessing.
 - **Vault-sync:** demand raised contracts-20260716-platform-vault-w1-gate.
+
+## 2026-07-21 — Session 28 (v0.15.0 — Companion turn contract, Wave 7 session B-2)
+
+Owner-commissioned ("go B-2", Wave 7, `docs/WAVE_7_PACK_DRAFT.md`/D066): land
+the PROVEN inhabited-stack contracts as the next minor version — scoped
+strictly to what shipped and was proven live in plantpal's V2 build, per
+doctrine §12.
+
+- **State:** Read the real implementation first (read-only):
+  `../plantpal/backend/.../companion/` (`CompanionController`,
+  `CompanionServiceImpl`, `CompanionMessageRequest`/`Response`,
+  `StageContextDto`) and `../plantpal/frontend/.../stage-kit/models/
+  companion-turn.model.ts` + the app-owned `companion-message.model.ts`. New
+  `schemas/stage/companion.turn.yaml` (OpenAPI 3.1): `CompanionMessageRequest`
+  (`message` required, `pointableTargets`/`stageContext`/`priorCorrections`/
+  `locale` all optional — matches the real DTO's own `@NotBlank`-only
+  posture, not a stricter guess), `StageContext` (all fields optional,
+  `coldStart` defaults `false`), `CompanionMessageResponse` (`say` required;
+  `pointAt`/`evidence`/`confidence` optional). Two invariants are documented
+  in the schema descriptions rather than schema-enforced, both by direct
+  analogy to existing repo precedent: `pointAt`'s server-validated-against-
+  the-request's-own-list rule (can't be expressed in JSON Schema at all — a
+  cross-document constraint) and `evidence`/`confidence`'s travel-together-
+  or-not-at-all pairing (same choice as `ai.response`'s v0.13.0 `skipped`
+  shape — a producer-side convention, not worth an `if`/`then` for one
+  producer). `stage/` chosen as a new domain (not a per-repo group) by
+  analogy to `app/`'s existing precedent, after reading the full
+  `schemas/` taxonomy first.
+- **Additive-only, proven, not assumed:** `git diff --stat -- schemas/`
+  against the pre-release tree is empty apart from the one new file — zero
+  existing schema touched, checked mechanically before writing the CHANGELOG
+  claim.
+- **Bindings regenerated, all three, verified for real:** Java
+  (`openapi-generator-cli` 7.23.0 `--library resttemplate`, matching
+  `ai-gateway/job.yaml`'s precedent — not wired into `pom.xml`, generated via
+  the documented `npx` CLI invocation; `mvn -f gen/java/pom.xml clean test`
+  BUILD SUCCESS 12/12, zero `com.google.gson` imports). TypeScript
+  (`openapi-typescript`, re-exported from `index.ts`, `dist/` rebuilt, `npx
+  tsc --noEmit --strict` clean). Python (`datamodel-codegen --input-file-type
+  openapi --target-python-version 3.11 --use-specialized-enum`; `Confidence`
+  came out `StrEnum` correctly this time — no drift to fix, unlike v0.14.0's
+  `state_event.py` incident). Added `tests/validate_stage_companion_turn.py`
+  (10 assertions), wired into `tests/run_all.py`; full suite (11 validators +
+  state-event sync) green.
+- **D031 acceptance — all three languages, against the real tagged worktree,
+  no unverified leg:** `git worktree add ../contracts-worktrees/v0.15.0
+  v0.15.0`. Java: fresh `.m2` install from that worktree, `jar tf` confirming
+  `CompanionMessageRequest`/`StageContext`/`CompanionMessageResponse`
+  actually packaged (not just a green build — this repo's own v0.9.0
+  empty-stub precedent). TypeScript: `file:`-scratch consumer project against
+  the worktree's committed `gen/ts/dist/`, `tsc --noEmit` clean. Python:
+  scratch venv, `pip install` from the worktree's `gen/python`, round-tripped
+  a `CompanionMessageResponse`. All scratch dirs deleted after.
+- **Conventions validator green** (`java -jar
+  conventions/validator/target/conventions-validator-0.1.0.jar contracts`):
+  14 checks, 0 failed, 1 pre-existing UNVERIFIED (`status-coherence` — a
+  vault-owned `PLATFORM_STATE.md` text-classification gap that predates this
+  session, unrelated to `stage/`).
+- **Consumer-pin assessment (the B-2 gate — evidence, not execution):**
+  plantpal pins `contracts` v0.7.0 (Java) and uses six contracts. Walked every
+  CHANGELOG entry v0.8.0 → v0.15.0 against exactly those six:
+  `app.health`/`app.manifest`/`ai.request`/`dimension.event` — zero changes.
+  `ai.response` — one additive change (v0.13.0's `skipped` field,
+  required→optional widening on `result`/`model`/`provider`); plantpal reads
+  it via plain getters, never triggers `skipped: true` today. `state.event` —
+  two additive `oneOf` widenings (v0.7.0's own `activity.count`, already
+  plantpal's baseline; v0.14.0's three more members); plantpal only
+  *produces* `state.event` via concrete generated classes, never deserializes
+  the union, so the new members are structurally inert for it. Java
+  package/artifact coordinates unchanged throughout. **Verdict: a safe
+  micro-session, not a real migration** — full per-contract evidence trail in
+  `CHANGELOG.md`'s v0.15.0 entry and in the demand below. Did not execute the
+  repin — plantpal's own session, owner-sequenced, per this session's brief.
+- **D043 duty:** per D054 (already ruled this exact ambiguity for v0.14.0 —
+  a wave-commissioned release with no filed consumer demand has
+  `platform-vault` as its origin, forming a linked list of origins), raised
+  `demands/2026-07-21-platform-vault-b2-companion-turn-landed.md`
+  (`contracts-20260721-platform-vault-b2-companion-turn-landed`,
+  `prev: contracts-20260716-platform-vault-w1-gate`), carrying the
+  consumer-pin assessment as its payload. Frontmatter checked against
+  `schemas/demand-coordinator/demand.json` before committing.
+- **Pushed:** `git push origin main --tags`.
+- **Next step:** Awaiting the coordinator/owner on
+  `contracts-20260721-platform-vault-b2-companion-turn-landed`. plantpal's
+  own repin session (v0.7.0 → v0.15.0, six contracts, additive-only per this
+  session's evidence) is next, owner-sequenced — not a `contracts` follow-up.
+- **Standing:** A second real exercise of D054's linked-list-of-origins
+  pattern — the mechanism holds up cleanly for a second owner-commissioned,
+  no-filed-demand release. `stage/` is now a live precedent for a
+  cross-tenant capability domain (alongside `app/`) — the next inhabited-stack
+  landing (intent-bus or card-anatomy, whenever either has a working
+  implementation to extract from) has a taxonomy slot to land into without
+  re-deriving one.
+- **Vault-sync:** demand raised
+  contracts-20260721-platform-vault-b2-companion-turn-landed.
