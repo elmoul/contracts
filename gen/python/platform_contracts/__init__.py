@@ -12,6 +12,7 @@ from platform_contracts.connector import (
     connector_invoke_response,
 )
 from platform_contracts.demand_coordinator import demand, demand_fulfillment
+from platform_contracts.stage import companion_turn
 
 __all__ = [
     "manifest",
@@ -33,4 +34,5 @@ __all__ = [
     "connector_invoke_response",
     "demand",
     "demand_fulfillment",
+    "companion_turn",
 ]
