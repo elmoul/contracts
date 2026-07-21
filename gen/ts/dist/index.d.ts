@@ -17,3 +17,4 @@ export type { ConnectorInvokeResponse } from "./connector-invoke-response";
 export type { Demand } from "./demand";
 export type { DemandFulfillment } from "./demand-fulfillment";
 export type { AiModelManifest, CapabilityDeclaration } from "./model-manifest";
+export type { paths as StageCompanionTurnPaths, components as StageCompanionTurnComponents } from "./stage-companion-turn";
