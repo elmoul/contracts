@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "platform-contracts"
-version = "0.14.0"
+version = "0.15.0"
 description = "Generated Python bindings for platform contracts. Do not edit by hand — regenerate from schemas/."
 requires-python = ">=3.11"
 dependencies = [

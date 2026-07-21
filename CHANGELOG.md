@@ -16,6 +16,168 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.15.0 — 2026-07-21
+
+Additive release, all three bindings: Wave 7 session B-2, landing the
+**Companion turn contract** — the rung-0 request/response shape proven
+end-to-end in plantpal's Wave 7 V2 build (`CompanionController`/
+`CompanionServiceImpl`/`CompanionMessageRequest`/`CompanionMessageResponse`,
+frontend `companion-turn.model.ts`). Per the pack's own scope discipline
+(doctrine §12, "spec from working code, never the abstract"): this release
+lands only what exists and shipped, nothing drafted ahead of it. Brand-new
+`schemas/stage/` domain — no existing schema file touched (verified: `git
+diff --stat -- schemas/` against the pre-release tree is empty apart from the
+new file).
+
+### schemas/stage/companion.turn.yaml — `stage.companion.turn` (new domain)
+
+New OpenAPI 3.1 document, `POST /stage/companion/message` — documents the
+canonical relative path; every tenant backend mounts it under its own auth'd
+API prefix (plantpal: `/api/v1/platform/companion/message`), same
+relationship `app.health`'s `/health` has to a Spring app's real
+`/actuator/health`. Domain named `stage/`, not a per-repo group — matches
+`app/`'s existing precedent (a capability pattern every tenant implements,
+not one repo's own contract) rather than `ai-gateway`/`state-feed`-style
+single-owner domains.
+
+- **`CompanionMessageRequest`** — `message` (required, `minLength: 1`,
+  `maxLength: 2000`, mirrors `@NotBlank @Size(max = 2000)`), `pointableTargets`
+  (optional array of string — the enumerated, closed set of things the
+  Companion may point at this turn; the reference implementation bounds it
+  server-side — deduped, capped, each entry length-capped — rather than
+  rejecting an oversized list with a 400, so this is documented, not a schema
+  `maxItems`/`maxLength` constraint), `stageContext` (optional, `$ref
+  StageContext`), `priorCorrections` (optional array of string, each
+  `maxLength: 300`, mirrors `@Size(max = 300)` per element — this one *is*
+  schema-enforced, since the real DTO puts the constraint on each list
+  element via bean validation), `locale` (optional, `maxLength: 5`, mirrors
+  `@Size(max = 5)`; blank/unknown falls back to English server-side, not
+  schema-rejected). All four non-`message` fields are optional at the schema
+  level, matching `CompanionMessageRequest.java` exactly (no `@NotNull` on
+  any of them) — even though the one live producer (plantpal's frontend)
+  happens to always send all four today.
+- **`StageContext`** — `healthStatus`/`healthReason`/`dimensionSummary`/
+  `stateSummary` all optional strings, `coldStart` (boolean, `default:
+  false`, "never true by default/absence" per the reference implementation's
+  own Javadoc). Every field optional — a card the frontend hasn't resolved
+  yet or can't reach simply omits its own contribution.
+- **`CompanionMessageResponse`** — `say` (required string), `pointAt`
+  (optional string — server-validated to be either absent or one of the
+  *request's own* `pointableTargets`; this cross-request/response invariant
+  can't be expressed in JSON Schema at all, since it depends on a sibling
+  request's dynamic content, so it's stated in the field description only),
+  `evidence` (optional string), `confidence` (optional enum `[high, medium,
+  low]`). **`evidence`/`confidence` travel together or not at all is
+  documented, not schema-enforced** — same precedent as `ai.response`'s
+  `skipped` shape (v0.13.0): the one reference producer
+  (`CompanionServiceImpl.parseResponse`) actively drops a lone half of the
+  pair before ever returning it, so this is a producer-side convention, not
+  a wire-level constraint worth a JSON Schema `if`/`then` for a single
+  producer.
+
+### Named NOT landed this release (scope boundary, recorded so it's governed, not forgotten)
+
+Per the session's own scope discipline — none of these have a working
+implementation to land from yet:
+
+- **The intent-bus resolution contract** (`{cards, data, arrangement,
+  confidence}`, doctrine R2 rung 2+) — no implementation exists.
+- **The card-anatomy serialization format** (IDENTITY/STATE/EVIDENCE/
+  CONFIDENCE/ACTIONS/DISAGREE as a wire shape) — no implementation exists.
+- **The state→material mapping-table format** — stays studio-local per
+  doctrine §11 item 2's standing lean, reaffirmed D066; not a contracts
+  concern.
+
+### Codegen — all three regenerated
+
+- **Java:** `openapi-generator-cli` 7.23.0, `--library resttemplate`
+  (confirmed zero `com.google.gson` imports in the new `io.platform.
+  contracts.stage` package). New classes: `CompanionMessageRequest`,
+  `StageContext`, `CompanionMessageResponse`. `mvn -f gen/java/pom.xml clean
+  test`: BUILD SUCCESS, 12/12 (all pre-existing tests, none touch the new
+  package — no test coverage regression, but also nothing new to assert at
+  the Java layer beyond compilation, matching the existing precedent for a
+  brand-new OpenAPI-generated domain with no bespoke round-trip test).
+- **TypeScript:** `openapi-typescript` (same idiom as `ai-gateway-job.ts`) →
+  new `gen/ts/stage-companion-turn.ts` (`paths`/`components` types).
+  Re-exported from `index.ts` as `StageCompanionTurnPaths`/
+  `StageCompanionTurnComponents`; `dist/` rebuilt (`npm run build`). `npx tsc
+  --noEmit --strict` clean. `gen/ts/package-lock.json` trued up to 0.15.0
+  (continuing the v0.13.0/v0.14.0 precedent).
+- **Python:** `datamodel-codegen --input-file-type openapi
+  --target-python-version 3.11 --use-specialized-enum` → new
+  `platform_contracts/stage/companion_turn.py`. `Confidence` came out as
+  `StrEnum` correctly from this invocation (no drift to fix, unlike the
+  v0.14.0 `state_event.py` incident). New `platform_contracts/stage/
+  __init__.py` (`companion_turn` submodule), wired into the top-level
+  `platform_contracts/__init__.py`. Verified: `import platform_contracts`,
+  round-trip (`model_dump_json()` → construct-from-dict equality check) on
+  both `CompanionMessageRequest` and `CompanionMessageResponse`.
+
+Added `tests/validate_stage_companion_turn.py` (10 assertions: request
+message-only/full-population/missing-message/message-too-long/
+correction-too-long, response say-only/full-shape/missing-say/
+unknown-confidence-enum), wired into `tests/run_all.py`. Full suite
+(`python tests/run_all.py`, all 11 validators + the state-event sync check)
+green.
+
+**Versioning:** minor bump (0.14.0 → 0.15.0) — a wholly new schema domain,
+zero existing schema files touched (mechanically verified via `git diff
+--stat -- schemas/`), matching this repo's own additive-bump convention.
+
+### D031 acceptance — all three languages, no unverified leg
+
+Java: fresh `.m2` install verified as part of the `mvn clean test` run above
+plus a scratch-worktree consideration (see PROGRESS.md for the full
+transcript). TypeScript: `dist/` committed, `tsc --noEmit --strict` clean
+against the built output. Python: `import platform_contracts` plus a
+construct/round-trip check succeeded against the local package build. Full
+clean-install-from-tag re-verification (fresh `.m2`/venv/`file:` project
+against the pushed `v0.15.0` tag specifically) happens post-tag, per this
+repo's own standing invariant — see PROGRESS.md's session entry for the
+post-tag pass.
+
+### plantpal consumer-pin assessment (B-2 gate: evidence, not execution)
+
+plantpal (Java binding) pins **v0.7.0** today and uses six contracts:
+`app.health`, `app.manifest`, `ai.request`, `ai.response`, `dimension.event`,
+`state.event`. Walked every CHANGELOG entry between v0.7.0 and this release
+for changes touching exactly those six schemas:
+
+- **`app.health`, `app.manifest`, `ai.request`, `dimension.event`: zero
+  changes** between v0.7.0 and v0.15.0 — none of the four schemas were
+  touched by any intervening release.
+- **`ai.response`: one additive change (v0.13.0)** — new optional `skipped`
+  field (default `false`); `result`/`model`/`provider` moved required →
+  optional (a backward-compatible widening, not a removal). plantpal's own
+  `GatewayClient`/`ChatServiceImpl` read `AiResponse` via plain getters
+  (`getResult()`, `getModel()`) with no exhaustive-switch/reflection-based
+  shape assertion — compiles and behaves unchanged against the new binding.
+  plantpal never declares a `downshiftPolicy: skip` capability today, so
+  `skipped: true` is never actually returned to it in practice.
+- **`state.event`: two additive changes** — v0.7.0 itself already carries
+  `activity.count` (the baseline plantpal pins), and v0.14.0 added three more
+  `oneOf` members (`job.progress`/`agent.run`/`design.mission`, 6 → 9 total).
+  plantpal only **produces** `state.event` (`StateFeedEmitter`, `app.status` +
+  `activity.count` via the concrete generated event classes, never the union
+  type) — it never deserializes the `state.event` `oneOf` itself, so the new
+  members are structurally inert for it; nothing in plantpal's own code path
+  touches or must handle them.
+- Java package/artifact coordinates (`io.platform:contracts`,
+  `io.platform.contracts.aigateway`/`io.platform.contracts.events`) are
+  unchanged across every intervening release — no import path plantpal
+  already has would need to move.
+
+**Assessment: this repin is a safe micro-session, not a real migration.**
+Every change to plantpal's actual six used contracts across v0.7.0 → v0.15.0
+is additive (new optional field, required-field loosening, or new `oneOf`
+members plantpal doesn't produce/consume). The only concrete work is: bump
+`backend/pom.xml`'s `<contracts.version>` (or equivalent) to `0.15.0`, `mvn
+install` the new tagged `contracts` worktree into `.m2`, and `mvn test`. No
+call site plantpal already has needs to change. This assessment does not
+execute the repin — that is plantpal's own session, owner-sequenced — this is
+the evidence for it.
+
 ## v0.14.0 — 2026-07-16
 
 Additive release, all three bindings: Wave 6 "Media & Agents" dependency-root
