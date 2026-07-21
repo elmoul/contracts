@@ -1,0 +1,202 @@
+openapi: "3.1.0"
+info:
+  title: Stage — Companion Turn
+  version: "0.1.0"
+  description: >
+    The Companion's rung-0 turn contract (doctrine R2/R8, "The Inhabited
+    Interface"): one request/response exchange with the small observing
+    presence inside a tenant's `/stage` view. Rung 0 is observe/speak/
+    highlight/propose only — the Companion never clicks, submits, navigates,
+    or otherwise acts; if something needs doing, the human does it.
+
+
+    Landed from the first proven, shipped implementation
+    (`plantpal` Wave 7 session A-4 — `CompanionController`/
+    `CompanionServiceImpl`/`CompanionMessageRequest`/`CompanionMessageResponse`),
+    not drafted ahead of working code (doctrine §12). Every tenant's own
+    backend implements this as a thin, auth'd proxy in front of `ai-gateway`
+    (D022 — no direct provider calls, no provider keys in the browser); the
+    path below (`/stage/companion/message`) is the contract's canonical
+    relative path, mounted under whatever auth'd API prefix a given tenant
+    already uses (plantpal mounts it at `/api/v1/platform/companion/message`).
+
+
+    Scope note: this is the ONLY inhabited-stack shape landed as of this
+    release. The intent-bus resolution contract (`{cards, data, arrangement,
+    confidence}`, doctrine R2 rung 2+) and the card-anatomy serialization
+    format are NOT landed — neither has a working implementation yet. The
+    state→material mapping-table format also stays studio-local per doctrine
+    §11 item 2's standing lean (reaffirmed D066). All three are deliberately
+    out of scope; see this release's CHANGELOG entry.
+
+paths:
+  /stage/companion/message:
+    post:
+      summary: Send one message to the Companion; receive its rung-0 reply
+      operationId: sendCompanionTurn
+      description: >
+        Every tenant backend implements this route itself (never a direct
+        browser→ai-gateway call). The server is the trust boundary for the
+        pointing contract: `pointAt` in the response is valid only if it
+        appears in this same request's own `pointableTargets` list — the
+        server discards (renders as absent) anything the model returns that
+        isn't in that exact list. The AI selects from an enumerated set; it
+        never generates UI (doctrine R2).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanionMessageRequest"
+      responses:
+        "200":
+          description: Companion replied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanionMessageResponse"
+        "400":
+          description: Validation error (e.g. message over 2000 characters)
+        "401":
+          description: Unauthorized
+        "429":
+          description: Companion rate limit reached
+        "503":
+          description: ai-gateway disabled or unreachable — the Companion says so honestly, never a fabricated reply
+
+components:
+  schemas:
+    CompanionMessageRequest:
+      type: object
+      description: >
+        One turn of a Companion conversation — a bounded, client-supplied
+        snapshot of what's honestly on screen, plus the message itself.
+        Everything here grounds the reply; the Companion is instructed to
+        never invent a plant, a status, an event, or a number not stated in
+        this request.
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: The user's message to the Companion.
+          minLength: 1
+          maxLength: 2000
+          examples:
+            - "Is the garden okay right now?"
+        pointableTargets:
+          type: array
+          description: >
+            The enumerated, closed set of things the Companion is allowed to
+            point at right now — exactly what is really rendered on screen at
+            the moment of asking. The AI picks a value from this list or
+            returns none; it never invents a target. This is the closed set
+            `pointAt` on the response is validated against — server-side,
+            not merely requested of the model. Absent or empty means nothing
+            is pointable this turn. The reference implementation bounds this
+            list server-side (deduplicated, capped, each entry length-capped)
+            rather than rejecting an oversized list with a 400 — a documented
+            server behavior, not a schema-level constraint.
+          items:
+            type: string
+          examples:
+            - ["card-action-app-health", "card-data-dimension-event", "card-data-state-event"]
+        stageContext:
+          $ref: "#/components/schemas/StageContext"
+        priorCorrections:
+          type: array
+          description: >
+            Prior "I disagree" corrections the user has made this session
+            (client-persisted), most recent last — included so the Companion
+            doesn't repeat a claim the user already corrected (doctrine R8:
+            a correction is reflected in subsequent material). Bounded
+            server-side regardless of what's sent.
+          items:
+            type: string
+            maxLength: 300
+        locale:
+          type: string
+          description: >
+            BCP-47-ish locale code the reply should be written in. The
+            reference implementation recognizes "en"/"fr"/"ar"; a blank or
+            unrecognized value falls back to English server-side rather than
+            rejecting the request.
+          maxLength: 5
+          examples:
+            - "en"
+            - "fr"
+            - "ar"
+      additionalProperties: false
+
+    StageContext:
+      type: object
+      description: >
+        The honest, small snapshot of what the frontend can currently see on
+        `/stage` — built entirely from data already held client-side, never
+        fabricated or looked up server-side. Every field is optional: a card
+        the frontend hasn't resolved yet (still loading) or cannot reach
+        (unavailable) simply omits its own contribution rather than the
+        whole request failing.
+      properties:
+        healthStatus:
+          type: string
+          description: The app-health card's status when known (e.g. "UP", "DOWN"), else absent.
+        healthReason:
+          type: string
+          description: Why the health card itself is unavailable, present only when healthStatus is absent.
+        dimensionSummary:
+          type: string
+          description: >
+            A short plain-text summary of the dimension.event feed already
+            rendered client-side, e.g. "3 recent plant_count events, net +2"
+            or "no recent plant_count activity".
+        stateSummary:
+          type: string
+          description: A short plain-text summary of the state.event feed, mirroring dimensionSummary.
+        coldStart:
+          type: boolean
+          default: false
+          description: >
+            True only when the frontend has confirmed a genuine day-zero read
+            (the dimension feed resolved to its designed empty state, not
+            unavailable). Never true by default/absence.
+      additionalProperties: false
+
+    CompanionMessageResponse:
+      type: object
+      description: >
+        The Companion's reply — the small, deterministic
+        `{say, pointAt, evidence, confidence}` contract (doctrine R2/R8).
+        `pointAt` is guaranteed by the server to be either absent or one of
+        the exact strings the request's own `pointableTargets` carried —
+        never a value the model invented. `evidence`/`confidence` are a
+        documented pair, not a schema-enforced one (same precedent as
+        `ai.response`'s `skipped` shape, v0.13.0): the reference
+        implementation sends both or neither — present exactly when the
+        reply carries an assessment about the garden/stage to substantiate
+        (doctrine R8's trust slots), absent for a plain conversational reply
+        with nothing to substantiate.
+      required:
+        - say
+      properties:
+        say:
+          type: string
+          description: The Companion's reply text.
+        pointAt:
+          type: string
+          description: >
+            One id from the request's own pointableTargets, or absent if
+            none genuinely fits. Server-validated: never a value outside
+            that list.
+        evidence:
+          type: string
+          description: >
+            The specific fact backing an assessment just made. Present only
+            together with confidence — see this schema's own description.
+        confidence:
+          type: string
+          enum: [high, medium, low]
+          description: >
+            Present only together with evidence — see this schema's own
+            description.
+      additionalProperties: false
