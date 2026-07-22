@@ -6,7 +6,7 @@
 /**
  * Event emitted over SSE by the state-feed (D029). Consumed by the dashboard, the 3D renderer, and the guest projection — the same schema, three renderers. Discriminate on the 'type' field.
  */
-export type StateEvent = ComponentHealthEvent | LoadEvent | CostTickEvent | CiRunEvent | AppStatusEvent | ActivityCountEvent | JobProgressEvent | AgentRunEvent | DesignMissionEvent;
+export type StateEvent = ComponentHealthEvent | LoadEvent | CostTickEvent | CiRunEvent | AppStatusEvent | ActivityCountEvent | JobProgressEvent | AgentRunEvent | DesignMissionEvent | DesignSystemEvent;
 /**
  * Which wall the event was produced on (D011). Optional — absent means host, preserving compatibility with producers that predate this field.
  */
@@ -285,4 +285,54 @@ export interface DesignMissionPayload {
      * Owner's recorded decision, present when this event reports a gate outcome.
      */
     gateOutcome?: "approved" | "rejected";
+}
+export interface DesignSystemEvent {
+    type: "design.designSystem";
+    /**
+     * ISO-8601 timestamp when the event was produced
+     */
+    timestamp: string;
+    payload: DesignSystemPayload;
+    origin?: Origin;
+}
+/**
+ * Emitted by design-studio for each DesignSystem registry lifecycle transition (S-B1).
+ */
+export interface DesignSystemPayload {
+    /**
+     * Unique identifier for this design system, from design-studio's registry.
+     */
+    designSystemId: string;
+    /**
+     * Human-readable name of the design system.
+     */
+    name: string;
+    /**
+     * Functional identifier (D002) for the design system.
+     */
+    slug: string;
+    /**
+     * Design system version (semver, optionally v-prefixed).
+     */
+    version: string;
+    /**
+     * Which design regime/checklist this design system is gated by (D053): D036 information-first console law, or the Inhabited Interface doctrine.
+     */
+    regime: "console-class" | "inhabited-class";
+    /**
+     * Current lifecycle status of the design system.
+     */
+    status: "draft" | "validated" | "retired";
+    /**
+     * How this design system came to exist: hand-built by the owner, or produced end-to-end by a design mission.
+     */
+    origin: "owner-built" | "mission-built";
+    /**
+     * The design mission that produced this design system. Absent/null when origin is owner-built.
+     */
+    sourceMissionId?: string;
+    /**
+     * The reason this particular event fired.
+     */
+    change: "created" | "validated" | "retired" | "release";
 }

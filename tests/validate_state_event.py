@@ -14,6 +14,9 @@ JobProgressEvent (D047, media-generation), AgentRunEvent (D048, agent-runner), a
 DesignMissionEvent (D051, design-studio) — each with known-good and known-bad cases,
 matching the density of the existing activity.count coverage.
 
+Extended again (design-studio S-B1) to cover DesignSystemEvent — the DesignSystem
+registry's own lifecycle emissions, replacing a hand-shaped stopgap dict.
+
 Run: python tests/validate_state_event.py
 """
 import json
@@ -243,6 +246,97 @@ BAD_DESIGN_MISSION_MISSING_TARGET_REPO = {
     },
 }
 
+GOOD_DESIGN_SYSTEM_OWNER_BUILT = {
+    "type": "design.designSystem",
+    "timestamp": "2026-07-22T10:00:00Z",
+    "payload": {
+        "designSystemId": "a1b2c3d4-e5f6-4789-a123-456789abcdef",
+        "name": "Console Base",
+        "slug": "console-base",
+        "version": "1.0.0",
+        "regime": "console-class",
+        "status": "draft",
+        "origin": "owner-built",
+        "change": "created",
+    },
+}
+
+GOOD_DESIGN_SYSTEM_MISSION_BUILT_RELEASED = {
+    "type": "design.designSystem",
+    "timestamp": "2026-07-22T11:00:00Z",
+    "payload": {
+        "designSystemId": "a1b2c3d4-e5f6-4789-a123-456789abcdef",
+        "name": "Inhabited Interface Kit",
+        "slug": "inhabited-interface-kit",
+        "version": "v2.3.1",
+        "regime": "inhabited-class",
+        "status": "validated",
+        "origin": "mission-built",
+        "sourceMissionId": "c9c1b1f0-9c3a-4b7e-8b0a-6f7d8e9f0a1b",
+        "change": "release",
+    },
+    "origin": "host",
+}
+
+BAD_DESIGN_SYSTEM_UNKNOWN_STATUS = {
+    "type": "design.designSystem",
+    "timestamp": "2026-07-22T10:00:00Z",
+    "payload": {
+        "designSystemId": "a1b2c3d4-e5f6-4789-a123-456789abcdef",
+        "name": "Console Base",
+        "slug": "console-base",
+        "version": "1.0.0",
+        "regime": "console-class",
+        "status": "published",
+        "origin": "owner-built",
+        "change": "created",
+    },
+}
+
+BAD_DESIGN_SYSTEM_UNKNOWN_ORIGIN = {
+    "type": "design.designSystem",
+    "timestamp": "2026-07-22T10:00:00Z",
+    "payload": {
+        "designSystemId": "a1b2c3d4-e5f6-4789-a123-456789abcdef",
+        "name": "Console Base",
+        "slug": "console-base",
+        "version": "1.0.0",
+        "regime": "console-class",
+        "status": "draft",
+        "origin": "ai-generated",
+        "change": "created",
+    },
+}
+
+BAD_DESIGN_SYSTEM_BAD_VERSION_SHAPE = {
+    "type": "design.designSystem",
+    "timestamp": "2026-07-22T10:00:00Z",
+    "payload": {
+        "designSystemId": "a1b2c3d4-e5f6-4789-a123-456789abcdef",
+        "name": "Console Base",
+        "slug": "console-base",
+        "version": "latest",
+        "regime": "console-class",
+        "status": "draft",
+        "origin": "owner-built",
+        "change": "created",
+    },
+}
+
+BAD_DESIGN_SYSTEM_MISSING_CHANGE = {
+    "type": "design.designSystem",
+    "timestamp": "2026-07-22T10:00:00Z",
+    "payload": {
+        "designSystemId": "a1b2c3d4-e5f6-4789-a123-456789abcdef",
+        "name": "Console Base",
+        "slug": "console-base",
+        "version": "1.0.0",
+        "regime": "console-class",
+        "status": "draft",
+        "origin": "owner-built",
+    },
+}
+
 
 def load_state_event_schema() -> dict:
     return json.loads(STATE_EVENT_SPEC.read_text(encoding="utf-8"))
@@ -288,6 +382,13 @@ def main() -> int:
     expect_invalid(schema, BAD_DESIGN_MISSION_UNKNOWN_REGIME, "design.mission: unknown regime enum value (known-bad)")
     expect_invalid(schema, BAD_DESIGN_MISSION_UNKNOWN_STAGE, "design.mission: unknown stage enum value (known-bad)")
     expect_invalid(schema, BAD_DESIGN_MISSION_MISSING_TARGET_REPO, "design.mission: missing targetRepo (known-bad)")
+
+    expect_valid(schema, GOOD_DESIGN_SYSTEM_OWNER_BUILT, "design.designSystem: known-good event, owner-built draft")
+    expect_valid(schema, GOOD_DESIGN_SYSTEM_MISSION_BUILT_RELEASED, "design.designSystem: known-good event, mission-built release with sourceMissionId")
+    expect_invalid(schema, BAD_DESIGN_SYSTEM_UNKNOWN_STATUS, "design.designSystem: unknown status enum value (known-bad)")
+    expect_invalid(schema, BAD_DESIGN_SYSTEM_UNKNOWN_ORIGIN, "design.designSystem: unknown origin enum value (known-bad)")
+    expect_invalid(schema, BAD_DESIGN_SYSTEM_BAD_VERSION_SHAPE, "design.designSystem: version not matching semver pattern (known-bad)")
+    expect_invalid(schema, BAD_DESIGN_SYSTEM_MISSING_CHANGE, "design.designSystem: missing change (known-bad)")
     return 0
 
 

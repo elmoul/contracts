@@ -12,7 +12,8 @@
     { "$ref": "#/definitions/ActivityCountEvent" },
     { "$ref": "#/definitions/JobProgressEvent" },
     { "$ref": "#/definitions/AgentRunEvent" },
-    { "$ref": "#/definitions/DesignMissionEvent" }
+    { "$ref": "#/definitions/DesignMissionEvent" },
+    { "$ref": "#/definitions/DesignSystemEvent" }
   ],
   "definitions": {
     "ComponentHealthEvent": {
@@ -447,6 +448,76 @@
       "type": "string",
       "enum": ["host", "hub"],
       "description": "Which wall the event was produced on (D011). Optional — absent means host, preserving compatibility with producers that predate this field."
+    },
+    "DesignSystemEvent": {
+      "title": "DesignSystemEvent",
+      "type": "object",
+      "required": ["type", "timestamp", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "design.designSystem" },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp when the event was produced"
+        },
+        "payload": { "$ref": "#/definitions/DesignSystemPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
+      }
+    },
+    "DesignSystemPayload": {
+      "title": "DesignSystemPayload",
+      "description": "Emitted by design-studio for each DesignSystem registry lifecycle transition (S-B1).",
+      "type": "object",
+      "required": ["designSystemId", "name", "slug", "version", "regime", "status", "origin", "change"],
+      "additionalProperties": false,
+      "properties": {
+        "designSystemId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this design system, from design-studio's registry."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name of the design system."
+        },
+        "slug": {
+          "type": "string",
+          "description": "Functional identifier (D002) for the design system.",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Design system version (semver, optionally v-prefixed).",
+          "pattern": "^v?\\d+\\.\\d+\\.\\d+$",
+          "examples": ["1.0.0", "v2.3.1"]
+        },
+        "regime": {
+          "type": "string",
+          "enum": ["console-class", "inhabited-class"],
+          "description": "Which design regime/checklist this design system is gated by (D053): D036 information-first console law, or the Inhabited Interface doctrine."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "validated", "retired"],
+          "description": "Current lifecycle status of the design system."
+        },
+        "origin": {
+          "type": "string",
+          "enum": ["owner-built", "mission-built"],
+          "description": "How this design system came to exist: hand-built by the owner, or produced end-to-end by a design mission."
+        },
+        "sourceMissionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "The design mission that produced this design system. Absent/null when origin is owner-built."
+        },
+        "change": {
+          "type": "string",
+          "enum": ["created", "validated", "retired", "release"],
+          "description": "The reason this particular event fired."
+        }
+      }
     }
   }
 }

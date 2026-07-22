@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.platform.contracts.events.AgentRunPayload;
+import io.platform.contracts.events.DesignSystemPayload;
 import io.platform.contracts.events.Origin;
 import java.time.OffsetDateTime;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -28,21 +28,21 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * AgentRunEvent
+ * DesignSystemEvent
  */
 @JsonPropertyOrder({
-  AgentRunEvent.JSON_PROPERTY_TYPE,
-  AgentRunEvent.JSON_PROPERTY_TIMESTAMP,
-  AgentRunEvent.JSON_PROPERTY_PAYLOAD,
-  AgentRunEvent.JSON_PROPERTY_ORIGIN
+  DesignSystemEvent.JSON_PROPERTY_TYPE,
+  DesignSystemEvent.JSON_PROPERTY_TIMESTAMP,
+  DesignSystemEvent.JSON_PROPERTY_PAYLOAD,
+  DesignSystemEvent.JSON_PROPERTY_ORIGIN
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-22T19:18:35.443326+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
-public class AgentRunEvent {
+public class DesignSystemEvent {
   /**
-   * Discriminator value — always \&quot;agent.run\&quot;
+   * Discriminator value — always \&quot;design.designSystem\&quot;
    */
   public enum TypeEnum {
-    AGENT_RUN(String.valueOf("agent.run"));
+    DESIGN_DESIGN_SYSTEM(String.valueOf("design.designSystem"));
 
     private String value;
 
@@ -81,23 +81,23 @@ public class AgentRunEvent {
 
   public static final String JSON_PROPERTY_PAYLOAD = "payload";
   @jakarta.annotation.Nonnull
-  private AgentRunPayload payload;
+  private DesignSystemPayload payload;
 
   public static final String JSON_PROPERTY_ORIGIN = "origin";
   @jakarta.annotation.Nullable
   private Origin origin;
 
-  public AgentRunEvent() {
+  public DesignSystemEvent() {
   }
 
-  public AgentRunEvent type(@jakarta.annotation.Nonnull TypeEnum type) {
+  public DesignSystemEvent type(@jakarta.annotation.Nonnull TypeEnum type) {
     
     this.type = type;
     return this;
   }
 
   /**
-   * Discriminator value — always \&quot;agent.run\&quot;
+   * Discriminator value — always \&quot;design.designSystem\&quot;
    * @return type
    */
   @jakarta.annotation.Nonnull
@@ -115,7 +115,7 @@ public class AgentRunEvent {
     this.type = type;
   }
 
-  public AgentRunEvent timestamp(@jakarta.annotation.Nonnull OffsetDateTime timestamp) {
+  public DesignSystemEvent timestamp(@jakarta.annotation.Nonnull OffsetDateTime timestamp) {
     
     this.timestamp = timestamp;
     return this;
@@ -140,7 +140,7 @@ public class AgentRunEvent {
     this.timestamp = timestamp;
   }
 
-  public AgentRunEvent payload(@jakarta.annotation.Nonnull AgentRunPayload payload) {
+  public DesignSystemEvent payload(@jakarta.annotation.Nonnull DesignSystemPayload payload) {
     
     this.payload = payload;
     return this;
@@ -154,18 +154,18 @@ public class AgentRunEvent {
   @JsonProperty(value = JSON_PROPERTY_PAYLOAD, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public AgentRunPayload getPayload() {
+  public DesignSystemPayload getPayload() {
     return payload;
   }
 
 
   @JsonProperty(value = JSON_PROPERTY_PAYLOAD, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setPayload(@jakarta.annotation.Nonnull AgentRunPayload payload) {
+  public void setPayload(@jakarta.annotation.Nonnull DesignSystemPayload payload) {
     this.payload = payload;
   }
 
-  public AgentRunEvent origin(@jakarta.annotation.Nullable Origin origin) {
+  public DesignSystemEvent origin(@jakarta.annotation.Nullable Origin origin) {
     
     this.origin = origin;
     return this;
@@ -199,11 +199,11 @@ public class AgentRunEvent {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AgentRunEvent agentRunEvent = (AgentRunEvent) o;
-    return Objects.equals(this.type, agentRunEvent.type) &&
-        Objects.equals(this.timestamp, agentRunEvent.timestamp) &&
-        Objects.equals(this.payload, agentRunEvent.payload) &&
-        Objects.equals(this.origin, agentRunEvent.origin);
+    DesignSystemEvent designSystemEvent = (DesignSystemEvent) o;
+    return Objects.equals(this.type, designSystemEvent.type) &&
+        Objects.equals(this.timestamp, designSystemEvent.timestamp) &&
+        Objects.equals(this.payload, designSystemEvent.payload) &&
+        Objects.equals(this.origin, designSystemEvent.origin);
   }
 
   @Override
@@ -214,7 +214,7 @@ public class AgentRunEvent {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AgentRunEvent {\n");
+    sb.append("class DesignSystemEvent {\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("    payload: ").append(toIndentedString(payload)).append("\n");

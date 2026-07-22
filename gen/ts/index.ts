@@ -22,6 +22,7 @@ export type {
   JobProgressEvent, JobProgressPayload,
   AgentRunEvent, AgentRunPayload,
   DesignMissionEvent, DesignMissionPayload,
+  DesignSystemEvent, DesignSystemPayload,
 } from "./state-event";
 export type { HexagonDescriptor } from "./hexagon-descriptor";
 export type { RegistryEntry } from "./registry-entry";

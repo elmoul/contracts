@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   AgentRunPayload.JSON_PROPERTY_DURATION_MS,
   AgentRunPayload.JSON_PROPERTY_TOKENS_USED
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-16T11:05:53.385113100+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-22T19:18:35.443326+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AgentRunPayload {
   public static final String JSON_PROPERTY_RUN_ID = "runId";
   @jakarta.annotation.Nonnull

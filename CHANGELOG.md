@@ -16,6 +16,92 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.16.0 — 2026-07-22
+
+Additive release, all three bindings: fulfills demand
+`design-studio-20260722-contracts-design-system-state-event` — adds a
+`design.designSystem` `state.event` member so design-studio's DesignSystem
+registry (S-B1) can emit schema-valid events instead of a hand-shaped stopgap
+dict. Single `oneOf` member added; no existing `state.event` member's shape
+changed (verified: `git diff --stat -- schemas/` against the pre-release tree
+touches only `schemas/state-feed/state.event.json` and its
+`state-event-java.yaml` mirror).
+
+### state.event — one new payload type (additive `oneOf` member, 9 → 10)
+
+Same envelope idiom as the existing nine (`type`/`timestamp`/`payload`
+required, `origin` optional, `additionalProperties: false`); mirrored into
+`state-event-java.yaml` so both files stay structurally identical
+(`tests/check_state_event_sync.py`: 10 event types in sync).
+
+- **`design.designSystem`** (S-B1, emitted by `design-studio`):
+  `designSystemId` (UUID), `name`, `slug` (D002-style functional-identifier
+  pattern, reusing `targetRepo`'s `^[a-z][a-z0-9-]+$`), `version` (semver,
+  optionally `v`-prefixed — `^v?\d+\.\d+\.\d+$`), `regime`
+  (`console-class|inhabited-class` — **reuses `DesignMissionPayload`'s own
+  `regime` enum verbatim**, not a duplicate: confirmed the Python regen
+  collapsed both fields onto the same `Regime` class rather than emitting a
+  second one), `status` (new enum, `draft|validated|retired`), `origin` (new
+  enum, `owner-built|mission-built` — **deliberately distinct from this same
+  file's existing envelope-level `Origin` enum** (`host|hub`, D011's
+  which-wall field); the datamodel-codegen regen confirms this by naming them
+  `Origin`/`Origin1`, never merging the two), `sourceMissionId` (optional
+  UUID, absent/null when `origin: owner-built`), `change` (new enum,
+  `created|validated|retired|release` — the reason this particular event
+  fired). All fields except `sourceMissionId` required.
+
+### Codegen — all three regenerated
+
+- **Python:** `datamodel-codegen --target-python-version 3.11
+  --use-specialized-enum` against the edited `state.event.json`. New
+  `DesignSystemPayload`/`DesignSystemEvent` classes; `Regime` reused as
+  described above; new `Status3` (draft/validated/retired, following this
+  file's own existing `Status`/`Status1`/`Status2` numbering precedent for
+  same-field-name-different-values enums), `Origin1` (owner-built/
+  mission-built, same precedent), and `Change` (created/validated/retired/
+  release). `StateEvent`'s outer `Union[...]` and inner `root: Union[...]`
+  both updated identically. The nine pre-existing classes pick up only a
+  refreshed generation timestamp comment — no functional change (confirmed
+  by diff). `python tests/run_all.py`: all 11 validators + the state-event
+  sync check green.
+- **TypeScript:** `json-schema-to-typescript` for `state-event.ts`
+  (`DesignSystemEvent`/`DesignSystemPayload` added, existing nine untouched);
+  re-exported from `index.ts`; `dist/` rebuilt (`npm run build`). `npx tsc
+  --noEmit` clean.
+- **Java:** `openapi-generator-cli` 7.23.0 against the hand-mirrored
+  `state-event-java.yaml`, `--library resttemplate` (confirmed zero
+  `com.google.gson` imports in the new classes). New
+  `DesignSystemEvent`/`DesignSystemPayload` (nested nonshared
+  `RegimeEnum`/`StatusEnum`/`OriginEnum`/`ChangeEnum`, matching this
+  package's existing per-class-nested-enum idiom — Java doesn't get the
+  cross-payload `Regime` sharing Python's regen produces, by design, same as
+  `DesignMissionPayload`'s own nested `RegimeEnum`). The 19 pre-existing
+  classes in `io.platform.contracts.events` pick up only a refreshed
+  `@Generated` timestamp. `mvn -f gen/java/pom.xml test`: BUILD SUCCESS,
+  12/12 (no new Java-side test added — matches this package's own precedent:
+  `job.progress`/`agent.run`/`design.mission` never got dedicated Java tests
+  either; coverage lives in `tests/validate_state_event.py` and the sync
+  check).
+
+Extended `tests/validate_state_event.py` with 6 cases for `design.designSystem`
+(owner-built-draft and mission-built-release-with-sourceMissionId known-good;
+unknown-status, unknown-origin, bad-version-shape, missing-change known-bad),
+matching the existing density. Full suite (`python tests/run_all.py`, 11
+validators + sync check) green.
+
+**Versioning:** minor bump (0.15.0 → 0.16.0) — one new additive `oneOf`
+member, no existing member's shape touched. Per D043, additive releases raise
+only the origin demand (design-studio) — no fleet-wide consumer notification.
+
+### D031 acceptance
+
+Local verification this session: Java `mvn -f gen/java/pom.xml test` (BUILD
+SUCCESS), TypeScript `npx tsc --noEmit` clean against rebuilt `dist/`, Python
+`python tests/run_all.py` green against the locally-regenerated package.
+Full clean-install-from-tag re-verification (fresh venv against the pushed
+`v0.16.0` tag specifically, per this repo's own standing invariant) happens
+post-tag — see `PROGRESS.md`'s session entry for the post-tag pass.
+
 ## v0.15.0 — 2026-07-21
 
 Additive release, all three bindings: Wave 7 session B-2, landing the

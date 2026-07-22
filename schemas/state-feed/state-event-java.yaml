@@ -456,6 +456,80 @@ components:
           description: Owner's recorded decision, present when this event reports a gate outcome.
       additionalProperties: false
 
+    DesignSystemEvent:
+      type: object
+      required:
+        - type
+        - timestamp
+        - payload
+      properties:
+        type:
+          type: string
+          enum: ["design.designSystem"]
+          description: Discriminator value — always "design.designSystem"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO-8601 timestamp when the event was produced
+        payload:
+          $ref: "#/components/schemas/DesignSystemPayload"
+        origin:
+          $ref: "#/components/schemas/Origin"
+      additionalProperties: false
+
+    DesignSystemPayload:
+      type: object
+      description: Emitted by design-studio for each DesignSystem registry lifecycle transition (S-B1).
+      required:
+        - designSystemId
+        - name
+        - slug
+        - version
+        - regime
+        - status
+        - origin
+        - change
+      properties:
+        designSystemId:
+          type: string
+          format: uuid
+          description: Unique identifier for this design system, from design-studio's registry.
+        name:
+          type: string
+          description: Human-readable name of the design system.
+        slug:
+          type: string
+          description: Functional identifier (D002) for the design system.
+          pattern: "^[a-z][a-z0-9-]+$"
+        version:
+          type: string
+          description: Design system version (semver, optionally v-prefixed).
+          pattern: "^v?\\d+\\.\\d+\\.\\d+$"
+        regime:
+          type: string
+          enum: ["console-class", "inhabited-class"]
+          description: >-
+            Which design regime/checklist this design system is gated by
+            (D053): D036 information-first console law, or the Inhabited
+            Interface doctrine.
+        status:
+          type: string
+          enum: ["draft", "validated", "retired"]
+          description: Current lifecycle status of the design system.
+        origin:
+          type: string
+          enum: ["owner-built", "mission-built"]
+          description: How this design system came to exist — hand-built by the owner, or produced end-to-end by a design mission.
+        sourceMissionId:
+          type: string
+          format: uuid
+          description: The design mission that produced this design system. Absent/null when origin is owner-built.
+        change:
+          type: string
+          enum: ["created", "validated", "retired", "release"]
+          description: The reason this particular event fired.
+      additionalProperties: false
+
     Origin:
       type: string
       enum: ["host", "hub"]
