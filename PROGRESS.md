@@ -306,3 +306,55 @@ doctrine §12.
   re-deriving one.
 - **Vault-sync:** demand raised
   contracts-20260721-platform-vault-b2-companion-turn-landed.
+
+## Session 29 (2026-07-22) — v0.16.0, `design.designSystem` state-event member
+
+- **Picked up an interrupted prior session:** the working tree already held a
+  fully-built, uncommitted v0.16.0 (schemas, all three regenerated bindings,
+  `CHANGELOG.md` entry, version bumps, extended
+  `tests/validate_state_event.py`) fulfilling demand
+  `design-studio-20260722-contracts-design-system-state-event` — new
+  `design.designSystem` `state.event` `oneOf` member (10th), mirroring
+  `design.mission`'s envelope exactly: `DesignSystemPayload` (`designSystemId`,
+  `name`, `slug`, `version`, `regime` — reuses `DesignMissionPayload`'s
+  existing enum verbatim, `status` new enum, `origin` new enum distinct from
+  the envelope-level `Origin`, `sourceMissionId` optional, `change`). Verified
+  the uncommitted state matched the demand's acceptance criteria exactly
+  before proceeding (no rework needed) — see full diff review in this
+  session's tool history if ever needed.
+- **Verified before committing:** `python tests/run_all.py` (11 validators +
+  state-event sync check) green; `mvn -f gen/java/pom.xml test` BUILD
+  SUCCESS 12/12; `npx tsc --noEmit` clean in `gen/ts`.
+- **Committed and tagged:** `53e43d6` "release: v0.16.0", tag `v0.16.0`,
+  pushed (`git push origin main --tags`).
+- **D031 acceptance — all three languages, against the real tagged
+  worktree, no unverified leg:** `git worktree add
+  ../contracts-worktrees/v0.16.0 v0.16.0`. Java: fresh `.m2` install from
+  that worktree, `jar tf` confirmed `DesignSystemEvent`/`DesignSystemPayload`
+  (+ nested enums) actually packaged; a scratch Maven consumer project
+  depending on `io.platform:contracts:0.16.0` compiled and ran code
+  constructing a full event. Python: fresh venv, `pip install
+  git+...@v0.16.0#subdirectory=gen/python`, round-tripped a
+  `DesignSystemEvent`, confirmed the `StateEvent` union accepts it, confirmed
+  a bad `status` value raises `ValidationError`. TypeScript: `file:`-scratch
+  consumer project against the worktree's committed `gen/ts`, assigning a
+  `DesignSystemEvent` to the `StateEvent` union — `npx tsc --noEmit` clean.
+  All scratch dirs and the worktree deleted after.
+- **D043 duty:** this release fulfils a real filed demand (not a
+  wave-commissioned no-demand release), so the origin is `design-studio`
+  directly — no D054 linked-list needed. Wrote
+  `demands/fulfilled/design-studio-20260722-contracts-design-system-state-event-report.md`
+  (worker duty, §4) and raised
+  `demands/2026-07-22-design-studio-repin-design-system-event.md`
+  (`contracts-20260722-design-studio-repin-design-system-event`, origin duty,
+  §3 — "re-pin and adopt v0.16.0"). Additive release, so per D043 only the
+  origin demand is required, no fleet-wide "adopt or explain". Both
+  frontmatters validated against `schemas/demand-coordinator/demand.json` /
+  `demand.fulfillment.json` before committing. Committed `d45a7b6`, pushed.
+- **Next step:** Awaiting the coordinator/owner on
+  `contracts-20260722-design-studio-repin-design-system-event`. `design-studio`'s
+  own repin-and-adopt session is next, not a `contracts` follow-up.
+- **Standing:** first `contracts` release where the D043 origin demand traces
+  straight back to a real filed consumer demand rather than through D054's
+  linked-list fallback — the ordinary case the release checklist was written
+  for.
