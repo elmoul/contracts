@@ -9,7 +9,7 @@ acceptance-criteria:
   - "DesignSystem registry emissions (S-B1) construct platform_contracts.state_feed.state_event.DesignSystemEvent / DesignSystemPayload (or the TS/Java equivalents, whichever design-studio's producer is written in) instead of the hand-shaped stopgap dict"
   - "the stopgap-dict code path and any comment documenting it as a workaround is removed"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand — re-pin `contracts` v0.16.0 and adopt `design.designSystem`
