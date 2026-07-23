@@ -1,0 +1,16 @@
+# Force LF on shell scripts and hooks regardless of a checkout's core.autocrlf
+# setting. CRLF breaks a shebang's interpreter lookup under real Linux
+# (`/bin/sh^M: bad interpreter`) and bash's backslash line-continuation -- both
+# confirmed empirically in this fleet 2026-07-14; see runtime/.gitattributes and
+# media-generation/.gitattributes for the write-ups. Both patterns are PROACTIVE
+# here: contracts tracks no .sh file and no hook as of 2026-07-23, so they pin
+# nothing that exists yet -- they exist so the first one added is covered without
+# a second pass.
+#
+# Deliberately narrow. No `* text=auto` and no rules over `gen/` : this repo's
+# generated bindings are consumed by version pin, and a blanket normalization
+# could rewrite generated output and change what an already-pinned consumer sees
+# from a tag. Nothing here touches a schema or requires a version bump.
+.gitattributes text eol=lf
+*.sh text eol=lf
+.githooks/pre-commit text eol=lf
