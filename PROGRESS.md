@@ -358,3 +358,51 @@ doctrine §12.
   straight back to a real filed consumer demand rather than through D054's
   linked-list fallback — the ordinary case the release checklist was written
   for.
+
+## Session 30 — 2026-07-23
+
+- **State:** `v0.17.0` tagged and pushed. Fulfilled
+  `design-studio-20260723-contracts-atlas-class-regime-enum`: the shared
+  `Regime` enum (used by both `DesignMissionPayload.regime` and
+  `DesignSystemPayload.regime` in `state.event`) gained a third member,
+  `atlas-class`, alongside `console-class`/`inhabited-class`. Purely
+  additive — no existing enum value, required field, or payload shape
+  touched (verified: `git diff --stat -- schemas/` against the pre-release
+  tree touches only `state.event.json` and its `state-event-java.yaml`
+  mirror). `tests/validate_state_event.py` extended with one new
+  known-good fixture per payload; existing `BAD_DESIGN_MISSION_UNKNOWN_REGIME`
+  (`hybrid-class`) fixture untouched and still rejected. All three bindings
+  regenerated (Python: `datamodel-codegen --target-python-version 3.11
+  --use-specialized-enum`, `Regime` gains `atlas_class = 'atlas-class'`;
+  TypeScript: `json-schema-to-typescript` + `dist/` rebuild, `tsc --noEmit`
+  clean; Java: `openapi-generator-cli` 7.23.0, `RegimeEnum` gains
+  `ATLAS_CLASS` on both payload classes, `mvn test` BUILD SUCCESS 12/12).
+  `python tests/run_all.py` (11 validators + state-event sync check) green.
+  **D031 acceptance, real tagged worktree, no unverified leg:** `git
+  worktree add ../contracts-worktrees/v0.17.0 v0.17.0`. Python: fresh venv,
+  `pip install git+...@v0.17.0#subdirectory=gen/python`, constructed
+  `ContractRegime('atlas-class')` directly (the exact call
+  `design-studio/src/design_studio/adapters/event_sink_state_feed.py:188`/
+  `:210` make), round-tripped `DesignMissionPayload`/`DesignSystemPayload`,
+  confirmed the `StateEvent` union accepts an atlas-class mission event,
+  confirmed `hybrid-class` still raises `ValueError`. Java: fresh `.m2`
+  install from the worktree; a scratch Maven consumer compiled and ran
+  code constructing `RegimeEnum.ATLAS_CLASS`. TypeScript: `file:`-scratch
+  consumer against the worktree's committed `gen/ts`, assigning
+  `regime: "atlas-class"` to a full `StateEvent` — `tsc --noEmit` clean.
+  All scratch dirs and the worktree deleted after.
+- **D043 duty:** real filed demand as origin (`design-studio`), no D054
+  linked-list needed. Wrote
+  `demands/fulfilled/design-studio-20260723-contracts-atlas-class-regime-enum-report.md`
+  (worker duty, §4) and raised
+  `demands/2026-07-23-design-studio-repin-atlas-class-regime-enum.md`
+  (`contracts-20260723-design-studio-repin-atlas-class-regime-enum`, origin
+  duty, §3 — "re-pin and adopt v0.17.0"). Additive release, so per D043
+  only the origin demand is required. Committed `713006b`, pushed.
+- **Next step:** Awaiting the coordinator/owner on
+  `contracts-20260723-design-studio-repin-atlas-class-regime-enum`.
+  `design-studio`'s own repin-and-adopt session is next, not a `contracts`
+  follow-up.
+- **Standing:** same pattern as v0.16.0/v0.17.0's predecessor — a real
+  filed consumer demand traced straight through to its D043 origin demand,
+  no linked-list fallback needed.
