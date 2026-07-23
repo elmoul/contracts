@@ -16,6 +16,66 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.17.0 — 2026-07-23
+
+Additive release, all three bindings: fulfills demand
+`design-studio-20260723-contracts-atlas-class-regime-enum` — adds a third
+`atlas-class` member to the shared `Regime` enum used by both
+`design.mission`'s `DesignMissionPayload.regime` and `design.designSystem`'s
+`DesignSystemPayload.regime` in `state.event`. Both payloads reuse the same
+enum (confirmed by the Python regen still collapsing both fields onto a
+single `Regime` class, as noted in v0.16.0's own entry). Purely additive — no
+existing enum value, required field, or payload shape changed (verified:
+`git diff --stat -- schemas/` against the pre-release tree touches only
+`schemas/state-feed/state.event.json` and its `state-event-java.yaml`
+mirror).
+
+### state.event — `Regime` enum gains a third value (`console-class` /
+### `inhabited-class` / `atlas-class`)
+
+Both occurrences updated in lockstep: `DesignMissionPayload.regime` and
+`DesignSystemPayload.regime` in `schemas/state-feed/state.event.json`, and
+the same two properties in `schemas/state-feed/state-event-java.yaml`
+(`tests/check_state_event_sync.py`: 10 event types still in sync — this
+check compares property names/required sets, not enum values, so it doesn't
+catch enum drift on its own; both files were edited by hand in the same
+commit and diffed against each other to confirm the enum literal matches).
+`tests/validate_state_event.py` extended with one new known-good fixture per
+payload (`GOOD_DESIGN_MISSION_ATLAS_CLASS_REGIME`,
+`GOOD_DESIGN_SYSTEM_ATLAS_CLASS_REGIME`) asserting `atlas-class` now
+validates; the existing `BAD_DESIGN_MISSION_UNKNOWN_REGIME` fixture
+(`"hybrid-class"`) is untouched and still correctly rejected, proving the
+enum is extended, not opened up to arbitrary strings.
+
+### Codegen — all three regenerated
+
+- **Python:** `datamodel-codegen --target-python-version 3.11
+  --use-specialized-enum` against the edited `state.event.json`. The shared
+  `Regime(StrEnum)` class gains `atlas_class = 'atlas-class'` alongside the
+  existing `console_class`/`inhabited_class` members; every other generated
+  class is untouched (confirmed by diff — only `Regime` and the file's
+  generation-timestamp header comment changed).
+- **TypeScript:** `json-schema-to-typescript` for `state-event.ts`
+  (`DesignMissionPayload.regime` and `DesignSystemPayload.regime` both widen
+  to `"console-class" | "inhabited-class" | "atlas-class"`); `dist/` rebuilt
+  (`npm run build`). `npx tsc --noEmit` clean.
+- **Java:** `openapi-generator-cli` 7.23.0 against the hand-mirrored
+  `state-event-java.yaml`, `--library resttemplate` (confirmed zero
+  `com.google.gson` imports). `DesignMissionPayload`/`DesignSystemPayload`
+  each gain an `ATLAS_CLASS` value on their own nested (non-shared)
+  `RegimeEnum` — same per-class-nested-enum idiom as every other Java event
+  class in this package. The other 18 pre-existing classes pick up only a
+  refreshed `@Generated` timestamp. `mvn -f gen/java/pom.xml test`: BUILD
+  SUCCESS, 12/12 tests, no existing test touched either payload class.
+
+### D031 acceptance — post-tag, run for real, all three languages
+
+See `demands/fulfilled/design-studio-20260723-contracts-atlas-class-regime-enum-report.md`
+for the full per-language acceptance-test transcript against the pushed
+`v0.17.0` tag.
+
+---
+
 ## v0.16.0 — 2026-07-22
 
 Additive release, all three bindings: fulfills demand

@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   DesignMissionPayload.JSON_PROPERTY_STAGE,
   DesignMissionPayload.JSON_PROPERTY_GATE_OUTCOME
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-22T19:18:35.443326+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-23T04:24:32.335221600+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class DesignMissionPayload {
   public static final String JSON_PROPERTY_MISSION_ID = "missionId";
   @jakarta.annotation.Nonnull
@@ -46,12 +46,14 @@ public class DesignMissionPayload {
   private String targetRepo;
 
   /**
-   * Which design regime/checklist this mission is gated by (D053): D036 information-first console law, or the Inhabited Interface doctrine.
+   * Which design regime/checklist this mission is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, or the atlas-class regime.
    */
   public enum RegimeEnum {
     CONSOLE_CLASS(String.valueOf("console-class")),
     
-    INHABITED_CLASS(String.valueOf("inhabited-class"));
+    INHABITED_CLASS(String.valueOf("inhabited-class")),
+    
+    ATLAS_CLASS(String.valueOf("atlas-class"));
 
     private String value;
 
@@ -236,7 +238,7 @@ public class DesignMissionPayload {
   }
 
   /**
-   * Which design regime/checklist this mission is gated by (D053): D036 information-first console law, or the Inhabited Interface doctrine.
+   * Which design regime/checklist this mission is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, or the atlas-class regime.
    * @return regime
    */
   @jakarta.annotation.Nonnull

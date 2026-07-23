@@ -441,11 +441,11 @@ components:
           pattern: "^[a-z][a-z0-9-]+$"
         regime:
           type: string
-          enum: ["console-class", "inhabited-class"]
+          enum: ["console-class", "inhabited-class", "atlas-class"]
           description: >-
             Which design regime/checklist this mission is gated by (D053):
-            D036 information-first console law, or the Inhabited Interface
-            doctrine.
+            D036 information-first console law, the Inhabited Interface
+            doctrine, or the atlas-class regime.
         stage:
           type: string
           enum: ["harvest", "interview", "brief", "theme-gate", "coverage-gate", "plan-gate", "executing", "feel-gate", "closed"]
@@ -507,11 +507,11 @@ components:
           pattern: "^v?\\d+\\.\\d+\\.\\d+$"
         regime:
           type: string
-          enum: ["console-class", "inhabited-class"]
+          enum: ["console-class", "inhabited-class", "atlas-class"]
           description: >-
             Which design regime/checklist this design system is gated by
-            (D053): D036 information-first console law, or the Inhabited
-            Interface doctrine.
+            (D053): D036 information-first console law, the Inhabited
+            Interface doctrine, or the atlas-class regime.
         status:
           type: string
           enum: ["draft", "validated", "retired"]

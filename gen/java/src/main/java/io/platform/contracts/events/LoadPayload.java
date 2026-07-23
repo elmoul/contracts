@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   LoadPayload.JSON_PROPERTY_VALUE,
   LoadPayload.JSON_PROPERTY_METRIC
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-22T19:18:35.443326+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-23T04:24:32.335221600+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class LoadPayload {
   public static final String JSON_PROPERTY_COMPONENT_ID = "componentId";
   @jakarta.annotation.Nonnull
