@@ -9,7 +9,7 @@ acceptance-criteria:
   - "design-studio's event_sink_state_feed.py adapter (or its TS/Java equivalent) can construct ContractRegime('atlas-class') / the generated Regime.atlas_class member without a schema validation error"
   - "any workaround, stopgap, or comment in design-studio's producer code that predates atlas-class support is removed once the mission/design-system emission paths that need it are updated"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand — re-pin `contracts` v0.17.0 and adopt the `atlas-class` `Regime` member
