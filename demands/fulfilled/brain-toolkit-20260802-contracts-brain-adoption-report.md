@@ -88,6 +88,20 @@ carries a proper `Vault-sync:` line, which clears it.
 The other `UNVERIFIED` (`status-coherence`) is likewise long-standing and
 unrelated.
 
+Re-run after this session's `brain session close` wrote its session file and
+the `PROGRESS.md` Session 31 projection:
+
+```
+→ PASS (15 checks, 0 failed, 1 unverified)
+  [PASS] vault-sync-handoff          most recent PROGRESS.md entry has a Vault-sync: line
+  [PASS] brain-session-file          v0.6 format, valid frontmatter; .brain/ complete
+  [PASS] brain-session-lessons       non-empty, non-TBD lessons entry
+  [PASS] brain-projection-equality   vault_sync matches PROGRESS.md's Vault-sync line — projection intact
+```
+
+`contracts` now validates clean; the one remaining `UNVERIFIED` is
+`status-coherence`, which predates this work.
+
 **5. Published artifacts exclude `.brain/`** — confirmed, and the mechanism is
 structural rather than an ignore list: **`.brain/` lives at the repo root,
 while every published package root is a subdirectory** (`gen/ts`, `gen/python`,
