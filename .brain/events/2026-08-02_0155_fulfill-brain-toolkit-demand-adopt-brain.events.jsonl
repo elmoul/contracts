@@ -1,0 +1,2 @@
+{"ev": "session_start", "ts": "2026-08-02T01:55:23+01:00", "agent": "contracts", "model": "claude-code"}
+{"ev": "session_stop", "ts": "2026-08-02T01:56:25+01:00"}

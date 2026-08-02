@@ -406,3 +406,16 @@ doctrine §12.
 - **Standing:** same pattern as v0.16.0/v0.17.0's predecessor — a real
   filed consumer demand traced straight through to its D043 origin demand,
   no linked-list fallback needed.
+
+## Session 31 (2026-08-02)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-08-02_0155_fulfill-brain-toolkit-demand-adopt-brain.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill brain-toolkit demand: adopt .brain in contracts -- status: done.
+- Next step: Await coordinator validation of the fulfillment report. No contracts follow-up pending.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none -- adoption is additive repo tooling; no schema, version, or tag change, so no vault amendment needed
+- Session: 2026-08-02_0155_fulfill-brain-toolkit-demand-adopt-brain
