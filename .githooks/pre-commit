@@ -1,0 +1,39 @@
+#!/bin/sh
+# Platform convention: gitleaks pre-commit hook (conventions/rules.yaml -> gitleaks_precommit).
+# Source of truth for this file: conventions/hooks/gitleaks/pre-commit — copy verbatim into
+# your own repo's .githooks/pre-commit, do not hand-edit a fork of it. See
+# conventions/hooks/gitleaks/README.md for the one-line install step.
+#
+# Runs on Windows via Git for Windows' bundled sh.exe (MSYS) — core.hooksPath hooks are
+# executed the same way git executes its own internal scripts, so a plain #!/bin/sh hook
+# runs without WSL, Cygwin, or any extra shell install. Verified empirically on this
+# platform (Git for Windows 2.55, sh.exe at C:\Program Files\Git\usr\bin\sh.exe): a
+# core.hooksPath hook blocks/allows commits exactly as it would on Linux/macOS.
+#
+# Absent-binary behavior is a HARD FAIL, not a warn-and-pass: this hook exists because
+# session logs and pasted terminal output are a named, real leak vector (agent-memory
+# spec Appendix A.9 / §14), so "protection that silently isn't there" is treated as worse
+# than a blocked commit. The emergency bypass is git's own `--no-verify` flag — a
+# deliberate, visible override, never a silent one built into this script.
+
+set -e
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "----------------------------------------------------------------------" >&2
+  echo "BLOCKED: gitleaks is not installed or not on PATH." >&2
+  echo "" >&2
+  echo "This repo requires a gitleaks pre-commit scan (conventions/rules.yaml:" >&2
+  echo "gitleaks_precommit). Install it, then retry the commit:" >&2
+  echo "" >&2
+  echo "    winget install -e --id Gitleaks.Gitleaks" >&2
+  echo "" >&2
+  echo "(open a new shell afterward so PATH picks up the install). See" >&2
+  echo "conventions/hooks/gitleaks/README.md for alternatives and details." >&2
+  echo "----------------------------------------------------------------------" >&2
+  exit 1
+fi
+
+# --staged scans exactly what's about to be committed (not the whole history);
+# --redact keeps any real secret it finds out of the hook's own console output;
+# --verbose gives the developer enough context to find and fix the offending line.
+gitleaks protect --staged --redact --verbose
