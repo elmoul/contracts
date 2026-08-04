@@ -488,3 +488,18 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-08-04_0845_fulfill-demand-state-feed-20260804-state
+
+## Session 37 (2026-08-04)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-08-04_0844_fulfill-demand-state-feed-20260804-state.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+agent-runner's dispatch supervisor from an auto-drafted, unconfirmed close --
+not a second hand-written account, and not yet reviewed by a human or the
+worker agent itself).
+
+- State: Fulfill demand state-feed-20260804-state-event-app-mission-member (capability: Add an app.mission member to the state.event oneOf union (and its Java binding), so state-feed can accept an app.mission state-event type-safely, from: state-feed, target: contracts). Acceptance criteria: - schemas/state-... -- status: done (close: auto-drafted, unconfirmed).
+- Next step: Review this session's auto-drafted close (`.brain/sessions/2026-08-04_0844_fulfill-demand-state-feed-20260804-state.md`) and confirm or correct it.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-08-04_0844_fulfill-demand-state-feed-20260804-state
