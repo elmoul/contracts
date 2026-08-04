@@ -16,6 +16,34 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.22.0 — 2026-08-04
+
+**Additive, all three bindings.** `app.task-plan`'s verify step gains an
+optional string `channel`: *for an absence claim only, the input path (field,
+map key, header, argument) that could carry the thing being excluded.* Fulfils
+demand `app-studio-20260804-contracts-verify-step-channel`.
+
+An absence step — "the API key never reaches the provider" — is unfalsifiable
+until the plan names where the excluded thing would have travelled if it had.
+`expect` says what must not be true; `channel` says where to look. Meaningless
+on a positive step, so it is optional rather than conditionally required: every
+existing plan artifact carries no `channel` on any step and validates unchanged
+against v0.22.0.
+
+| binding | v0.22.0 |
+|---|---|
+| TypeScript | `channel?: string` on `VerifyStep` |
+| Python | `channel: str \| None = None` |
+| Java | `private String channel` on `VerifyStep` |
+
+No consumer is obligated to move (D031 pins are deliberate). One Java note for
+anyone who does: jsonschema2pojo's all-args `VerifyStep` constructor gains a
+fourth parameter, so a call site using that constructor (rather than the
+no-arg + setters form) needs the extra argument. Getter/setter and JSON
+round-trip behaviour are unchanged.
+
+---
+
 ## v0.21.0 — 2026-08-04
 
 **Breaking release, all three bindings** — read this before re-pinning:

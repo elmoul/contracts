@@ -134,4 +134,8 @@ export interface VerifyStep {
      * What counts as passing.
      */
     expect: string;
+    /**
+     * For an absence claim only: the input path (field, map key, header, argument) that could carry the thing being excluded. Optional, and meaningless on a positive step — a step asserting something IS there needs no channel. An absence step without one is unfalsifiable: "the secret never reaches the provider" is only checkable once you name where it would have travelled if it did.
+     */
+    channel?: string;
 }

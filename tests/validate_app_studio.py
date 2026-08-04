@@ -223,6 +223,34 @@ GOOD_PLAN_ADVISORY_UNIT_WITHOUT_VERIFY["waves"][0]["units"].append(
     }
 )
 
+# An absence claim — "the secret never reaches the provider" — is only
+# checkable once the step names the input path the excluded thing would have
+# travelled on. `channel` is that path. Optional by construction: every plan
+# artifact that predates it (PILOT_PLAN included) carries no channel on any
+# step and must keep validating, which the pilot-plan positive above asserts.
+GOOD_PLAN_ABSENCE_STEP_WITH_CHANNEL = deepcopy(PILOT_PLAN)
+GOOD_PLAN_ABSENCE_STEP_WITH_CHANNEL["waves"][0]["units"][0]["verify"] = [
+    {
+        "run": None,
+        "manual": "send a prompt carrying an API key and read the gateway's outbound request log",
+        "expect": "no request to the provider contains the key",
+        "channel": "the `metadata` map on the outbound provider request",
+    }
+]
+
+# The same step with the channel dropped: still valid — the property is
+# optional, not conditionally required.
+GOOD_PLAN_ABSENCE_STEP_WITHOUT_CHANNEL = deepcopy(GOOD_PLAN_ABSENCE_STEP_WITH_CHANNEL)
+del GOOD_PLAN_ABSENCE_STEP_WITHOUT_CHANNEL["waves"][0]["units"][0]["verify"][0]["channel"]
+
+# It is one input path, stated in words — not a list of them, and not a
+# structured locator. Typed loosely enough and it becomes the free-form dumping
+# ground the description exists to prevent.
+BAD_PLAN_CHANNEL_AS_LIST = deepcopy(GOOD_PLAN_ABSENCE_STEP_WITH_CHANNEL)
+BAD_PLAN_CHANNEL_AS_LIST["waves"][0]["units"][0]["verify"][0]["channel"] = [
+    "the `metadata` map"
+]
+
 CASES = [
     # (schema file, label, document, should_validate)
     ("app.mission.json", "tutor pilot mission (real, from the ledger)", PILOT_MISSION, True),
@@ -251,6 +279,9 @@ CASES = [
     ("app.task-plan.json", "the two decision lists collapsed into one", BAD_PLAN_COLLAPSED_LISTS, False),
     ("app.task-plan.json", "unknown lazy namespace", BAD_PLAN_UNKNOWN_LAZY_NAMESPACE, False),
     ("app.task-plan.json", "unknown wave status", BAD_PLAN_UNKNOWN_WAVE_STATUS, False),
+    ("app.task-plan.json", "absence verify step naming its channel", GOOD_PLAN_ABSENCE_STEP_WITH_CHANNEL, True),
+    ("app.task-plan.json", "the same step with channel omitted (optional)", GOOD_PLAN_ABSENCE_STEP_WITHOUT_CHANNEL, True),
+    ("app.task-plan.json", "channel as a list rather than one input path", BAD_PLAN_CHANNEL_AS_LIST, False),
 ]
 
 

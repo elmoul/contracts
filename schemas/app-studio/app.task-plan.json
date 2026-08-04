@@ -164,7 +164,11 @@
       "properties": {
         "run": { "type": ["string", "null"], "description": "The command to run. Null on a manual step." },
         "manual": { "type": ["string", "null"], "description": "The check a person performs. Null on a runnable step." },
-        "expect": { "type": "string", "minLength": 1, "description": "What counts as passing." }
+        "expect": { "type": "string", "minLength": 1, "description": "What counts as passing." },
+        "channel": {
+          "type": "string",
+          "description": "For an absence claim only: the input path (field, map key, header, argument) that could carry the thing being excluded. Optional, and meaningless on a positive step — a step asserting something IS there needs no channel. An absence step without one is unfalsifiable: \"the secret never reaches the provider\" is only checkable once you name where it would have travelled if it did."
+        }
       },
       "not": {
         "description": "A step must have something to run or something a person checks. Stated as a negative rather than an anyOf of two required-shapes on purpose: the anyOf form makes every generator emit two variant classes and a union, which would push a modelling detail of this rule onto every consumer constructing a verify step.",
