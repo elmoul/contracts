@@ -561,3 +561,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-08-04_1011_close-the-loop-on-demand-contracts-20260
+
+## Session 42 (2026-08-04)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-08-04_1505_fulfill-demand-app-studio-20260804-contr.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand app-studio-20260804-contracts-verify-step-channel (capability: `app.task-plan`'s verify step gains an optional `channel` — the input path that could carry the thing an absence criterion excludes, from: app-studio, target: contracts). Acceptance criteria: - `app.task-plan`'s verify-ste... -- status: done.
+- Next step: app-studio closes the consuming leg: re-pin v0.22.0, fill channel on absence steps, drop the recorded gap
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-08-04_1505_fulfill-demand-app-studio-20260804-contr
