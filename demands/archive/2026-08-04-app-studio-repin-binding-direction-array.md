@@ -10,7 +10,7 @@ acceptance-criteria:
   - "the projection that computes gateContext emits a list (oldest first) whose length tracks priorRounds, and null when the gate has never rejected"
   - "any local type, DTO or hand-rolled shape that still declares bindingDirection as a string is removed in favour of the generated binding, or the divergence is written down with a reason"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand — re-pin `contracts` v0.21.0 and read `bindingDirection` as a list
