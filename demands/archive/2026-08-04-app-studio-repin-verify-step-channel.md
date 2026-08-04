@@ -11,7 +11,7 @@ acceptance-criteria:
   - "the recorded gap for this missing field is dropped"
   - "any local type or hand-rolled verify-step shape declaring channel itself is removed in favour of the generated binding, or the divergence is written down with a reason"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand — re-pin `contracts` v0.22.0 and adopt `verify.channel`
