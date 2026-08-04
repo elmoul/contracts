@@ -419,3 +419,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none -- adoption is additive repo tooling; no schema, version, or tag change, so no vault amendment needed
 - Session: 2026-08-02_0155_fulfill-brain-toolkit-demand-adopt-brain
+
+## Session 32 (2026-08-04)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-08-04_0757_fulfill-demand-design-studio-20260804-co-2.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: fulfill demand design-studio-20260804-contracts-guided-turn-class-regime-enum -- status: done.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-08-04_0757_fulfill-demand-design-studio-20260804-co-2
