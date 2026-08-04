@@ -147,8 +147,9 @@
           "examples": ["the Product Concept", "the task_plan's next wave"]
         },
         "bindingDirection": {
-          "type": ["string", "null"],
-          "description": "The direction carried from the last rejection at this gate, if any."
+          "type": ["array", "null"],
+          "items": { "type": "string" },
+          "description": "The directions carried from every prior rejection at this gate, oldest first — `null` when the gate has never rejected. A list, not a single string: a gate that rejects twice binds the owner to both directions, and the earlier one does not stop being binding because a second arrived. Length tracks `priorRounds`."
         },
         "priorRounds": {
           "type": "integer",

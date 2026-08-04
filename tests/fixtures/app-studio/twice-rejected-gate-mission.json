@@ -1,0 +1,36 @@
+{
+  "id": "6f2a1c90-9b41-4d2e-8a77-1c0f3b5d7e42",
+  "class": "genesis",
+  "appName": "tutor",
+  "stage": "plan-gate",
+  "stageKind": "gate",
+  "currentWave": 0,
+  "isTerminal": false,
+  "gateContext": {
+    "gate": "plan-gate",
+    "subject": "the task_plan's next wave",
+    "bindingDirection": [
+      "split wave 1 — it carries two unrelated concerns",
+      "the verify steps must name a command, not 'check it works'"
+    ],
+    "priorRounds": 2,
+    "approvalRequires": []
+  },
+  "gateRecords": [
+    {
+      "gate": "plan-gate",
+      "outcome": "rejected",
+      "notes": "split wave 1 — it carries two unrelated concerns",
+      "decidedAt": "2026-08-03T10:00:00+00:00"
+    },
+    {
+      "gate": "plan-gate",
+      "outcome": "rejected",
+      "notes": "the verify steps must name a command, not 'check it works'",
+      "decidedAt": "2026-08-03T15:30:00+00:00"
+    }
+  ],
+  "sendBacks": [],
+  "rewinds": [],
+  "rewindTargets": []
+}

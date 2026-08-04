@@ -168,9 +168,9 @@ export interface AppMission {
      */
     subject: string;
     /**
-     * The direction carried from the last rejection at this gate, if any.
+     * The directions carried from every prior rejection at this gate, oldest first — `null` when the gate has never rejected. A list, not a single string: a gate that rejects twice binds the owner to both directions, and the earlier one does not stop being binding because a second arrived. Length tracks `priorRounds`.
      */
-    bindingDirection?: string | null;
+    bindingDirection?: string[] | null;
     /**
      * How many times this gate has already rejected.
      */

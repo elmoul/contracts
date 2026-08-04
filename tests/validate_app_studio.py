@@ -41,6 +41,23 @@ def load(path: Path) -> dict:
 PILOT_MISSION = load(FIXTURES / "tutor-pilot-mission.json")
 PILOT_PLAN = load(FIXTURES / "tutor-pilot-plan.json")
 
+# A gate that has rejected twice. The defect this fixture exists to prevent:
+# `gateContext.bindingDirection` was typed as a single nullable string, so the
+# second rejection could only be represented by discarding the first direction —
+# which does not stop being binding because a later one arrived. Kept as a
+# permanent positive case so the list form can never quietly regress to a scalar.
+TWICE_REJECTED_MISSION = load(FIXTURES / "twice-rejected-gate-mission.json")
+
+BAD_MISSION_BINDING_DIRECTION_AS_STRING = deepcopy(TWICE_REJECTED_MISSION)
+BAD_MISSION_BINDING_DIRECTION_AS_STRING["gateContext"]["bindingDirection"] = (
+    "split wave 1 — it carries two unrelated concerns"
+)
+
+GOOD_MISSION_NEVER_REJECTED = deepcopy(TWICE_REJECTED_MISSION)
+GOOD_MISSION_NEVER_REJECTED["gateContext"]["bindingDirection"] = None
+GOOD_MISSION_NEVER_REJECTED["gateContext"]["priorRounds"] = 0
+GOOD_MISSION_NEVER_REJECTED["gateRecords"] = []
+
 # --- mission negatives -------------------------------------------------------
 
 BAD_MISSION_UNKNOWN_STAGE = deepcopy(PILOT_MISSION)
@@ -212,6 +229,9 @@ CASES = [
     ("app.mission.json", "aborted mission", GOOD_MISSION_ABORTED, True),
     ("app.mission.json", "mission with a send-back", GOOD_MISSION_SEND_BACK, True),
     ("app.mission.json", "mission at wave-review with waveReviewNext", GOOD_MISSION_WAVE_REVIEW, True),
+    ("app.mission.json", "gate rejected twice — bindingDirection carries both", TWICE_REJECTED_MISSION, True),
+    ("app.mission.json", "gate never rejected — bindingDirection null", GOOD_MISSION_NEVER_REJECTED, True),
+    ("app.mission.json", "bindingDirection as a bare string (the pre-v0.21.0 form)", BAD_MISSION_BINDING_DIRECTION_AS_STRING, False),
     ("app.mission.json", "unknown stage", BAD_MISSION_UNKNOWN_STAGE, False),
     ("app.mission.json", "send-back smuggled in as a gate outcome", BAD_MISSION_SEND_BACK_AS_OUTCOME, False),
     ("app.mission.json", "send-back record placed in gateRecords", BAD_MISSION_SEND_BACK_IN_GATE_RECORDS, False),

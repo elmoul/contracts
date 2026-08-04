@@ -16,6 +16,62 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.21.0 — 2026-08-04
+
+**Breaking release, all three bindings** — read this before re-pinning:
+`app.mission`'s `gateContext.bindingDirection` changes from a nullable
+**string** to a nullable **array of strings**. Fulfils demand
+`app-studio-20260804-contracts-binding-direction-array`.
+
+**A consumer typing this field as a string will break.** Not "may" — will. The
+generated types moved with the schema:
+
+| binding | v0.20.0 | v0.21.0 |
+|---|---|---|
+| TypeScript | `bindingDirection?: string \| null` | `bindingDirection?: string[] \| null` |
+| Python | `bindingDirection: str \| None` | `bindingDirection: list[str] \| None` |
+| Java | `private String bindingDirection` | `private List<String> bindingDirection` |
+
+So: TS/Java consumers get a compile error (the good case), Python consumers get
+a pydantic `ValidationError` at parse time, and anything hand-parsing the JSON
+silently gets a list where it expected a string. Migration is
+`bindingDirection` → `bindingDirection?.[0]` for read-one-direction call sites,
+or better, render all of them.
+
+**Why the field was wrong.** A gate's binding direction was modelled as "the
+direction carried from the *last* rejection". But a gate can reject more than
+once, and the first direction does not stop being binding because a second
+arrived — the owner is bound by both. With a scalar the only representable
+choice was to discard history, so a mission whose gate had rejected twice
+either lost a direction or failed validation. `priorRounds` already counted the
+rounds; the directions now have somewhere to go, oldest first, with length
+tracking `priorRounds`.
+
+`null` is unchanged and still means *this gate has never rejected* — the tutor
+pilot fixture (`gateContext: null`) validates untouched.
+
+Regression cover: `tests/fixtures/app-studio/twice-rejected-gate-mission.json`
+is now a permanent positive fixture (a `plan-gate` with two rejections and both
+directions carried), paired with a negative asserting the old bare-string form
+is rejected, so the list form cannot quietly regress to a scalar.
+
+**Version choice.** Minor, not major, following the v0.11.0 precedent recorded
+below: while this package sits at `0.y.z` semver treats it as initial
+development, where breaking changes ride a minor bump; a major is reserved for
+the first genuinely 1.0-era break. The rule at the top of this file
+(breaking = major) is the 1.0+ rule.
+
+Per D043 this release also raises a re-pin demand back to `app-studio`, the
+origin. The breaking-release leg of D043 (demand every consumer of the changed
+schema) resolves to the same single repo here: the only other reader of
+`app.mission` is state-feed's `AppMissionEvent` payload (v0.20.0), and that
+payload carries `missionId`/`appName`/`stage`/`currentWave`/`gate`/`outcome`/
+`gateWave` — it does not carry `gateContext` at all, so it is unaffected. This
+was established from the schemas in this repo; control-plane's `GET /registry`
+consumer graph was not reachable from this session to cross-check.
+
+---
+
 ## v0.20.0 — 2026-08-04
 
 Additive release, all three bindings: fulfills demand
