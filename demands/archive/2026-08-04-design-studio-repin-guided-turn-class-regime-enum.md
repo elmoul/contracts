@@ -10,7 +10,7 @@ acceptance-criteria:
   - "design-studio's value-projection emits the regime verbatim as 'guided-turn-class' — no mapping table, since the contracts spelling matches the three existing members"
   - "any workaround, stopgap, or comment in design-studio's producer code that predates guided-turn-class support is removed once the mission/design-system emission paths that need it are updated"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand — re-pin `contracts` v0.18.0 and adopt the `guided-turn-class` `Regime` member
