@@ -10,7 +10,7 @@ acceptance-criteria:
   - "the stage/gate values are read as the generated enums (AppMissionEvent), not as free strings — an off-spine stage name is rejected at the boundary rather than forwarded"
   - "any hand-rolled app.mission shape state-feed carried while waiting for this release is deleted in favour of the generated binding, or the divergence is written down with a reason"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand — re-pin `contracts` v0.20.0 and accept `app.mission`
