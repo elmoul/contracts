@@ -447,3 +447,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-08-04_0757_fulfill-demand-design-studio-20260804-co
+
+## Session 34 (2026-08-04)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-08-04_0816_fulfill-demand-app-studio-20260804-contr.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand app-studio-20260804-contracts-app-mission-and-task-plan (capability: add app.mission and app.task-plan as additive schemas, now that a real genesis mission has proved both shapes end to end, from: app-studio, target: contracts). Acceptance criteria: - schemas/app-studio/app.mission.js... -- status: done.
+- Next step: Await coordinator validation; archive demands/2026-08-04-app-studio-repin-app-mission-and-task-plan.md once app-studio's re-pin is reported satisfied.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-08-04_0816_fulfill-demand-app-studio-20260804-contr
