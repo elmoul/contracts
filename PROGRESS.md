@@ -587,3 +587,18 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-08-04_2255_archive-demand-contracts-20260804-app-st
+
+## Session 44 (2026-08-04)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-08-04_2255_close-the-loop-on-demand-contracts-20260.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+agent-runner's dispatch supervisor from an auto-drafted, unconfirmed close --
+not a second hand-written account, and not yet reviewed by a human or the
+worker agent itself).
+
+- State: Close the loop on demand contracts-20260804-app-studio-repin-verify-step-channel. It was approved at 2026-08-04T21:55:07.195085Z -- the only thing left is this repo's own archive bookkeeping, which nobody has done yet. 1. GET http://localhost:8082/satisfied/contracts -- find contracts-20260804-app-s... -- status: done (close: auto-drafted, unconfirmed).
+- Next step: Review this session's auto-drafted close (`.brain/sessions/2026-08-04_2255_close-the-loop-on-demand-contracts-20260.md`) and confirm or correct it.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-08-04_2255_close-the-loop-on-demand-contracts-20260
