@@ -25,6 +25,7 @@ VALIDATORS = [
     "validate_model_manifest.py",
     "validate_ai_job.py",
     "validate_stage_companion_turn.py",
+    "validate_app_studio.py",
     "check_state_event_sync.py",
 ]
 

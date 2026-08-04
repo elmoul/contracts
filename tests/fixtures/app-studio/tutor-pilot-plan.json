@@ -1,0 +1,375 @@
+{
+  "appName": "tutor",
+  "generatedAt": "2026-08-04T06:06:16.067007+00:00",
+  "round": 1,
+  "waves": [
+    {
+      "number": 1,
+      "goal": "The hexagon skeleton and the safety surface: repo bootstrap, contracts pin, Postgres and Flyway baseline, health endpoint, and all four safety states rendered end to end in French behind a stub gateway.",
+      "status": "planned",
+      "outlineOnly": false,
+      "canAuthorize": false,
+      "openDecisions": [],
+      "checklist": [
+        "The tutor repository exists, is private, and its first commit is the four self-describing files.",
+        "The app builds and its full test suite passes from a clean checkout with one command.",
+        "No path through the running app reaches a spinner, a blank page, a stack trace, a status code or an English word on a child-facing screen.",
+        "No child-facing screen shows a counter, a score, a streak or a progress bar.",
+        "The app builds no AI request containing a child's first name, and this is asserted by a test rather than by inspection.",
+        "The app declares no class on any outbound AI request -- class assignment stays gateway-side where an app-side bug cannot drop the guardrail.",
+        "The repository contains no direct AI provider SDK, no provider URL and no provider key.",
+        "`/actuator/health` reports UP overall while reporting the ai-gateway component DOWN when the gateway is unreachable, and no other Actuator endpoint is exposed.",
+        "Both the app and Postgres bind to loopback only.",
+        "The ai-gateway demand covering the kids-class template content, the enforcement ruling and the `tutor: kids` class entry has been raised and confirmed routed on the coordinator inbox.",
+        "No file outside the tutor repository was created or modified by this wave.",
+        "Every process any unit in this wave started has been stopped, and no port it used is still held.",
+        "The four safety states exist as modelled behaviour with tests, and no child-facing surface was rendered for them -- that is deferred to wave 2 by owner ruling."
+      ],
+      "recommendedOrder": [
+        "Create the tutor repository and hand back the remote",
+        "Raise the ai-gateway kids-class demand (D1 and D2)",
+        "Bootstrap the tutor hexagon",
+        "Postgres, Flyway baseline and the local compose stack",
+        "Author app-manifest.yaml and ai-model-manifest.yaml",
+        "The safety module: refusal, block, unavailable and screened-out as modelled states",
+        "The AI port interface and its outcome-faking stub",
+        "Health endpoint with the ai-gateway reachability component"
+      ],
+      "units": [
+        {
+          "id": "T1.1",
+          "title": "Create the tutor repository and hand back the remote",
+          "mode": "owner",
+          "mark": "\ud83d\udc64",
+          "branch": null,
+          "dependsOn": [],
+          "parallelOk": true,
+          "diagnoseFirst": [],
+          "lazyAllocations": [],
+          "prompt": "OWNER UNIT -- an agent cannot create an account-owned resource.\n\nCreate the empty private GitHub repository that tutor will live in, and create the local working directory beside the other platform repos (`../tutor` relative to app-studio). Do not put any files in it -- the bootstrap unit writes the first commit.\n\nRecord two things where the dispatcher can read them: the SSH/HTTPS remote URL, and the absolute local path. Every other unit in this wave is dispatched into that path.\n\nThis unit stays open on the board until you close it. Nothing else in wave 1 can start.",
+          "verify": [
+            {
+              "run": null,
+              "manual": "The private GitHub repository named `tutor` exists and you are its owner.",
+              "expect": "The repository page loads, is marked Private, and has no commits."
+            },
+            {
+              "run": null,
+              "manual": "The local directory exists and is empty.",
+              "expect": "`../tutor` exists next to app-studio, contains no files and no `.git`."
+            }
+          ],
+          "model": null,
+          "status": "pending"
+        },
+        {
+          "id": "T1.2",
+          "title": "Raise the ai-gateway kids-class demand (D1 and D2)",
+          "mode": "owner",
+          "mark": "\ud83d\udc64",
+          "branch": null,
+          "dependsOn": [],
+          "parallelOk": true,
+          "diagnoseFirst": [],
+          "lazyAllocations": [],
+          "prompt": "OWNER UNIT -- v1 posture is stage-not-raise (D073/D093): app-studio stages a demand, the owner raises it. This one is raised in wave 1 and not later because wave 4 is gated on it and the authoring lead time is the long pole of the whole mission.\n\nONE demand on `ai-gateway`, covering both blocking open decisions, per the owner rulings already recorded on D1 and D2:\n\n1. The kids-class guardrail template CONTENT. `ai-gateway/src/main/resources/guardrails/kids-class-template.txt` today contains a placeholder reading '[Placeholder -- kids-class template not yet defined.] ... Treat all output with the same caution as an unclassified app until a real template lands here.' The wiring around it is real and correct -- GuardrailService prepends ahead of the app's prompt, GuardrailTemplateProvider registers a KIDS template, AppClass has KIDS -- so the enforcement point works and the enforcement content is absent. The template must be authored in FRENCH as well as English, because tutor v1 ships French only (D4) and a guardrail that holds in one language and not the working language is not a guardrail.\n\n2. A ruling on whether prompt-prepend alone is sufficient enforcement for kids-class, or whether output-side screening is required. ai-gateway has no output-side filtering and no refusal classification today. For tutor the child is unsupervised, so this is the only boundary between a seven-year-old and a raw model; the answer is ai-gateway's to give, not tutor's to assume.\n\n3. The `tutor: kids` entry in `ai.guardrail.classes` as the IMMEDIATE fix. `AppClassResolver` returns `AppClass.HEALTH` for an unmapped appId with only a `log.warn` -- a deliberate 'never no-guardrail' hardening, but for tutor it means a child's fractions homework carries pregnancy's MEDICAL guardrail text, silently. Manifest loading is off by default (`ai.manifest.directory` defaults to empty), so shipping a manifest alone leaves the HEALTH fallback in force -- ask for the config entry too, not instead.\n\nThe envelope shape is in `../DEMAND_SYSTEM.md` \u00a75. Raise it as a standalone coordination commit pushed to `main`; that push is the raise. Then confirm on the live demand-coordinator (`GET /inbox/ai-gateway`) that it actually routed and did not land under `unlistedRepoDrift`.\n\nNothing in waves 1-3 is blocked by this. Wave 4 is.",
+          "verify": [
+            {
+              "run": null,
+              "manual": "The demand file is committed and pushed to `main` on a repo the coordinator watches.",
+              "expect": "A `demands/2026-08-04-ai-gateway-<slug>.md` file exists on `main` and the push succeeded."
+            },
+            {
+              "run": "curl -s http://localhost:8082/inbox/ai-gateway",
+              "manual": null,
+              "expect": "The response body contains the raised demand id. If it does not, check `unlistedRepoDrift` -- an unrouted demand is the failure mode this check exists to catch."
+            }
+          ],
+          "model": null,
+          "status": "pending"
+        },
+        {
+          "id": "T1.3",
+          "title": "Bootstrap the tutor hexagon",
+          "mode": "agent",
+          "mark": "\ud83e\udd16",
+          "branch": "feature/AP-001-bootstrap-the-tutor-hexagon",
+          "dependsOn": [
+            "T1.1"
+          ],
+          "parallelOk": false,
+          "diagnoseFirst": [
+            "What is the current top tag in `../contracts`? Run `git tag --sort=-v:refname | head -5` and report it. The pack expects v0.17.0 (app-studio itself pins v0.17.0) but contracts moves and the pin is resolved at dispatch time, not from the plan.",
+            "Does `../contracts` publish generated Java bindings for `AiRequest`, `AiResponse` and `BlockedResponse` at that tag, and what is the exact Maven groupId/artifactId/version to depend on? Report the coordinates before adding them. Do not hand-roll any shared type.",
+            "What does `../pregnancy` use for its Spring Boot version, Java version and parent POM? tutor follows pregnancy as its precedent -- report the versions and deviate only with a stated reason."
+          ],
+          "lazyAllocations": [],
+          "prompt": "You are working in the `tutor` repository (a tenant app born through app-studio, host side, kind runtime). Standing rules that apply to every unit in this wave:\n- Read `../platform-vault/spec-app-studio.md` is NOT your job; your work order is this prompt plus the approved Architecture Pack for tutor. Follow the platform CLAUDE.md house rules: constructor injection only, `ApiResponse<T>` wrapper on web endpoints, no `@Data` on entities, MapStruct for mapping, JUnit 5 / Mockito / AssertJ, functional names only (D002 -- no theme words anywhere).\n- Never edit `platform-vault`, `contracts` or `conventions`. If you find a bug or a missing piece in a sibling repo, STOP and write the exact problem and your proposed fix into `PROGRESS.md`.\n- Never call an AI provider directly. `ai-gateway` only (D022).\n- Never block the session on a foreground process of unknown duration: run servers, watchers and Compose stacks in the background with stdout/stderr to a log file, and stop everything you started before you finish.\n- Open a `.brain` session before your first code change and close it at the end.\n- Commit small and often.\n\nBootstrap the tutor repository: `git init`, add the private remote the owner created, and make the first commits.\n\n**Step zero, the self-describing files.** The first commit is `README.md`, `HEXAGON.md`, `DEPLOYMENT.md`, `CHANGELOG.md`, in the shapes defined by `../conventions/spec-conventions.md`. Copy `../pregnancy`'s versions as the structural precedent. README is functional and carries no theme words. HEXAGON.md frontmatter matters more than it looks: control-plane's inventory reader picks the repo up from it. Declare side `host`, kind `runtime`, class `kids-class`, status `building`, and the dependency list from the Architecture Pack (contracts, ai-gateway, control-plane, state-feed, own Postgres).\n\n**Then the skeleton.** A Maven Java 21 / Spring Boot 3 service, package root `tutor` (functional naming -- no theme words in any package, class or file name). Create empty package-info-only source packages for the ten modules from the Architecture Pack so the module boundary is visible from day one and later waves land in an obvious place: `account`, `mathcheck`, `tutoring`, `aiport`, `safety`, `session`, `review`, `retention`, `platform`, `web`. In each `package-info.java`, write the module's `owns` line and its `dependsOn` list from the pack as a Javadoc comment. Add an ArchUnit test (or an equivalent enforced check) that pins the declared dependency direction -- in particular that `mathcheck` and `aiport` depend on nothing, that only `tutoring` may reference `aiport`, and that `review` has no reference to the `Exchange` type at all. That last one is an architectural fact the pack asks for (ADR-4, ADR-8), not a convention, so it is worth a failing test rather than a comment.\n\n**Pin contracts** at the version your diagnose step reported, exactly, with no version range.\n\nAdd `.brain/` per the platform's adoption procedure, an empty `demands/` directory, `PROGRESS.md`, and a `CLAUDE.md` for the repo written in the shape of this one -- but note that all of those are platform files that the ship-clean check will later strip (D094), so do not let any of them become load-bearing for the build.\n\nNo business logic in this unit. No entities, no endpoints, no database. The app should compile, the test suite should run green with the ArchUnit test in it, and that is the whole deliverable.",
+          "verify": [
+            {
+              "run": "mvn -q clean verify",
+              "manual": null,
+              "expect": "Exit code 0. The ArchUnit module-boundary test appears in the surefire report and passes."
+            },
+            {
+              "run": "git log --oneline",
+              "manual": null,
+              "expect": "The first commit contains exactly README.md, HEXAGON.md, DEPLOYMENT.md and CHANGELOG.md, and nothing else."
+            },
+            {
+              "run": "grep -rn 'calcifer\\|markl\\|howl\\|castle' --include=*.java --include=*.md --include=*.xml -i .",
+              "manual": null,
+              "expect": "No matches. D002: functional names only outside theme-* repos."
+            },
+            {
+              "run": null,
+              "manual": "The pinned contracts version in `pom.xml` matches the tag reported by the diagnose step.",
+              "expect": "An exact version, not a range, and it is the version reported -- not the v0.9.1 the Architecture Pack mistakenly names."
+            }
+          ],
+          "model": null,
+          "status": "pending"
+        },
+        {
+          "id": "T1.4",
+          "title": "Postgres, Flyway baseline and the local compose stack",
+          "mode": "agent",
+          "mark": "\ud83e\udd16",
+          "branch": "feature/AP-002-postgres-flyway-baseline-and-the-local-compose-stack",
+          "dependsOn": [
+            "T1.3"
+          ],
+          "parallelOk": false,
+          "diagnoseFirst": [
+            "What ports are already claimed across the platform? Read the vault's PLATFORM_STATE.md and the sibling repos' DEPLOYMENT.md files and report the claimed app and Postgres ports before asking the dispatcher for tutor's. Do not pick one yourself."
+          ],
+          "lazyAllocations": [
+            "port",
+            "migration"
+          ],
+          "prompt": "You are working in the `tutor` repository (a tenant app born through app-studio, host side, kind runtime). Standing rules that apply to every unit in this wave:\n- Read `../platform-vault/spec-app-studio.md` is NOT your job; your work order is this prompt plus the approved Architecture Pack for tutor. Follow the platform CLAUDE.md house rules: constructor injection only, `ApiResponse<T>` wrapper on web endpoints, no `@Data` on entities, MapStruct for mapping, JUnit 5 / Mockito / AssertJ, functional names only (D002 -- no theme words anywhere).\n- Never edit `platform-vault`, `contracts` or `conventions`. If you find a bug or a missing piece in a sibling repo, STOP and write the exact problem and your proposed fix into `PROGRESS.md`.\n- Never call an AI provider directly. `ai-gateway` only (D022).\n- Never block the session on a foreground process of unknown duration: run servers, watchers and Compose stacks in the background with stdout/stderr to a log file, and stop everything you started before you finish.\n- Open a `.brain` session before your first code change and close it at the end.\n- Commit small and often.\n\nGive tutor its datastore: PostgreSQL, one database owned by this app (D038), Flyway migrations, and a docker-compose stack for local running.\n\n**Ports and migration numbers are allocated at dispatch time.** You will be handed the app port and the Postgres port, and the migration sequence number to use for the baseline. Do not invent either and do not copy a number out of a sibling repo -- a literal duplicated migration number is a recorded, twice-repeated failure in this method's history.\n\n**The baseline migration** creates nothing but what wave 1 needs. This is deliberate: the domain tables arrive in the waves that own them, so an early schema guess cannot calcify. Create only the schema itself and whatever Flyway needs to be happy. Later waves add their own migrations, each with a number allocated the same way.\n\n**Both bindings are loopback (D040).** The app binds `127.0.0.1` and the Postgres container publishes to `127.0.0.1` only. Never `0.0.0.0`.\n\n**Two runtime postures from one image**, per the pack's deployment section: default (standalone, no `platform` profile) and `SPRING_PROFILES_ACTIVE=platform`. Wave 1 only needs the default one to work; define the second in compose so that wave 6 is wiring, not design.\n\nAdd Testcontainers for the integration test layer, following the house rules and pregnancy's setup. Write DEPLOYMENT.md properly in this unit -- the allocated ports, the compose commands, both postures -- rather than leaving it as the bootstrap stub.\n\nRun the stack in the BACKGROUND with logs to a file, verify against the log, and tear it down before you finish. On Windows, check for surviving Maven/Gradle child JVMs holding the port after the tracked task stops, and kill them directly if present.",
+          "verify": [
+            {
+              "run": "docker compose up -d && sleep 15 && docker compose ps",
+              "manual": null,
+              "expect": "Both the app and the postgres container report a healthy/running state."
+            },
+            {
+              "run": "mvn -q verify",
+              "manual": null,
+              "expect": "Exit code 0, including a Testcontainers-backed integration test that starts Postgres, runs Flyway to completion and asserts the schema exists."
+            },
+            {
+              "run": "docker compose port app <allocated-app-port>",
+              "manual": null,
+              "expect": "The published binding is `127.0.0.1:<port>`, not `0.0.0.0:<port>` (D040)."
+            },
+            {
+              "run": null,
+              "manual": "DEPLOYMENT.md records the allocated ports and both runtime postures.",
+              "expect": "A reader who has never seen the repo can bring the stack up from DEPLOYMENT.md alone."
+            }
+          ],
+          "model": null,
+          "status": "pending"
+        },
+        {
+          "id": "T1.5",
+          "title": "Health endpoint with the ai-gateway reachability component",
+          "mode": "agent",
+          "mark": "\ud83e\udd16",
+          "branch": "feature/AP-003-health-endpoint-with-the-ai-gateway-reachability-component",
+          "dependsOn": [
+            "T1.4"
+          ],
+          "parallelOk": true,
+          "diagnoseFirst": [
+            "What exact JSON shape does the `app.health` thin contract require, and does Spring Actuator's default `/actuator/health` body satisfy it with zero mapping as the pack claims? Read the contract in `../contracts` and report either 'conforms unmapped' or the specific divergence."
+          ],
+          "lazyAllocations": [],
+          "prompt": "You are working in the `tutor` repository (a tenant app born through app-studio, host side, kind runtime). Standing rules that apply to every unit in this wave:\n- Read `../platform-vault/spec-app-studio.md` is NOT your job; your work order is this prompt plus the approved Architecture Pack for tutor. Follow the platform CLAUDE.md house rules: constructor injection only, `ApiResponse<T>` wrapper on web endpoints, no `@Data` on entities, MapStruct for mapping, JUnit 5 / Mockito / AssertJ, functional names only (D002 -- no theme words anywhere).\n- Never edit `platform-vault`, `contracts` or `conventions`. If you find a bug or a missing piece in a sibling repo, STOP and write the exact problem and your proposed fix into `PROGRESS.md`.\n- Never call an AI provider directly. `ai-gateway` only (D022).\n- Never block the session on a foreground process of unknown duration: run servers, watchers and Compose stacks in the background with stdout/stderr to a log file, and stop everything you started before you finish.\n- Open a `.brain` session before your first code change and close it at the end.\n- Commit small and often.\n\nExpose `GET /actuator/health` as the `app.health` thin contract, in the Spring Actuator shape with zero mapping. Expose the health endpoint and nothing else from Actuator -- no env, no beans, no metrics, no loggers.\n\nAdd ONE custom health indicator: ai-gateway reachability, reported as a named component.\n\n**The load-bearing detail, and the reason this is its own unit:** the ai-gateway component must NOT pull the aggregate status to DOWN. The parent surface of this app -- accounts, learners, review -- is fully alive with the gateway unreachable, and only the child's guided turn is not. Reporting the whole app DOWN because a child cannot get a hint right now is a false statement to every operator and monitor that reads it. Register the indicator into a non-aggregating group, or set its status mapping so the component reports its own truth without contributing to the top-level rollup. Write a test that asserts exactly this: with the gateway unreachable, top-level `status` is `UP` and `components.aiGateway.status` is `DOWN`.\n\nDo not build the AI port here. Reachability is a connectivity probe against the configured gateway base URL with a short timeout -- it must never block the health endpoint, and a slow gateway must produce a DOWN component quickly rather than a hanging request.",
+          "verify": [
+            {
+              "run": "curl -s http://127.0.0.1:<allocated-app-port>/actuator/health",
+              "manual": null,
+              "expect": "HTTP 200 and a body whose top-level `status` is `UP`, containing an `aiGateway` component."
+            },
+            {
+              "run": "mvn -q -Dtest=*HealthIndicator* test",
+              "manual": null,
+              "expect": "Exit code 0. The test asserting UP-overall / DOWN-component with the gateway unreachable is present and passes."
+            },
+            {
+              "run": "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:<allocated-app-port>/actuator/env",
+              "manual": null,
+              "expect": "404. Only the health endpoint is exposed."
+            }
+          ],
+          "model": null,
+          "status": "pending"
+        },
+        {
+          "id": "T1.6",
+          "title": "The safety module: refusal, block, unavailable and screened-out as modelled states",
+          "mode": "agent",
+          "mark": "\ud83e\udd16",
+          "branch": "feature/AP-004-the-safety-module-refusal-block-unavailable-and-screened-out-as-modelled-states",
+          "dependsOn": [
+            "T1.3"
+          ],
+          "parallelOk": true,
+          "diagnoseFirst": [
+            "How does `../pregnancy` model its refusal path -- what are the types, where do the copy keys live, and how does the web layer reach them? tutor is copying that shape deliberately. Report the shape before writing, and say where you intend to deviate and why."
+          ],
+          "lazyAllocations": [],
+          "prompt": "You are working in the `tutor` repository (a tenant app born through app-studio, host side, kind runtime). Standing rules that apply to every unit in this wave:\n- Read `../platform-vault/spec-app-studio.md` is NOT your job; your work order is this prompt plus the approved Architecture Pack for tutor. Follow the platform CLAUDE.md house rules: constructor injection only, `ApiResponse<T>` wrapper on web endpoints, no `@Data` on entities, MapStruct for mapping, JUnit 5 / Mockito / AssertJ, functional names only (D002 -- no theme words anywhere).\n- Never edit `platform-vault`, `contracts` or `conventions`. If you find a bug or a missing piece in a sibling repo, STOP and write the exact problem and your proposed fix into `PROGRESS.md`.\n- Never call an AI provider directly. `ai-gateway` only (D022).\n- Never block the session on a foreground process of unknown duration: run servers, watchers and Compose stacks in the background with stdout/stderr to a log file, and stop everything you started before you finish.\n- Open a `.brain` session before your first code change and close it at the end.\n- Commit small and often.\n\nBuild the `safety` module. This is the wave's centre of gravity and it is being built BEFORE the happy path, on purpose: this app has no corpus fallback, so the degraded state IS the fallback, and it will be read by a six-to-eleven-year-old sitting alone with no adult to interpret it. Pregnancy built its refusal path first; that is the precedent being copied.\n\n**Four distinct modelled states, not one error type** (ADR-6):\n- `REFUSAL` -- the request was off-frame or the gateway refused it. The tutor will not answer this.\n- `BLOCKED` -- a 402 BlockedResponse from the gateway: a spend or plan ceiling was hit. Nothing is wrong with what the child asked.\n- `UNAVAILABLE` -- the gateway is unreachable, timed out, or the capability's `block` downshift policy fired (D8: the child-facing capabilities deliberately block rather than degrade, because a degraded model's wrong hint to an unsupervised child is worse than an honest 'try later').\n- `SCREENED_OUT` -- app-side intake decided the typed text is not an in-frame primary-maths problem. This is a designed refusal of the tutoring frame, and it is explicitly NOT the content-safety boundary (ADR-3) -- content safety is the gateway's, assigned platform-side.\n\nModel these as first-class objects in the `safety` module, each carrying a stable copy key. The module depends on nothing.\n\n**The copy.** The app ships in FRENCH (owner ruling D4). All child-facing copy is written in French at a primary reading level -- short sentences, common words, no jargon, no blame. Code identifiers, comments, log messages and commit messages stay in English. Each state gets its own text and they must be genuinely different from each other -- a child who reads all four should understand that being refused, being out of credit, the tutor being briefly away, and 'that is not a maths problem' are four different things. Constraints that are doctrine, not taste:\n- Never blame the child. A refusal must not read as being told off.\n- Never say 'error', 'failed', 'invalid', or anything that reads as the app being broken.\n- Never show a code, a stack trace, a status number or a technical term.\n- One short idea per sentence. Prefer two short sentences to one long one.\n- Always say what the child can do next, even if that is only 'try again in a little while'.\n- No counter, no score, no streak, no progress bar -- ever, anywhere in this module.\n\nPut the copy in a resource bundle keyed by the copy key and locale, so that adding a second language is data rather than a code change (mirroring the `locale` field the domain model already carries on ParentAccount for the same reason).\n\nAlso build the `BadAnswerReport` domain type and its `RAISED -> SURFACED -> ACKNOWLEDGED` lifecycle here -- the module owns it. The endpoints that drive it come in later waves; this unit is the type, the states, the transitions and their tests.\n\n**Note the interface-design boundary:** you are writing copy and modelling states. You are NOT designing a regime, a doctrine or a design system -- those are design-studio's (D051/D069/D071), and a `guided-turn-class` doctrine for exactly this surface is being authored there in parallel. Keep the presentation deliberately plain so that adopting the doctrine later is a restyle, not a rewrite.",
+          "verify": [
+            {
+              "run": "mvn -q -Dtest=safety.* test",
+              "manual": null,
+              "expect": "Exit code 0. Tests cover all four states and the BadAnswerReport lifecycle including its illegal transitions."
+            },
+            {
+              "run": "mvn -q -Dtest=*CopyBundle* test",
+              "manual": null,
+              "expect": "Exit code 0. A test asserts every declared copy key resolves in the French bundle with no missing-key fallback, and that the four states' texts are distinct from one another."
+            },
+            {
+              "run": null,
+              "manual": "Read all four French texts aloud as if to a seven-year-old.",
+              "expect": "Each is understandable without an adult, contains no error code or technical word, does not blame the child, and tells them what to do next."
+            }
+          ],
+          "model": null,
+          "status": "pending"
+        },
+        {
+          "id": "T1.7",
+          "title": "The AI port interface and its outcome-faking stub",
+          "mode": "agent",
+          "mark": "\ud83e\udd16",
+          "branch": "feature/AP-005-the-ai-port-interface-and-its-outcome-faking-stub",
+          "dependsOn": [
+            "T1.3"
+          ],
+          "parallelOk": true,
+          "diagnoseFirst": [
+            "What are the exact contracts types for `AiRequest`, `AiResponse` and `BlockedResponse` at the pinned version -- field names, required fields, and whether `AiRequest` has any class or category field? Report the field lists. The pack asserts there is no class field and that class is assigned gateway-side; confirm or contradict that from the schema itself."
+          ],
+          "lazyAllocations": [],
+          "prompt": "You are working in the `tutor` repository (a tenant app born through app-studio, host side, kind runtime). Standing rules that apply to every unit in this wave:\n- Read `../platform-vault/spec-app-studio.md` is NOT your job; your work order is this prompt plus the approved Architecture Pack for tutor. Follow the platform CLAUDE.md house rules: constructor injection only, `ApiResponse<T>` wrapper on web endpoints, no `@Data` on entities, MapStruct for mapping, JUnit 5 / Mockito / AssertJ, functional names only (D002 -- no theme words anywhere).\n- Never edit `platform-vault`, `contracts` or `conventions`. If you find a bug or a missing piece in a sibling repo, STOP and write the exact problem and your proposed fix into `PROGRESS.md`.\n- Never call an AI provider directly. `ai-gateway` only (D022).\n- Never block the session on a foreground process of unknown duration: run servers, watchers and Compose stacks in the background with stdout/stderr to a log file, and stop everything you started before you finish.\n- Open a `.brain` session before your first code change and close it at the end.\n- Commit small and often.\n\nBuild the `aiport` module: the single outbound port to ai-gateway, plus a stub adapter that fakes the gateway's outcomes so the whole safety surface can be driven end to end in this wave without a live gateway. The REAL adapter is wave 4's, and wave 4 is gated on the ai-gateway demand closing -- do not build it here.\n\n**The port.** One interface. Request construction plus the mapping of every gateway outcome into a typed result: 200 completed, 200-after-downshift, 402 BlockedResponse, 503/unreachable, and skipped. No prompt policy lives in this module -- prompts belong to `tutoring`. The port's job is transport and outcome typing, nothing else.\n\n**Two rules that are enforced here in code because they cannot be enforced by schema:**\n1. `AiRequest.userId` is the Learner's opaque UUID. The child's `firstName` -- and the parent's email, and anything else a human could read as an identity -- must never appear in any request this module builds. Write an explicit test for this: build a request for a Learner whose firstName is a distinctive sentinel string, serialise the whole request, and assert the sentinel does not appear anywhere in the payload.\n2. The app does not claim its own class (ADR-2, D010). Do not add a class, category or guardrail field to the outbound request even if one seems available. Class is resolved gateway-side and the guardrail is prepended where the app cannot reach it -- that property is precisely what makes the guardrail undroppable by an app-side prompt bug, and it is the app's central safety claim. Write a test that asserts the serialised request carries no class-like field.\n\n**The stub adapter.** Behind a non-default profile (call it `stub-ai`), a deterministic implementation that returns any of the five outcomes on demand -- driven by a test/dev-only control, not by parsing the child's input. Its entire purpose is to let the next unit prove that each gateway outcome renders the right safety screen. It must be impossible to activate in the default profile set; write a test that asserts the default context has no stub bean.\n\nThere is no second AiPort adapter and there will never be a direct-provider fallback (ADR-7, D022). A standalone tutor still points at a gateway; that is the design, not a gap -- shedding the gateway would strip the kids-class guardrail from the one app that most needs it. Write that sentence into the module's `package-info.java` so the next agent does not helpfully add one.",
+          "verify": [
+            {
+              "run": "mvn -q -Dtest=aiport.* test",
+              "manual": null,
+              "expect": "Exit code 0, including the firstName-sentinel leak test and the no-class-field test."
+            },
+            {
+              "run": "mvn -q -Dtest=*StubProfile* test",
+              "manual": null,
+              "expect": "Exit code 0. A test boots the default profile set and asserts no stub AI bean is present."
+            },
+            {
+              "run": null,
+              "manual": "Read the module for provider names.",
+              "expect": "No provider SDK, no provider base URL and no API key handling appears anywhere in the repo -- the only outbound AI destination is the configured ai-gateway URL (D022)."
+            }
+          ],
+          "model": null,
+          "status": "pending"
+        },
+        {
+          "id": "T1.9",
+          "title": "Author app-manifest.yaml and ai-model-manifest.yaml",
+          "mode": "agent",
+          "mark": "\ud83e\udd16",
+          "branch": "feature/AP-007-author-app-manifest-yaml-and-ai-model-manifest-yaml",
+          "dependsOn": [
+            "T1.3"
+          ],
+          "parallelOk": true,
+          "diagnoseFirst": [
+            "What is the exact `AppManifest` shape in contracts at the pinned version, and what shape does ai-gateway's manifest loader expect for an ai-model-manifest? Read both and report the required fields. Do not infer either shape from a sibling repo's file -- report where you read it from."
+          ],
+          "lazyAllocations": [],
+          "prompt": "You are working in the `tutor` repository (a tenant app born through app-studio, host side, kind runtime). Standing rules that apply to every unit in this wave:\n- Read `../platform-vault/spec-app-studio.md` is NOT your job; your work order is this prompt plus the approved Architecture Pack for tutor. Follow the platform CLAUDE.md house rules: constructor injection only, `ApiResponse<T>` wrapper on web endpoints, no `@Data` on entities, MapStruct for mapping, JUnit 5 / Mockito / AssertJ, functional names only (D002 -- no theme words anywhere).\n- Never edit `platform-vault`, `contracts` or `conventions`. If you find a bug or a missing piece in a sibling repo, STOP and write the exact problem and your proposed fix into `PROGRESS.md`.\n- Never call an AI provider directly. `ai-gateway` only (D022).\n- Never block the session on a foreground process of unknown duration: run servers, watchers and Compose stacks in the background with stdout/stderr to a log file, and stop everything you started before you finish.\n- Open a `.brain` session before your first code change and close it at the end.\n- Commit small and often.\n\nWrite tutor's two declaration files. They are authored in wave 1, ahead of the wave 6 integration work, because the ai-gateway demand raised at the top of this wave references them: `ai-model-manifest.yaml` is the durable record of tutor's class and of the per-capability downshift policy, and the whole AI map depends on it.\n\n**`app-manifest.yaml`** at the repo root, in contracts' `AppManifest` shape: name `tutor`, class `kids-class`, plan `free`, routes for `/actuator/health` and the public API. Follow pregnancy's file exactly as the precedent. There is no `/apps/register` endpoint yet -- control-plane's inventory reader picks the repo up from HEXAGON.md frontmatter -- so this file is a static declaration in wave 1. The adapter that POSTs it lives behind the `platform` profile in wave 6, which makes wiring the real endpoint later a config change rather than a redesign.\n\n**`ai-model-manifest.yaml`** declaring class `kids-class` and, per capability, the downshift policy from the approved AI map:\n- intake screening and normalisation -- `block`\n- first hint or worked step -- `block`\n- re-explanation -- `block`\n- wrong-step explanation -- `block`\n- worked solution (the escape hatch) -- `block`\n- topic labelling for the parent summary -- `skip`\n\nThe five `block` policies are a deliberate, owner-recorded deviation from D023's default degrade-before-block ladder (D8), not an oversight. Write that reason into the file as a comment: a degraded model's wrong hint to an unsupervised six-to-eleven-year-old is worse than an explicit, kindly worded 'try again later'. Topic labelling is `skip` because it is the only capability whose absence degrades nothing the child sees -- the summary is simply written without labels and says so.\n\nBoth files are in the ship-clean strip list (D094) -- `app-manifest.yaml` explicitly so. Nothing in the build may read either file at runtime in the default profile. Assert that: the standalone boot must not depend on their presence.\n\nNote for the record in `PROGRESS.md`: shipping `ai-model-manifest.yaml` does not by itself fix the class resolution, because ai-gateway's `ai.manifest.directory` defaults to empty and manifest loading is off. The `tutor: kids` entry in `ai.guardrail.classes` is the immediate fix and is part of the raised demand. Do not attempt either change yourself -- ai-gateway is a sibling repo.",
+          "verify": [
+            {
+              "run": "mvn -q -Dtest=*ManifestShape* test",
+              "manual": null,
+              "expect": "Exit code 0. A test validates app-manifest.yaml against contracts' AppManifest schema at the pinned version."
+            },
+            {
+              "run": null,
+              "manual": "Delete both manifest files in a scratch copy of the tree and boot the app with no profile active.",
+              "expect": "The app starts and serves /actuator/health unchanged. Neither file is load-bearing at runtime."
+            },
+            {
+              "run": null,
+              "manual": "Read ai-model-manifest.yaml.",
+              "expect": "Six capabilities, five `block` and one `skip`, with the D8 deviation reason written in as a comment."
+            }
+          ],
+          "model": null,
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "goal": "Accounts, learners and the hand-over, PLUS the deferred safety surface: T1.8's end-to-end rendering of the four safety states, now written against design-studio's guided-turn-class doctrine rather than ahead of it (owner ruling at the wave-1 plan gate). Then ParentAccount, parent auth, Learner at the data-minimalism ceiling, the learner CRUD surface, and the parent-to-child scoped-token hand-over per D9. No AI, so unaffected by the gateway blockers.",
+      "status": "planned",
+      "outlineOnly": true,
+      "canAuthorize": false,
+      "openDecisions": [],
+      "checklist": [],
+      "recommendedOrder": [],
+      "units": []
+    },
+    {
+      "number": 3,
+      "goal": "mathcheck, standalone and exhaustive: parsing, normalisation, exact/decimal/fractional comparison, UNPARSEABLE and UNCHECKABLE as first-class outcomes, and the property and table tests that pin the app's safety floor.",
+      "status": "planned",
+      "outlineOnly": true,
+      "canAuthorize": false,
+      "openDecisions": [],
+      "checklist": [],
+      "recommendedOrder": [],
+      "units": []
+    },
+    {
+      "number": 4,
+      "goal": "The guided turn against the live gateway: the real AI adapter, the Problem state machine, intake screening, hint, re-explanation, wrong-step explanation, and the escape hatch at N=3 per D7. Gated on the ai-gateway demand closing.",
+      "status": "planned",
+      "outlineOnly": true,
+      "canAuthorize": false,
+      "openDecisions": [],
+      "checklist": [],
+      "recommendedOrder": [],
+      "units": []
+    },
+    {
+      "number": 5,
+      "goal": "Sessions, summaries, review and retention: TutoringSession lifecycle and idle windows, SessionSummary written at close, the parent review surface, the BadAnswerReport path end to end, and the 24-hour purge job with its PURGED transition.",
+      "status": "planned",
+      "outlineOnly": true,
+      "canAuthorize": false,
+      "openDecisions": [],
+      "checklist": [],
+      "recommendedOrder": [],
+      "units": []
+    },
+    {
+      "number": 6,
+      "goal": "Platform integration and hardening: the five thin contracts behind the default-off platform profile, the no-profile standalone boot test, the child-data leak tests, the ship-clean check, and DEPLOYMENT/CHANGELOG/HEXAGON completion.",
+      "status": "planned",
+      "outlineOnly": true,
+      "canAuthorize": false,
+      "openDecisions": [],
+      "checklist": [],
+      "recommendedOrder": [],
+      "units": []
+    }
+  ],
+  "problems": []
+}

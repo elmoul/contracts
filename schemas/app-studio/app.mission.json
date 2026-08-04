@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/app-studio/app.mission",
+  "title": "AppMission",
+  "description": "An app-studio mission ledger record — a gated state machine over the 15-stage spine (intake → discovery → concept → concept-gate → architecture → architecture-gate → planning → plan-gate → scaffold → executing ↔ wave-review → acceptance-gate → registration → closed, plus the terminal aborted). Extracted after the tutor genesis pilot proved the shape end to end (D066 build-then-extract), not predicted ahead of a build. This describes the *projected* record as an API reader sees it (app-studio's `projection.project()`): the stored fields plus read-time derivations. The derived fields (`stageKind`, `isTerminal`, `gateContext`, `rewindTargets`, `pipeline`) are optional here on purpose — a producer emitting a stored row rather than a projection omits them, and they are recomputed, never persisted. Three append-only record lists ride along and only the first is a decision: `gateRecords` (owner verdicts), `sendBacks` (a note with no verdict), `rewinds` (owner-only backward jumps, D067).",
+  "type": "object",
+  "required": ["id", "class", "appName", "stage", "currentWave", "gateRecords", "sendBacks", "rewinds"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Mission identifier. Stable for the mission's whole life.",
+      "examples": ["d34de281-c5c5-4e44-b3c5-6085c225adea"]
+    },
+    "class": {
+      "type": "string",
+      "enum": ["genesis", "feature"],
+      "description": "What kind of work this is. `genesis` births a new app from an idea and therefore passes through `scaffold`; `feature` is a delta on an app that already exists and skips `scaffold` — same conception and planning machinery, no repo to birth."
+    },
+    "appName": {
+      "type": "string",
+      "description": "Functional name (D002) of the app this mission is about.",
+      "examples": ["tutor"]
+    },
+    "stage": {
+      "$ref": "#/$defs/missionStage",
+      "description": "Where the mission currently sits on the spine."
+    },
+    "stageKind": {
+      "type": "string",
+      "enum": ["mechanical", "dispatched", "gate", "terminal"],
+      "description": "DERIVED. What kind of stage `stage` is — the distinction is the point: `mechanical` advances itself, `dispatched` advances when an observable agent run consolidates, `gate` moves ONLY on a recorded owner decision, `terminal` never moves."
+    },
+    "intake": {
+      "type": "string",
+      "description": "The originating brief, as the owner wrote it. Free-form; never rewritten by the studio."
+    },
+    "targetRepo": {
+      "type": ["string", "null"],
+      "description": "The app's repo, once it exists. Null until then — a genesis mission has no target before `scaffold`.",
+      "examples": ["tutor"]
+    },
+    "designMissionId": {
+      "type": ["string", "null"],
+      "description": "The linked design-studio mission, once the design subcontract is staged. Null when no design leg exists."
+    },
+    "currentWave": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Which wave `executing`/`wave-review` currently concerns. 0 until the first wave is authorized."
+    },
+    "isTerminal": {
+      "type": "boolean",
+      "description": "DERIVED. True when `stage` is `closed` or `aborted`."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the mission was opened."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When it last moved."
+    },
+    "abortedFrom": {
+      "oneOf": [{ "$ref": "#/$defs/missionStage" }, { "type": "null" }],
+      "description": "Set only on abort — what the mission was doing when it stopped. `aborted` sits beside the spine rather than on it (reachable from anywhere), so the origin stage is recorded rather than inferred."
+    },
+    "abortReason": {
+      "type": "string",
+      "description": "Why it stopped. Empty string on a live mission."
+    },
+    "gateRecords": {
+      "type": "array",
+      "description": "Append-only owner decisions — never edited, never removed. A gate that repeats (wave-review) contributes one record per round.",
+      "items": {
+        "type": "object",
+        "required": ["gate", "outcome", "notes", "decidedAt"],
+        "properties": {
+          "gate": {
+            "$ref": "#/$defs/missionGateStage",
+            "description": "Which of the five gates this decision was made at."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["approved", "rejected"],
+            "description": "The platform's gate vocabulary (D091), inherited whole. `approved` advances; `rejected` does not advance and is binding direction for the next round. There is deliberately no third `send-back` member — see `sendBacks`."
+          },
+          "notes": {
+            "type": "string",
+            "description": "The owner's own words. On a rejection this is binding direction folded into the next dispatched round."
+          },
+          "decidedAt": { "type": "string", "format": "date-time" },
+          "waveReviewNext": {
+            "oneOf": [{ "$ref": "#/$defs/waveReviewNext" }, { "type": "null" }],
+            "description": "Only meaningful on an APPROVED `wave-review`, the one gate with more than one forward target: `next-wave` proceeds into the already-planned next wave, `replan` returns to planning first (the rolling-wave default), `accept` declares the build finished and moves to the acceptance gate. Carried rather than inferred — inferring it would be the studio deciding something only the owner may decide. Null everywhere else."
+          },
+          "wave": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "Which wave this decision was about, when the gate repeats. Null on the once-only gates."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "sendBacks": {
+      "type": "array",
+      "description": "Notes with NO verdict, deliberately their own list rather than a third `outcome` member. A send-back records that a gate cannot be honestly evaluated as instrumented; it is never folded into a dispatched agent's direction. Collapsing it into `gateRecords` would lose exactly that distinction.",
+      "items": {
+        "type": "object",
+        "required": ["gate", "notes", "recordedAt"],
+        "properties": {
+          "gate": { "$ref": "#/$defs/missionGateStage" },
+          "notes": { "type": "string" },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "wave": { "type": ["integer", "null"], "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rewinds": {
+      "type": "array",
+      "description": "Owner-only backward jumps to an earlier gate stage (D067). The direction rides along as a synthetic rejection at the target gate, so a rewind needs no second fold-in mechanism.",
+      "items": {
+        "type": "object",
+        "required": ["fromStage", "toStage", "direction", "recordedAt"],
+        "properties": {
+          "fromStage": { "$ref": "#/$defs/missionStage" },
+          "toStage": { "$ref": "#/$defs/missionGateStage", "description": "A rewind may only land on a gate stage strictly behind the mission." },
+          "direction": { "type": "string", "description": "What the owner wants done differently on the way back through." },
+          "recordedAt": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gateContext": {
+      "type": ["object", "null"],
+      "description": "DERIVED. What the owner needs in order to decide the gate the mission is sitting at. Null when the mission is not at a gate — the absence is the signal, so a console never has to ask a second question to find out.",
+      "required": ["gate", "subject", "priorRounds"],
+      "properties": {
+        "gate": { "$ref": "#/$defs/missionGateStage" },
+        "subject": {
+          "type": "string",
+          "description": "What this gate's decision is actually about. A gate attests what its own subject can evidence (D091).",
+          "examples": ["the Product Concept", "the task_plan's next wave"]
+        },
+        "bindingDirection": {
+          "type": ["string", "null"],
+          "description": "The direction carried from the last rejection at this gate, if any."
+        },
+        "priorRounds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many times this gate has already rejected."
+        },
+        "wave": { "type": "integer", "minimum": 0, "description": "Present only at `wave-review`." },
+        "approvalRequires": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/waveReviewNext" },
+          "description": "Present only at `wave-review`: an approval there is incomplete without one of these."
+        }
+      },
+      "additionalProperties": false
+    },
+    "rewindTargets": {
+      "type": "array",
+      "description": "DERIVED. The gates strictly behind the mission — where a rewind could legally land. Empty on a terminal mission.",
+      "items": { "$ref": "#/$defs/missionGateStage" }
+    },
+    "pipeline": {
+      "type": ["object", "null"],
+      "description": "DERIVED, and deliberately unconstrained. The current stage's dispatch state (running / dead / blocked), which lives in an artifact rather than the ledger. Shape belongs to app-studio's dispatch layer and is not a cross-hexagon port; a consumer that needs it reads app-studio's own API.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "missionStage": {
+      "type": "string",
+      "description": "The mission spine (spec-app-studio.md §2, D093). `aborted` is terminal and sits beside the spine rather than on it.",
+      "enum": [
+        "intake",
+        "discovery",
+        "concept",
+        "concept-gate",
+        "architecture",
+        "architecture-gate",
+        "planning",
+        "plan-gate",
+        "scaffold",
+        "executing",
+        "wave-review",
+        "acceptance-gate",
+        "registration",
+        "closed",
+        "aborted"
+      ]
+    },
+    "waveReviewNext": {
+      "type": "string",
+      "description": "Where an approved `wave-review` sends the mission — the owner's choice, and the reason `wave-review` is the one gate whose approval carries a payload. Nullable at its use site via oneOf-with-null: that form keeps one shared definition of the vocabulary and generates a clean nullable enum in Python and TypeScript. jsonschema2pojo 1.2.1 does not follow a oneOf, so the two nullable enum fields (`abortedFrom`, `gateRecords[].waveReviewNext`) surface as java.lang.Object in the Java binding — a known, tested property (AppStudioContractsTest), preferred over the alternative: writing the vocabulary out inline at each nullable site fixes Java but makes datamodel-code-generator emit a plain Enum rather than this repo's StrEnum, where a Python consumer's `record.waveReviewNext == \"replan\"` would silently be False. A visible cast beats a silent mismatch.",
+      "enum": ["next-wave", "replan", "accept"]
+    },
+    "missionGateStage": {
+      "type": "string",
+      "description": "The five stages that move ONLY on a recorded owner decision.",
+      "enum": ["concept-gate", "architecture-gate", "plan-gate", "wave-review", "acceptance-gate"]
+    }
+  }
+}

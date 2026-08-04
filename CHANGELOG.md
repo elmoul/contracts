@@ -16,6 +16,63 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.19.0 — 2026-08-04
+
+Additive release, all three bindings: fulfills demand
+`app-studio-20260804-contracts-app-mission-and-task-plan` — adds two new
+schemas under a new `schemas/app-studio/` directory, `app.mission.json`
+(`AppMission`) and `app.task-plan.json` (`AppTaskPlan`). Nothing existing
+changed shape: `git diff v0.18.0 -- schemas/` adds two files and touches none.
+In particular the `Regime` enum in `state.event` is untouched — the
+`guided-turn-class` member is design-studio's to author and the vault's to
+adopt, tracked separately.
+
+Both shapes are extracted, not predicted (D066 build-then-extract): the tutor
+genesis pilot ran a mission end to end with all three of its gates
+owner-approved, and its own records are committed as the test fixtures
+(`tests/fixtures/app-studio/`) that `tests/validate_app_studio.py` validates.
+
+- **`app.mission`** — the mission ledger record as an API reader sees it: the
+  15-stage gated spine, plus three append-only lists of which only the first is
+  a decision. `gateRecords` carries owner verdicts (`approved`/`rejected` only);
+  `sendBacks` is a note with **no verdict**, kept as its own list rather than a
+  third outcome so that "this gate cannot be honestly evaluated as
+  instrumented" can never be folded into a dispatched agent's direction;
+  `rewinds` records owner-only backward jumps (D067). An approved `wave-review`
+  carries `waveReviewNext` (`next-wave`/`replan`/`accept`) because that gate is
+  the one with more than one forward target and the choice is the owner's, not
+  an inference. Read-time derivations (`stageKind`, `isTerminal`, `gateContext`,
+  `rewindTargets`, `pipeline`) are optional — never persisted, always
+  recomputed.
+- **`app.task-plan`** — the DAG of waves and work units. `mode`
+  (`owner`/`agent`/`assisted`/`advisory`) and `verify` are required on every
+  unit: `mode` is how a plan stays honest about what no agent can do, `verify`
+  is the only thing that closes a unit, and an `if`/`then` enforces at least one
+  verify step on everything actually dispatched (`advisory` is exempt — nothing
+  is dispatched and nothing closes). A wave's two decision lists are kept
+  strictly distinct: `openDecisions` blocks authorization, `deferredToDispatch`
+  does not. That split is a fix for a real defect — the pilot filed "the exact
+  contracts tag", "the ports" and "the baseline migration number" under open
+  decisions and the plan gate reported the wave blocked when nothing was.
+  `deferredToDispatch` is optional precisely because the plan that proved the
+  shape predates it.
+- **Bindings.** Python `platform_contracts.app_studio.{app_mission,
+  app_task_plan}` (all enums `StrEnum`), TypeScript `app-mission.ts` /
+  `app-task-plan.ts` re-exported from `index.ts`, Java
+  `io.platform.contracts.appstudio` via a new `app-studio` jsonschema2pojo
+  execution in `gen/java/pom.xml`.
+- **Known Java shape, asserted rather than silently accepted.** The two
+  nullable enum fields (`abortedFrom`, `gateRecords[].waveReviewNext`) are
+  expressed as `oneOf[$ref, null]`, which jsonschema2pojo 1.2.1 does not
+  follow, so they surface as `java.lang.Object` in the Java binding while
+  Python and TypeScript get a proper nullable enum. Writing the vocabulary out
+  inline at each nullable site fixes Java but makes datamodel-code-generator
+  emit a plain `Enum` instead of this repo's `StrEnum`, under which a Python
+  consumer's `record.waveReviewNext == "replan"` silently evaluates False. The
+  visible cast was preferred to the silent mismatch; `AppStudioContractsTest`
+  pins the current behaviour so a future generator that does follow the `oneOf`
+  fails loudly instead of changing the Java API by surprise.
+
 ## v0.18.0 — 2026-08-04
 
 Additive release, all three bindings: fulfills demand

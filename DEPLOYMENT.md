@@ -99,7 +99,7 @@ versions are pinned via `gen/java/pom.xml` (plugin versions),
 Two generator paths, both wired into `gen/java/pom.xml`:
 
 - **Plain JSON Schema definitions** (`events`, `ci-runner`, `control-plane`,
-  `connector` packages) — `jsonschema2pojo-maven-plugin` 1.2.1, run
+  `connector`, `demand-coordinator`, `app-studio` packages) — `jsonschema2pojo-maven-plugin` 1.2.1, run
   automatically as part of `mvn compile`/`mvn test` (bound to
   `generate-sources`, output under `target/generated-sources/jsonschema2pojo`,
   never `src/main/java` — see CHANGELOG.md v0.6.1 for why that separation
@@ -148,6 +148,8 @@ npx json-schema-to-typescript ../../schemas/app/dimension.event.json -o dimensio
 npx json-schema-to-typescript ../../schemas/connector/connector.vocabulary.json -o connector-vocabulary.ts
 npx json-schema-to-typescript ../../schemas/connector/connector.invoke.request.json -o connector-invoke-request.ts
 npx json-schema-to-typescript ../../schemas/connector/connector.invoke.response.json -o connector-invoke-response.ts
+npx json-schema-to-typescript ../../schemas/app-studio/app.mission.json -o app-mission.ts
+npx json-schema-to-typescript ../../schemas/app-studio/app.task-plan.json -o app-task-plan.ts
 npx openapi-typescript ../../schemas/ai-gateway/request.yaml -o ai-gateway-request.ts
 ```
 
@@ -170,6 +172,16 @@ datamodel-codegen \
   --input-file-type jsonschema \
   --output platform_contracts/state_feed/state_event.py \
   --output-model-type pydantic_v2.BaseModel
+```
+
+```bash
+cd gen/python
+datamodel-codegen \
+  --input ../../schemas/app-studio/app.mission.json \
+  --input-file-type jsonschema \
+  --output platform_contracts/app_studio/app_mission.py \
+  --output-model-type pydantic_v2.BaseModel \
+  --target-python-version 3.11 --use-specialized-enum
 ```
 
 Same pattern (`--input-file-type jsonschema`, `--output-model-type

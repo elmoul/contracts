@@ -1,0 +1,51 @@
+{
+ "pipeline": null,
+ "id": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+ "class": "genesis",
+ "appName": "tutor",
+ "stage": "executing",
+ "stageKind": "dispatched",
+ "intake": "A tutoring assistant for kids, used by PARENTS to assist their kids -- the parent is the account holder and the adult in the loop. Helps with homework-style learning: explanations, practice, patient re-explanation.\n\nThe pedagogical stance is tutoring, not answering: guide to the answer, do not hand it over.\n\nChild-data minimalism -- store the minimum about the child (a first name and a level is plenty); no profiling, no behavioural analytics on children.\n\nKids-class guardrails are enforced at the gateway, independent of app prompts. Be honest about limits: wrong-answer risk exists with any LLM tutor, and the parent-in-the-loop design plus 'check important work' framing is the mitigation at this scale.\n\nThis is the first app ever conceived through app-studio. Scope it as a real but MVP-sized product, following the platform precedent that phase-E apps are MVPs which exercise the contracts and class guardrails rather than full builds.",
+ "targetRepo": "tutor",
+ "designMissionId": null,
+ "currentWave": 1,
+ "isTerminal": false,
+ "createdAt": "2026-08-04T05:21:28.309151+00:00",
+ "updatedAt": "2026-08-04T06:09:36.274531+00:00",
+ "abortedFrom": null,
+ "abortReason": "",
+ "gateContext": null,
+ "gateRecords": [
+  {
+   "gate": "concept-gate",
+   "outcome": "approved",
+   "notes": "APPROVED. This is the app. The four embedded recommendations are ruled as written: (1) FRENCH for v1; (2) parent review is a LIGHT SUMMARY, never transcripts; (3) the ESCAPE HATCH after repeated failed attempts is approved -- offer the worked solution, flag it in the parent summary; (4) retention is WITHIN-SITTING ONLY, nothing about the child kept past first name and level. The guided-turn-class regime proposal is approved to be RAISED TO DESIGN-STUDIO NOW so doctrine authoring runs in parallel with architecture -- app-studio proposes, design-studio authors, the vault adopts (D071). STANDING for architecture: the kids-class guardrail layer is the blocking check. Read ai-gateway's GuardrailService and class templates directly, as pregnancy's build did for health-class. The child works unsupervised, so if that layer is not built, tutor's central safety claim has no enforcement point -- that belongs in openDecisions, not a footnote.",
+   "decidedAt": "2026-08-04T05:33:44.488299+00:00",
+   "waveReviewNext": null,
+   "wave": null
+  },
+  {
+   "gate": "architecture-gate",
+   "outcome": "approved",
+   "notes": "APPROVED -- proceed to the build. Owner ruling 2026-08-04, at the architecture gate of the first app ever conceived through app-studio.\n\nAll 11 open decisions are answered and recorded in the pack itself. Standing constraints carried into planning:\n- The child-facing guided turn is built BEHIND A FLAG that stays OFF until ai-gateway's real kids-class template lands (D1/D2). Waves 1-3 proceed regardless. Wave 4 is blocked on it.\n- One demand covers both guardrail defects and must ask for the enforcement ruling too, not just the template content -- the gateway has no output-side screening today.\n- Child sessions use a parent-handed scoped token bound to one learner and one sitting (D9).\n- Child-facing AI blocks rather than downshifts (D8) -- a recorded, deliberate deviation from D023's default ladder, justified by an unsupervised 6-11 year old being the strongest instance of 'a degraded wrong answer is worse than an explicit try-later' on this platform.\n- Refusal and degraded states are built BEFORE the happy path, following pregnancy's precedent.\n- contracts pins v0.17.0, not the v0.9.1 the pack stated; confirm the exact tag at dispatch.",
+   "decidedAt": "2026-08-04T06:01:35.668656+00:00",
+   "waveReviewNext": null,
+   "wave": null
+  },
+  {
+   "gate": "plan-gate",
+   "outcome": "approved",
+   "notes": "APPROVED -- wave 1 authorized, with one binding amendment.\n\nAMENDMENT: T1.8 (render the four safety states end to end) is DEFERRED TO WAVE 2. The owner ruled that the child-facing surface waits for design-studio's guided-turn-class doctrine rather than being written ahead of it by a build agent. Wave 1 therefore ships the four safety states as MODELLED BEHAVIOUR with tests, and renders no child-facing surface at all. Nothing in wave 1 depended on T1.8, so no dependency edge broke; the pre-amendment plan is archived at superseded/plan-before-owner-amendment-1.json.\n\nThe wave-1 exit checklist is amended to match: the 'four visibly different French screens' item is replaced by an assertion that the states exist as modelled behaviour and that no child-facing surface was rendered.\n\nThe other three wave-1 'open decisions' were not decisions -- the contracts tag, the ports and the baseline migration number are resolved AT DISPATCH by design (the lazy-namespace discipline that exists because literal numbers written into a plan ahead of time have already collided twice). They are cleared, not answered.\n\nWave 1 is now 8 units: 2 owner (create the repo; raise the ai-gateway demand) and 6 agent.",
+   "decidedAt": "2026-08-04T06:09:26.121865+00:00",
+   "waveReviewNext": null,
+   "wave": null
+  }
+ ],
+ "sendBacks": [],
+ "rewinds": [],
+ "rewindTargets": [
+  "concept-gate",
+  "architecture-gate",
+  "plan-gate"
+ ]
+}

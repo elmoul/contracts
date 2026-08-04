@@ -13,6 +13,7 @@ from platform_contracts.connector import (
 )
 from platform_contracts.demand_coordinator import demand, demand_fulfillment
 from platform_contracts.stage import companion_turn
+from platform_contracts.app_studio import app_mission, app_task_plan
 
 __all__ = [
     "manifest",
@@ -35,4 +36,6 @@ __all__ = [
     "demand",
     "demand_fulfillment",
     "companion_turn",
+    "app_mission",
+    "app_task_plan",
 ]
