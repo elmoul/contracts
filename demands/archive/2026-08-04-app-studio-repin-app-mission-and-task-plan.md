@@ -10,7 +10,7 @@ acceptance-criteria:
   - "a wave's deferredToDispatch list is emitted as its own field rather than folded into openDecisions, and the plan gate's blocked check reads openDecisions only"
   - "any place app-studio hand-rolls a shape these schemas now define is replaced by the generated binding (platform_contracts.app_studio.app_mission / app_task_plan), or the divergence is written down with a reason"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand — re-pin `contracts` v0.19.0 and adopt `app.mission` / `app.task-plan`
