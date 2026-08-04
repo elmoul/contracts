@@ -390,6 +390,115 @@ BAD_DESIGN_SYSTEM_MISSING_CHANGE = {
 }
 
 
+GOOD_APP_MISSION_EXECUTING = {
+    "type": "app.mission",
+    "timestamp": "2026-08-04T09:00:00Z",
+    "payload": {
+        "missionId": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+        "appName": "tutor",
+        "stage": "executing",
+        "currentWave": 2,
+    },
+}
+
+GOOD_APP_MISSION_WAVE_REVIEW_REJECTED = {
+    "type": "app.mission",
+    "timestamp": "2026-08-04T09:05:00Z",
+    "payload": {
+        "missionId": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+        "appName": "tutor",
+        "stage": "wave-review",
+        "currentWave": 2,
+        "gate": "wave-review",
+        "outcome": "rejected",
+        "gateWave": 2,
+    },
+    "origin": "host",
+}
+
+GOOD_APP_MISSION_CONCEPT_GATE_APPROVED = {
+    "type": "app.mission",
+    "timestamp": "2026-08-04T09:10:00Z",
+    "payload": {
+        "missionId": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+        "appName": "tutor",
+        "stage": "concept-gate",
+        "currentWave": 0,
+        "gate": "concept-gate",
+        "outcome": "approved",
+    },
+}
+
+GOOD_APP_MISSION_ABORTED = {
+    "type": "app.mission",
+    "timestamp": "2026-08-04T09:15:00Z",
+    "payload": {
+        "missionId": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+        "appName": "tutor",
+        "stage": "aborted",
+        "currentWave": 1,
+    },
+}
+
+BAD_APP_MISSION_UNKNOWN_STAGE = {
+    "type": "app.mission",
+    "timestamp": "2026-08-04T09:00:00Z",
+    "payload": {
+        "missionId": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+        "appName": "tutor",
+        "stage": "feel-gate",
+        "currentWave": 0,
+    },
+}
+
+BAD_APP_MISSION_NON_GATE_GATE = {
+    "type": "app.mission",
+    "timestamp": "2026-08-04T09:00:00Z",
+    "payload": {
+        "missionId": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+        "appName": "tutor",
+        "stage": "executing",
+        "currentWave": 1,
+        "gate": "executing",
+        "outcome": "approved",
+    },
+}
+
+BAD_APP_MISSION_SEND_BACK_OUTCOME = {
+    "type": "app.mission",
+    "timestamp": "2026-08-04T09:00:00Z",
+    "payload": {
+        "missionId": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+        "appName": "tutor",
+        "stage": "plan-gate",
+        "currentWave": 0,
+        "gate": "plan-gate",
+        "outcome": "send-back",
+    },
+}
+
+BAD_APP_MISSION_MISSING_CURRENT_WAVE = {
+    "type": "app.mission",
+    "timestamp": "2026-08-04T09:00:00Z",
+    "payload": {
+        "missionId": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+        "appName": "tutor",
+        "stage": "intake",
+    },
+}
+
+BAD_APP_MISSION_THEMED_APP_NAME = {
+    "type": "app.mission",
+    "timestamp": "2026-08-04T09:00:00Z",
+    "payload": {
+        "missionId": "d34de281-c5c5-4e44-b3c5-6085c225adea",
+        "appName": "Tutor App",
+        "stage": "intake",
+        "currentWave": 0,
+    },
+}
+
+
 def load_state_event_schema() -> dict:
     return json.loads(STATE_EVENT_SPEC.read_text(encoding="utf-8"))
 
@@ -445,6 +554,16 @@ def main() -> int:
     expect_invalid(schema, BAD_DESIGN_SYSTEM_UNKNOWN_ORIGIN, "design.designSystem: unknown origin enum value (known-bad)")
     expect_invalid(schema, BAD_DESIGN_SYSTEM_BAD_VERSION_SHAPE, "design.designSystem: version not matching semver pattern (known-bad)")
     expect_invalid(schema, BAD_DESIGN_SYSTEM_MISSING_CHANGE, "design.designSystem: missing change (known-bad)")
+
+    expect_valid(schema, GOOD_APP_MISSION_EXECUTING, "app.mission: known-good event, executing with no gate outcome")
+    expect_valid(schema, GOOD_APP_MISSION_WAVE_REVIEW_REJECTED, "app.mission: known-good event, wave-review rejected with gateWave")
+    expect_valid(schema, GOOD_APP_MISSION_CONCEPT_GATE_APPROVED, "app.mission: known-good event, concept-gate approved without gateWave")
+    expect_valid(schema, GOOD_APP_MISSION_ABORTED, "app.mission: known-good event, terminal aborted stage")
+    expect_invalid(schema, BAD_APP_MISSION_UNKNOWN_STAGE, "app.mission: design-studio stage name not on the app spine (known-bad)")
+    expect_invalid(schema, BAD_APP_MISSION_NON_GATE_GATE, "app.mission: non-gate stage used as gate (known-bad)")
+    expect_invalid(schema, BAD_APP_MISSION_SEND_BACK_OUTCOME, "app.mission: send-back as a gate outcome (known-bad)")
+    expect_invalid(schema, BAD_APP_MISSION_MISSING_CURRENT_WAVE, "app.mission: missing currentWave (known-bad)")
+    expect_invalid(schema, BAD_APP_MISSION_THEMED_APP_NAME, "app.mission: appName not a functional name (known-bad)")
     return 0
 
 

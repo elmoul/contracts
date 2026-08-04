@@ -6,7 +6,7 @@
 /**
  * Event emitted over SSE by the state-feed (D029). Consumed by the dashboard, the 3D renderer, and the guest projection — the same schema, three renderers. Discriminate on the 'type' field.
  */
-export type StateEvent = ComponentHealthEvent | LoadEvent | CostTickEvent | CiRunEvent | AppStatusEvent | ActivityCountEvent | JobProgressEvent | AgentRunEvent | DesignMissionEvent | DesignSystemEvent;
+export type StateEvent = ComponentHealthEvent | LoadEvent | CostTickEvent | CiRunEvent | AppStatusEvent | ActivityCountEvent | JobProgressEvent | AgentRunEvent | DesignMissionEvent | DesignSystemEvent | AppMissionEvent;
 /**
  * Which wall the event was produced on (D011). Optional — absent means host, preserving compatibility with producers that predate this field.
  */
@@ -335,4 +335,46 @@ export interface DesignSystemPayload {
      * The reason this particular event fired.
      */
     change: "created" | "validated" | "retired" | "release";
+}
+export interface AppMissionEvent {
+    type: "app.mission";
+    /**
+     * ISO-8601 timestamp when the event was produced
+     */
+    timestamp: string;
+    payload: AppMissionPayload;
+    origin?: Origin;
+}
+/**
+ * Emitted by app-studio for each mission stage/gate transition over the 15-stage spine (D093). The `stage` and `gate` vocabularies are the ones defined in schemas/app-studio/app.mission.json (`missionStage` / `missionGateStage`) and the outcome vocabulary is that schema's gate verdict (D091) — written out here because state.event.json is a self-contained bundle for three generators (nothing in it $refs another file), and held identical to app.mission.json mechanically by tests/check_state_event_sync.py, which fails if the two ever diverge. Do not edit either enum here alone.
+ */
+export interface AppMissionPayload {
+    /**
+     * Unique identifier for this mission, from app-studio's own ledger.
+     */
+    missionId: string;
+    /**
+     * Functional name (D002) of the app this mission is about.
+     */
+    appName: string;
+    /**
+     * Where the mission currently sits on the spine — same vocabulary as AppMission.stage.
+     */
+    stage: "intake" | "discovery" | "concept" | "concept-gate" | "architecture" | "architecture-gate" | "planning" | "plan-gate" | "scaffold" | "executing" | "wave-review" | "acceptance-gate" | "registration" | "closed" | "aborted";
+    /**
+     * Which build wave the mission is on; 0 before the first wave starts.
+     */
+    currentWave: number;
+    /**
+     * The gate this event reports an outcome for — present only when it reports one. Same vocabulary as AppMission.gateRecords[].gate.
+     */
+    gate?: "concept-gate" | "architecture-gate" | "plan-gate" | "wave-review" | "acceptance-gate";
+    /**
+     * The owner's recorded decision at `gate` (D091), present exactly when `gate` is. There is deliberately no third `send-back` member — a send-back carries no verdict.
+     */
+    outcome?: "approved" | "rejected";
+    /**
+     * The wave this gate outcome was recorded on, for the one gate that repeats per wave (`wave-review`). Absent for the gates that occur once.
+     */
+    gateWave?: number;
 }

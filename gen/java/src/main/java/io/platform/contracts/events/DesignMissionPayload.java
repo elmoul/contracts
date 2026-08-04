@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   DesignMissionPayload.JSON_PROPERTY_STAGE,
   DesignMissionPayload.JSON_PROPERTY_GATE_OUTCOME
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-08-04T07:59:22.801212400+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-08-04T08:47:38.874829900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class DesignMissionPayload {
   public static final String JSON_PROPERTY_MISSION_ID = "missionId";
   @jakarta.annotation.Nonnull

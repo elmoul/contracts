@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.platform.contracts.events.DesignSystemPayload;
+import io.platform.contracts.events.AppMissionPayload;
 import io.platform.contracts.events.Origin;
 import java.time.OffsetDateTime;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -28,21 +28,21 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * DesignSystemEvent
+ * AppMissionEvent
  */
 @JsonPropertyOrder({
-  DesignSystemEvent.JSON_PROPERTY_TYPE,
-  DesignSystemEvent.JSON_PROPERTY_TIMESTAMP,
-  DesignSystemEvent.JSON_PROPERTY_PAYLOAD,
-  DesignSystemEvent.JSON_PROPERTY_ORIGIN
+  AppMissionEvent.JSON_PROPERTY_TYPE,
+  AppMissionEvent.JSON_PROPERTY_TIMESTAMP,
+  AppMissionEvent.JSON_PROPERTY_PAYLOAD,
+  AppMissionEvent.JSON_PROPERTY_ORIGIN
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-08-04T08:47:38.874829900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
-public class DesignSystemEvent {
+public class AppMissionEvent {
   /**
-   * Discriminator value — always \&quot;design.designSystem\&quot;
+   * Discriminator value — always \&quot;app.mission\&quot;
    */
   public enum TypeEnum {
-    DESIGN_DESIGN_SYSTEM(String.valueOf("design.designSystem"));
+    APP_MISSION(String.valueOf("app.mission"));
 
     private String value;
 
@@ -81,23 +81,23 @@ public class DesignSystemEvent {
 
   public static final String JSON_PROPERTY_PAYLOAD = "payload";
   @jakarta.annotation.Nonnull
-  private DesignSystemPayload payload;
+  private AppMissionPayload payload;
 
   public static final String JSON_PROPERTY_ORIGIN = "origin";
   @jakarta.annotation.Nullable
   private Origin origin;
 
-  public DesignSystemEvent() {
+  public AppMissionEvent() {
   }
 
-  public DesignSystemEvent type(@jakarta.annotation.Nonnull TypeEnum type) {
+  public AppMissionEvent type(@jakarta.annotation.Nonnull TypeEnum type) {
     
     this.type = type;
     return this;
   }
 
   /**
-   * Discriminator value — always \&quot;design.designSystem\&quot;
+   * Discriminator value — always \&quot;app.mission\&quot;
    * @return type
    */
   @jakarta.annotation.Nonnull
@@ -115,7 +115,7 @@ public class DesignSystemEvent {
     this.type = type;
   }
 
-  public DesignSystemEvent timestamp(@jakarta.annotation.Nonnull OffsetDateTime timestamp) {
+  public AppMissionEvent timestamp(@jakarta.annotation.Nonnull OffsetDateTime timestamp) {
     
     this.timestamp = timestamp;
     return this;
@@ -140,7 +140,7 @@ public class DesignSystemEvent {
     this.timestamp = timestamp;
   }
 
-  public DesignSystemEvent payload(@jakarta.annotation.Nonnull DesignSystemPayload payload) {
+  public AppMissionEvent payload(@jakarta.annotation.Nonnull AppMissionPayload payload) {
     
     this.payload = payload;
     return this;
@@ -154,18 +154,18 @@ public class DesignSystemEvent {
   @JsonProperty(value = JSON_PROPERTY_PAYLOAD, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public DesignSystemPayload getPayload() {
+  public AppMissionPayload getPayload() {
     return payload;
   }
 
 
   @JsonProperty(value = JSON_PROPERTY_PAYLOAD, required = true)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setPayload(@jakarta.annotation.Nonnull DesignSystemPayload payload) {
+  public void setPayload(@jakarta.annotation.Nonnull AppMissionPayload payload) {
     this.payload = payload;
   }
 
-  public DesignSystemEvent origin(@jakarta.annotation.Nullable Origin origin) {
+  public AppMissionEvent origin(@jakarta.annotation.Nullable Origin origin) {
     
     this.origin = origin;
     return this;
@@ -199,11 +199,11 @@ public class DesignSystemEvent {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    DesignSystemEvent designSystemEvent = (DesignSystemEvent) o;
-    return Objects.equals(this.type, designSystemEvent.type) &&
-        Objects.equals(this.timestamp, designSystemEvent.timestamp) &&
-        Objects.equals(this.payload, designSystemEvent.payload) &&
-        Objects.equals(this.origin, designSystemEvent.origin);
+    AppMissionEvent appMissionEvent = (AppMissionEvent) o;
+    return Objects.equals(this.type, appMissionEvent.type) &&
+        Objects.equals(this.timestamp, appMissionEvent.timestamp) &&
+        Objects.equals(this.payload, appMissionEvent.payload) &&
+        Objects.equals(this.origin, appMissionEvent.origin);
   }
 
   @Override
@@ -214,7 +214,7 @@ public class DesignSystemEvent {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class DesignSystemEvent {\n");
+    sb.append("class AppMissionEvent {\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("    payload: ").append(toIndentedString(payload)).append("\n");

@@ -23,6 +23,7 @@ export type {
   AgentRunEvent, AgentRunPayload,
   DesignMissionEvent, DesignMissionPayload,
   DesignSystemEvent, DesignSystemPayload,
+  AppMissionEvent, AppMissionPayload,
 } from "./state-event";
 export type { HexagonDescriptor } from "./hexagon-descriptor";
 export type { RegistryEntry } from "./registry-entry";

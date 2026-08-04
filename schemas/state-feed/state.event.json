@@ -13,7 +13,8 @@
     { "$ref": "#/definitions/JobProgressEvent" },
     { "$ref": "#/definitions/AgentRunEvent" },
     { "$ref": "#/definitions/DesignMissionEvent" },
-    { "$ref": "#/definitions/DesignSystemEvent" }
+    { "$ref": "#/definitions/DesignSystemEvent" },
+    { "$ref": "#/definitions/AppMissionEvent" }
   ],
   "definitions": {
     "ComponentHealthEvent": {
@@ -516,6 +517,67 @@
           "type": "string",
           "enum": ["created", "validated", "retired", "release"],
           "description": "The reason this particular event fired."
+        }
+      }
+    },
+    "AppMissionEvent": {
+      "title": "AppMissionEvent",
+      "type": "object",
+      "required": ["type", "timestamp", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "app.mission" },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp when the event was produced"
+        },
+        "payload": { "$ref": "#/definitions/AppMissionPayload" },
+        "origin": { "$ref": "#/definitions/Origin" }
+      }
+    },
+    "AppMissionPayload": {
+      "title": "AppMissionPayload",
+      "description": "Emitted by app-studio for each mission stage/gate transition over the 15-stage spine (D093). The `stage` and `gate` vocabularies are the ones defined in schemas/app-studio/app.mission.json (`missionStage` / `missionGateStage`) and the outcome vocabulary is that schema's gate verdict (D091) — written out here because state.event.json is a self-contained bundle for three generators (nothing in it $refs another file), and held identical to app.mission.json mechanically by tests/check_state_event_sync.py, which fails if the two ever diverge. Do not edit either enum here alone.",
+      "type": "object",
+      "required": ["missionId", "appName", "stage", "currentWave"],
+      "additionalProperties": false,
+      "properties": {
+        "missionId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this mission, from app-studio's own ledger."
+        },
+        "appName": {
+          "type": "string",
+          "description": "Functional name (D002) of the app this mission is about.",
+          "pattern": "^[a-z][a-z0-9-]+$",
+          "examples": ["tutor"]
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["intake", "discovery", "concept", "concept-gate", "architecture", "architecture-gate", "planning", "plan-gate", "scaffold", "executing", "wave-review", "acceptance-gate", "registration", "closed", "aborted"],
+          "description": "Where the mission currently sits on the spine — same vocabulary as AppMission.stage."
+        },
+        "currentWave": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Which build wave the mission is on; 0 before the first wave starts."
+        },
+        "gate": {
+          "type": "string",
+          "enum": ["concept-gate", "architecture-gate", "plan-gate", "wave-review", "acceptance-gate"],
+          "description": "The gate this event reports an outcome for — present only when it reports one. Same vocabulary as AppMission.gateRecords[].gate."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": ["approved", "rejected"],
+          "description": "The owner's recorded decision at `gate` (D091), present exactly when `gate` is. There is deliberately no third `send-back` member — a send-back carries no verdict."
+        },
+        "gateWave": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The wave this gate outcome was recorded on, for the one gate that repeats per wave (`wave-review`). Absent for the gates that occur once."
         }
       }
     }

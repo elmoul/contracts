@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   CiRunEvent.JSON_PROPERTY_PAYLOAD,
   CiRunEvent.JSON_PROPERTY_ORIGIN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-23T04:24:32.335221600+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-08-04T08:47:38.874829900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class CiRunEvent {
   /**
    * Discriminator value — always \&quot;ci.run\&quot;

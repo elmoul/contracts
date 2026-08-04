@@ -26,6 +26,17 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 STATE_EVENT_JSON = ROOT / "schemas" / "state-feed" / "state.event.json"
 STATE_EVENT_JAVA_YAML = ROOT / "schemas" / "state-feed" / "state-event-java.yaml"
+APP_MISSION_JSON = ROOT / "schemas" / "app-studio" / "app.mission.json"
+
+# AppMissionPayload deliberately re-states app.mission.json's vocabularies rather
+# than $ref-ing them: state.event.json is a self-contained bundle for three
+# generators and the Java YAML wrapper cannot $ref another file at all. That
+# makes drift possible, so it is checked here — each entry is
+# (payload property, app.mission.json $defs name).
+APP_MISSION_SHARED_ENUMS = [
+    ("stage", "missionStage"),
+    ("gate", "missionGateStage"),
+]
 
 
 def load_json_schema() -> dict:
@@ -61,6 +72,40 @@ def payload_ref_name(event_def: dict) -> str:
 
 def payload_def(defs_or_schemas: dict, ref_name: str) -> dict:
     return defs_or_schemas[ref_name]
+
+
+def check_app_mission_enums(json_defs: dict, java_schemas: dict) -> list:
+    """AppMissionPayload's stage/gate/outcome vocabularies must equal app.mission.json's."""
+    errors = []
+    mission = json.loads(APP_MISSION_JSON.read_text(encoding="utf-8"))
+    mission_defs = mission["$defs"]
+
+    sources = {
+        "state.event.json": json_defs.get("AppMissionPayload"),
+        "state-event-java.yaml": java_schemas.get("AppMissionPayload"),
+    }
+    for where, payload in sources.items():
+        if payload is None:
+            errors.append(f"{where}: AppMissionPayload is missing")
+            continue
+        props = payload.get("properties", {})
+        for prop, def_name in APP_MISSION_SHARED_ENUMS:
+            expected = mission_defs[def_name]["enum"]
+            actual = props.get(prop, {}).get("enum")
+            if actual != expected:
+                errors.append(
+                    f"{where}: AppMissionPayload.{prop} enum diverges from "
+                    f"app.mission.json $defs/{def_name} — expected {expected}, got {actual}"
+                )
+        # The gate verdict vocabulary, inherited whole from app.mission.json's gateRecords.
+        expected_outcome = mission["properties"]["gateRecords"]["items"]["properties"]["outcome"]["enum"]
+        actual_outcome = props.get("outcome", {}).get("enum")
+        if actual_outcome != expected_outcome:
+            errors.append(
+                f"{where}: AppMissionPayload.outcome enum diverges from app.mission.json "
+                f"gateRecords[].outcome — expected {expected_outcome}, got {actual_outcome}"
+            )
+    return errors
 
 
 def main() -> int:
@@ -125,6 +170,8 @@ def main() -> int:
                 f"{json_payload_name}: payload 'required' differs — state.event.json={sorted(json_payload_required)}, "
                 f"state-event-java.yaml={sorted(java_payload_required)}"
             )
+
+    errors.extend(check_app_mission_enums(json_defs, java_schemas))
 
     if errors:
         for e in errors:

@@ -16,6 +16,43 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.20.0 — 2026-08-04
+
+Additive release, all three bindings: fulfills demand
+`state-feed-20260804-state-event-app-mission-member` — adds `app.mission` as
+the **eleventh** `state.event` oneOf member (`AppMissionEvent` /
+`AppMissionPayload`), so state-feed can accept app-studio's mission
+transitions type-safely instead of dropping them or widening a payload to a
+free-form map. Nothing existing changed shape: the ten prior variants, their
+payloads, and `Origin` are untouched, so a consumer still on v0.19.0 keeps
+working and only needs to re-pin if it wants to *read* the new variant.
+
+The payload requires `missionId`, `appName`, `stage` and `currentWave`, and
+carries the latest gate outcome as the optional trio `gate` / `outcome` /
+`gateWave` (`gateWave` exists for `wave-review`, the one gate that repeats per
+wave — the others occur once and omit it).
+
+**The vocabularies are app-studio's, not a second copy with a life of its
+own.** `stage` is the 15-member mission spine and `gate` the 5-member gate
+subset from `schemas/app-studio/app.mission.json` (`$defs/missionStage`,
+`$defs/missionGateStage`), and `outcome` is that schema's D091 gate verdict
+(`approved`/`rejected`, deliberately no `send-back` — a send-back carries no
+verdict). They are *written out* rather than `$ref`-ed, because
+`state.event.json` is a self-contained bundle feeding three generators and
+`state-event-java.yaml` cannot `$ref` another file at all — so the identity is
+enforced mechanically instead: `tests/check_state_event_sync.py` now also
+compares both files' `AppMissionPayload` enums against `app.mission.json` and
+fails on any divergence. Editing the spine in app-studio's schema alone now
+breaks the suite rather than silently forking the vocabulary.
+
+Coverage: 9 new schema-level cases in `tests/validate_state_event.py`
+(including a design-studio stage name and a `send-back` outcome as known-bads)
+and a new `StateEventAppMissionTest` in the Java binding (6 cases: gateless
+transition, wave-review outcome with `gateWave`, terminal `aborted`, two
+rejected-enum cases, round-trip). Java enum rejections surface as
+`ValueInstantiationException`, not `InvalidFormatException` — openapi-generator
+7.23.0 routes them through a `fromValue` factory.
+
 ## v0.19.0 — 2026-08-04
 
 Additive release, all three bindings: fulfills demand
