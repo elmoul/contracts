@@ -225,6 +225,17 @@ GOOD_DESIGN_MISSION_ATLAS_CLASS_REGIME = {
     },
 }
 
+GOOD_DESIGN_MISSION_GUIDED_TURN_CLASS_REGIME = {
+    "type": "design.mission",
+    "timestamp": "2026-08-04T03:00:00Z",
+    "payload": {
+        "missionId": "c9c1b1f0-9c3a-4b7e-8b0a-6f7d8e9f0a1b",
+        "targetRepo": "dashboard",
+        "regime": "guided-turn-class",
+        "stage": "harvest",
+    },
+}
+
 BAD_DESIGN_MISSION_UNKNOWN_REGIME = {
     "type": "design.mission",
     "timestamp": "2026-07-16T03:00:00Z",
@@ -298,6 +309,21 @@ GOOD_DESIGN_SYSTEM_ATLAS_CLASS_REGIME = {
         "slug": "atlas-base",
         "version": "1.0.0",
         "regime": "atlas-class",
+        "status": "draft",
+        "origin": "owner-built",
+        "change": "created",
+    },
+}
+
+GOOD_DESIGN_SYSTEM_GUIDED_TURN_CLASS_REGIME = {
+    "type": "design.designSystem",
+    "timestamp": "2026-08-04T10:00:00Z",
+    "payload": {
+        "designSystemId": "a1b2c3d4-e5f6-4789-a123-456789abcdef",
+        "name": "Guided Turn Base",
+        "slug": "guided-turn-base",
+        "version": "1.0.0",
+        "regime": "guided-turn-class",
         "status": "draft",
         "origin": "owner-built",
         "change": "created",
@@ -406,6 +432,7 @@ def main() -> int:
     expect_valid(schema, GOOD_DESIGN_MISSION_HARVEST_STAGE, "design.mission: known-good event, harvest stage, no gateOutcome")
     expect_valid(schema, GOOD_DESIGN_MISSION_THEME_GATE_APPROVED, "design.mission: known-good event, theme-gate approved, inhabited-class")
     expect_valid(schema, GOOD_DESIGN_MISSION_ATLAS_CLASS_REGIME, "design.mission: known-good event, atlas-class regime")
+    expect_valid(schema, GOOD_DESIGN_MISSION_GUIDED_TURN_CLASS_REGIME, "design.mission: known-good event, guided-turn-class regime")
     expect_invalid(schema, BAD_DESIGN_MISSION_UNKNOWN_REGIME, "design.mission: unknown regime enum value (known-bad)")
     expect_invalid(schema, BAD_DESIGN_MISSION_UNKNOWN_STAGE, "design.mission: unknown stage enum value (known-bad)")
     expect_invalid(schema, BAD_DESIGN_MISSION_MISSING_TARGET_REPO, "design.mission: missing targetRepo (known-bad)")
@@ -413,6 +440,7 @@ def main() -> int:
     expect_valid(schema, GOOD_DESIGN_SYSTEM_OWNER_BUILT, "design.designSystem: known-good event, owner-built draft")
     expect_valid(schema, GOOD_DESIGN_SYSTEM_MISSION_BUILT_RELEASED, "design.designSystem: known-good event, mission-built release with sourceMissionId")
     expect_valid(schema, GOOD_DESIGN_SYSTEM_ATLAS_CLASS_REGIME, "design.designSystem: known-good event, atlas-class regime")
+    expect_valid(schema, GOOD_DESIGN_SYSTEM_GUIDED_TURN_CLASS_REGIME, "design.designSystem: known-good event, guided-turn-class regime")
     expect_invalid(schema, BAD_DESIGN_SYSTEM_UNKNOWN_STATUS, "design.designSystem: unknown status enum value (known-bad)")
     expect_invalid(schema, BAD_DESIGN_SYSTEM_UNKNOWN_ORIGIN, "design.designSystem: unknown origin enum value (known-bad)")
     expect_invalid(schema, BAD_DESIGN_SYSTEM_BAD_VERSION_SHAPE, "design.designSystem: version not matching semver pattern (known-bad)")

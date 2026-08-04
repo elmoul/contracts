@@ -16,6 +16,60 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.18.0 — 2026-08-04
+
+Additive release, all three bindings: fulfills demand
+`design-studio-20260804-contracts-guided-turn-class-regime-enum` — adds a
+fourth `guided-turn-class` member to the shared `Regime` enum used by both
+`design.mission`'s `DesignMissionPayload.regime` and `design.designSystem`'s
+`DesignSystemPayload.regime` in `state.event`. Same shape as the v0.17.0
+`atlas-class` widening. Purely additive — no existing enum value, required
+field, or payload shape changed; `git diff -- schemas/` touches only the two
+`regime` properties (enum + description) in
+`schemas/state-feed/state.event.json` and its `state-event-java.yaml` mirror.
+
+### state.event — `Regime` enum gains a fourth value (`console-class` /
+### `inhabited-class` / `atlas-class` / `guided-turn-class`)
+
+Both occurrences updated in lockstep in both files. Spelled exactly
+`guided-turn-class` (hyphenated, matching the three existing members), so
+consumers projecting the value need no mapping table.
+`tests/validate_state_event.py` extended with one new known-good fixture per
+payload (`GOOD_DESIGN_MISSION_GUIDED_TURN_CLASS_REGIME`,
+`GOOD_DESIGN_SYSTEM_GUIDED_TURN_CLASS_REGIME`); the existing
+`BAD_DESIGN_MISSION_UNKNOWN_REGIME` fixture (`"hybrid-class"`) is untouched
+and still correctly rejected, proving the enum is extended, not opened up to
+arbitrary strings. `tests/check_state_event_sync.py`: 10 event types still in
+sync (this check compares property names/required sets, not enum values — the
+enum-literal parity between the two files was confirmed by direct diff).
+
+### Codegen — all three regenerated
+
+- **Python:** `datamodel-code-generator` 0.68.1 with
+  `--target-python-version 3.11 --use-specialized-enum`. The shared
+  `Regime(StrEnum)` class gains `guided_turn_class = 'guided-turn-class'`;
+  the only other diff hunks are the two `regime` field descriptions and the
+  generation-timestamp header.
+- **TypeScript:** `json-schema-to-typescript` for `state-event.ts` — both
+  `regime` fields widen to
+  `"console-class" | "inhabited-class" | "atlas-class" | "guided-turn-class"`;
+  `dist/` rebuilt (`npm run build`), `npx tsc --noEmit` clean.
+- **Java:** `openapi-generator-cli` 7.23.0, `--library resttemplate`
+  (confirmed zero `com.google.gson` imports). `DesignMissionPayload` and
+  `DesignSystemPayload` each gain `GUIDED_TURN_CLASS` on their own nested
+  `RegimeEnum`. Only those two files were taken from the regen — the other 18
+  classes' diffs were a refreshed `@Generated` timestamp only and were left
+  untouched. `mvn -f gen/java/pom.xml test`: BUILD SUCCESS, 12/12 tests.
+
+### D031 acceptance — post-tag, run for real, all three languages
+
+See
+`demands/fulfilled/design-studio-20260804-contracts-guided-turn-class-regime-enum-report.md`
+for the full per-language acceptance-test transcript against the pushed
+`v0.18.0` tag.
+
+---
+
 ## v0.17.0 — 2026-07-23
 
 Additive release, all three bindings: fulfills demand

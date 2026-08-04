@@ -287,9 +287,9 @@ export interface DesignMissionPayload {
    */
   targetRepo: string;
   /**
-   * Which design regime/checklist this mission is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, or the atlas-class regime.
+   * Which design regime/checklist this mission is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, the atlas-class regime, or the guided-turn-class regime.
    */
-  regime: "console-class" | "inhabited-class" | "atlas-class";
+  regime: "console-class" | "inhabited-class" | "atlas-class" | "guided-turn-class";
   /**
    * Current stage of the mission state machine.
    */
@@ -338,9 +338,9 @@ export interface DesignSystemPayload {
    */
   version: string;
   /**
-   * Which design regime/checklist this design system is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, or the atlas-class regime.
+   * Which design regime/checklist this design system is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, the atlas-class regime, or the guided-turn-class regime.
    */
-  regime: "console-class" | "inhabited-class" | "atlas-class";
+  regime: "console-class" | "inhabited-class" | "atlas-class" | "guided-turn-class";
   /**
    * Current lifecycle status of the design system.
    */

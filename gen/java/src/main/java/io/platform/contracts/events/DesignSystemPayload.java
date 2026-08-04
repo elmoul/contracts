@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   DesignSystemPayload.JSON_PROPERTY_SOURCE_MISSION_ID,
   DesignSystemPayload.JSON_PROPERTY_CHANGE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-23T04:24:32.335221600+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-08-04T07:59:22.801212400+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class DesignSystemPayload {
   public static final String JSON_PROPERTY_DESIGN_SYSTEM_ID = "designSystemId";
   @jakarta.annotation.Nonnull
@@ -58,14 +58,16 @@ public class DesignSystemPayload {
   private String version;
 
   /**
-   * Which design regime/checklist this design system is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, or the atlas-class regime.
+   * Which design regime/checklist this design system is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, the atlas-class regime, or the guided-turn-class regime.
    */
   public enum RegimeEnum {
     CONSOLE_CLASS(String.valueOf("console-class")),
     
     INHABITED_CLASS(String.valueOf("inhabited-class")),
     
-    ATLAS_CLASS(String.valueOf("atlas-class"));
+    ATLAS_CLASS(String.valueOf("atlas-class")),
+    
+    GUIDED_TURN_CLASS(String.valueOf("guided-turn-class"));
 
     private String value;
 
@@ -335,7 +337,7 @@ public class DesignSystemPayload {
   }
 
   /**
-   * Which design regime/checklist this design system is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, or the atlas-class regime.
+   * Which design regime/checklist this design system is gated by (D053): D036 information-first console law, the Inhabited Interface doctrine, the atlas-class regime, or the guided-turn-class regime.
    * @return regime
    */
   @jakarta.annotation.Nonnull
