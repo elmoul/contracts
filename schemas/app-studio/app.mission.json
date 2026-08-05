@@ -174,6 +174,50 @@
       "type": ["object", "null"],
       "description": "DERIVED, and deliberately unconstrained. The current stage's dispatch state (running / dead / blocked), which lives in an artifact rather than the ledger. Shape belongs to app-studio's dispatch layer and is not a cross-hexagon port; a consumer that needs it reads app-studio's own API.",
       "additionalProperties": true
+    },
+    "consistency": {
+      "type": ["object", "null"],
+      "description": "DERIVED. The ledger-vs-artifact divergence report: whether what this record states (stage, currentWave, gate history) still agrees with the artifacts it describes (the task_plan, the target repo), so a console reading a mission sees a contradiction without having to ask a second question. Null when reconciliation has not run — a producer emitting a stored row rather than a projection, or a mission with no artifact yet to diverge from (before `scaffold`/`planning`).",
+      "required": ["consistent", "checkedAt", "divergences"],
+      "properties": {
+        "consistent": {
+          "type": "boolean",
+          "description": "True when reconciliation found no divergence. `divergences` is empty exactly when this is true."
+        },
+        "checkedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this reconciliation ran. Read-time, like the rest of the derived fields — never persisted."
+        },
+        "divergences": {
+          "type": "array",
+          "description": "One entry per contradiction found between the ledger and an artifact. Empty when `consistent` is true.",
+          "items": {
+            "type": "object",
+            "required": ["subject", "ledgerValue", "artifactValue", "description"],
+            "properties": {
+              "subject": {
+                "type": "string",
+                "description": "What disagrees, e.g. `currentWave`, `stage`, `targetRepo existence`.",
+                "examples": ["currentWave"]
+              },
+              "ledgerValue": {
+                "description": "What this record states for `subject`. Deliberately unconstrained — the ledger's own field types vary by subject."
+              },
+              "artifactValue": {
+                "description": "What the artifact actually shows for `subject`. Deliberately unconstrained, same reason as `ledgerValue`."
+              },
+              "description": {
+                "type": "string",
+                "description": "The contradiction in the owner's terms — what a console shows without a second query.",
+                "examples": ["ledger says wave 2 but task_plan.json has no wave 2 entry"]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

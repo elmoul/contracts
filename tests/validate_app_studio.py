@@ -154,6 +154,42 @@ GOOD_MISSION_WAVE_REVIEW["gateContext"] = {
 BAD_MISSION_UNKNOWN_WAVE_REVIEW_NEXT = deepcopy(GOOD_MISSION_WAVE_REVIEW)
 BAD_MISSION_UNKNOWN_WAVE_REVIEW_NEXT["gateRecords"][-1]["waveReviewNext"] = "continue"
 
+# `consistency` is the ledger-vs-artifact divergence report — null when
+# reconciliation hasn't run (the pilot fixture, predating the field, must keep
+# validating unchanged), an empty-divergences object when it has run and found
+# nothing, and a populated one when the ledger and an artifact disagree.
+GOOD_MISSION_CONSISTENT = deepcopy(PILOT_MISSION)
+GOOD_MISSION_CONSISTENT["consistency"] = {
+    "consistent": True,
+    "checkedAt": "2026-08-05T07:00:00+00:00",
+    "divergences": [],
+}
+
+GOOD_MISSION_DIVERGENT = deepcopy(PILOT_MISSION)
+GOOD_MISSION_DIVERGENT["consistency"] = {
+    "consistent": False,
+    "checkedAt": "2026-08-05T07:00:00+00:00",
+    "divergences": [
+        {
+            "subject": "currentWave",
+            "ledgerValue": 2,
+            "artifactValue": 1,
+            "description": "ledger says wave 2 but task_plan.json has no wave 2 entry",
+        }
+    ],
+}
+
+# `divergences` is required — a consistency object cannot claim a verdict
+# without the list that backs it up, even an empty one.
+BAD_MISSION_CONSISTENCY_MISSING_DIVERGENCES = deepcopy(GOOD_MISSION_CONSISTENT)
+del BAD_MISSION_CONSISTENCY_MISSING_DIVERGENCES["consistency"]["divergences"]
+
+# A divergence entry with no `description` is unfalsifiable in the same way an
+# absence verify step without `channel` is — the console would show a
+# contradiction with nothing to say about it.
+BAD_MISSION_DIVERGENCE_MISSING_DESCRIPTION = deepcopy(GOOD_MISSION_DIVERGENT)
+del BAD_MISSION_DIVERGENCE_MISSING_DESCRIPTION["consistency"]["divergences"][0]["description"]
+
 # --- plan negatives ----------------------------------------------------------
 
 BAD_PLAN_UNIT_WITHOUT_VERIFY = deepcopy(PILOT_PLAN)
@@ -266,6 +302,10 @@ CASES = [
     ("app.mission.json", "rewind targeting a non-gate stage", BAD_MISSION_REWIND_TO_NON_GATE, False),
     ("app.mission.json", "missing the append-only record lists", BAD_MISSION_MISSING_LEDGERS, False),
     ("app.mission.json", "unknown waveReviewNext", BAD_MISSION_UNKNOWN_WAVE_REVIEW_NEXT, False),
+    ("app.mission.json", "consistency: reconciled, no divergence", GOOD_MISSION_CONSISTENT, True),
+    ("app.mission.json", "consistency: reconciled, one divergence", GOOD_MISSION_DIVERGENT, True),
+    ("app.mission.json", "consistency missing divergences", BAD_MISSION_CONSISTENCY_MISSING_DIVERGENCES, False),
+    ("app.mission.json", "divergence entry missing description", BAD_MISSION_DIVERGENCE_MISSING_DESCRIPTION, False),
     ("app.task-plan.json", "tutor pilot plan.json (real, owner-approved)", PILOT_PLAN, True),
     ("app.task-plan.json", "wave with deferredToDispatch kept separate", GOOD_PLAN_DEFERRED_TO_DISPATCH, True),
     ("app.task-plan.json", "advisory unit with no verify step", GOOD_PLAN_ADVISORY_UNIT_WITHOUT_VERIFY, True),

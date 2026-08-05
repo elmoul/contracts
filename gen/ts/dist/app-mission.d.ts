@@ -161,4 +161,42 @@ export interface AppMission {
     pipeline?: {
         [k: string]: unknown;
     } | null;
+    /**
+     * DERIVED. The ledger-vs-artifact divergence report: whether what this record states (stage, currentWave, gate history) still agrees with the artifacts it describes (the task_plan, the target repo), so a console reading a mission sees a contradiction without having to ask a second question. Null when reconciliation has not run — a producer emitting a stored row rather than a projection, or a mission with no artifact yet to diverge from (before `scaffold`/`planning`).
+     */
+    consistency?: {
+        /**
+         * True when reconciliation found no divergence. `divergences` is empty exactly when this is true.
+         */
+        consistent: boolean;
+        /**
+         * When this reconciliation ran. Read-time, like the rest of the derived fields — never persisted.
+         */
+        checkedAt: string;
+        /**
+         * One entry per contradiction found between the ledger and an artifact. Empty when `consistent` is true.
+         */
+        divergences: {
+            /**
+             * What disagrees, e.g. `currentWave`, `stage`, `targetRepo existence`.
+             */
+            subject: string;
+            /**
+             * What this record states for `subject`. Deliberately unconstrained — the ledger's own field types vary by subject.
+             */
+            ledgerValue: {
+                [k: string]: unknown;
+            };
+            /**
+             * What the artifact actually shows for `subject`. Deliberately unconstrained, same reason as `ledgerValue`.
+             */
+            artifactValue: {
+                [k: string]: unknown;
+            };
+            /**
+             * The contradiction in the owner's terms — what a console shows without a second query.
+             */
+            description: string;
+        }[];
+    } | null;
 }

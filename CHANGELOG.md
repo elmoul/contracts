@@ -16,6 +16,31 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.23.0 — 2026-08-05
+
+**Additive, all three bindings.** `app.mission` gains an optional
+`consistency` object — the ledger-vs-artifact divergence report. Fulfils
+demand `app-studio-20260805-contracts-mission-consistency`.
+
+A mission's ledger (stage, currentWave, gate history) and the artifacts it
+describes (the task_plan, the target repo) can drift apart — a stalled
+projection, a hand-edited plan.json, a repo that never got scaffolded. Without
+this, a console reading a mission has no way to see that contradiction short
+of a second query against app-studio's own API. `consistency` closes that:
+`{consistent, checkedAt, divergences}`, DERIVED like `gateContext`/`pipeline`
+— never persisted, null when reconciliation hasn't run (a stored row rather
+than a projection, or a mission with no artifact yet to diverge from). Each
+`divergences[]` entry names the `subject` that disagrees plus the ledger's and
+the artifact's own values for it, and a `description` in the owner's terms —
+mirrors `channel` on `app.task-plan`'s verify step (v0.22.0): a contradiction
+is only actionable once it says where to look, not just that something's
+wrong. `ledgerValue`/`artifactValue` are deliberately unconstrained (the
+ledger's field types vary by subject), matching `pipeline`'s precedent for
+shapes that don't need a cross-hexagon type.
+
+Optional, so every existing mission record — including the tutor pilot
+fixture — validates unchanged with no `consistency` key at all.
+
 ## v0.22.0 — 2026-08-04
 
 **Additive, all three bindings.** `app.task-plan`'s verify step gains an
