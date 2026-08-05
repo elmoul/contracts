@@ -9,7 +9,7 @@ acceptance-criteria:
   - "app-studio's mission projection (projection.project()) sets `consistency` to null wherever reconciliation hasn't run, and to a populated `{consistent, checkedAt, divergences}` object wherever it has — checked against the installed package, not a local copy of the schema"
   - "any place app-studio already surfaces a ledger-vs-artifact contradiction (console note, log line, ad-hoc field) is replaced by `consistency`, or the divergence from this shape is written down with a reason"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand — re-pin `contracts` v0.23.0 and adopt `app.mission.consistency`
