@@ -1,0 +1,14 @@
+{"ev": "read", "ts": "2026-09-13T23:52:24+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\schemas\\demand-coordinator\\demand.json"}
+{"ev": "read", "ts": "2026-09-13T23:52:24+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\schemas\\demand-coordinator\\demand.fulfillment.json"}
+{"ev": "search", "ts": "2026-09-13T23:52:39+01:00", "tool": "glob", "pattern": "**/demand-coordinator-20260913*"}
+{"ev": "read", "ts": "2026-09-13T23:52:46+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\demands\\README.md"}
+{"ev": "read", "ts": "2026-09-13T23:52:52+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\gen\\java\\pom.xml"}
+{"ev": "search", "ts": "2026-09-13T23:53:34+01:00", "tool": "grep", "pattern": "gateRecords|gateRecord\\\"|approvedBy|decidedBy|verdict\" (\\{|:)"}
+{"ev": "search", "ts": "2026-09-13T23:54:06+01:00", "tool": "grep", "pattern": "\"\\$ref\": \"\\./|\"\\$ref\": \"https://platform/contracts"}
+{"ev": "read", "ts": "2026-09-13T23:55:47+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\tests\\validate_demand.py"}
+{"ev": "search", "ts": "2026-09-13T23:55:55+01:00", "tool": "grep", "pattern": "Registry|RefResolver|referencing"}
+{"ev": "read", "ts": "2026-09-13T23:58:18+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\schemas\\demand-coordinator\\demand.approval-receipt.json"}
+{"ev": "read", "ts": "2026-09-13T23:58:54+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\CHANGELOG.md"}
+{"ev": "read", "ts": "2026-09-13T23:59:27+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\.brain\\sessions\\2026-09-13_2352_fulfill-demand-demand-coordinator-202609.md"}
+{"ev": "read", "ts": "2026-09-14T00:00:10+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\demands\\archive\\2026-08-05-app-studio-repin-mission-consistency.md"}
+{"ev": "session_stop", "ts": "2026-09-14T00:01:58+01:00"}

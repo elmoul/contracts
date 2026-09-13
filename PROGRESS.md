@@ -645,3 +645,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-08-05_0459_close-the-loop-on-demand-contracts-20260
+
+## Session 48 (2026-09-14)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-13_2352_fulfill-demand-demand-coordinator-202609.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand demand-coordinator-20260913-contracts-approved-evidence-receipt (capability: Define a governed approval-evidence receipt for exact-ID durable approval lookup, from: demand-coordinator, target: contracts). Acceptance criteria: - A versioned contract defines an immutable approval receip... -- status: done.
+- Next step: demand-coordinator re-pins to v0.24.0 and adopts DemandApprovalReceipt per the raised demand
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-13_2352_fulfill-demand-demand-coordinator-202609
