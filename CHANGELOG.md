@@ -16,6 +16,58 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.24.0 — 2026-09-13
+
+**Additive, Java binding only** (demand-coordinator is the only consumer and is
+Java/Spring — see spec-demand-coordinator.md §"Tech"). New schema
+`schemas/demand-coordinator/demand.approval-receipt.json` defines
+`DemandApprovalReceipt`: the durable, immutable record of the coordinator's
+owner gate for exactly one demand — what an exact-`demandId` lookup returns.
+Fulfils demand `demand-coordinator-20260913-contracts-approved-evidence-receipt`.
+
+Before this, the only durable trace of an approval was the demand's own
+lifecycle field (`open`/`satisfied`/`archived` in the origin's file) plus
+whatever the coordinator's own database happened to retain — no versioned,
+consumable shape for "the exact thing that was approved," so a lookup by
+`demandId` had nothing contractual to return. `DemandApprovalReceipt` closes
+that: `found` is the single discriminant. `found: true` requires
+`approvedAt`, `provenance` (`decidedBy` is a `const: "owner"` — spec-
+demand-coordinator.md's gate is explicit that a worker's `done` is a claim,
+never a verdict, and "no self-certification, ever," so the contract states
+that structurally rather than trusting a free-text field), the origin's
+`Demand` envelope and the approved `DemandFulfillment` envelope both embedded
+verbatim (`originEnvelope`/`fulfillmentEvidence`, `$ref`s to the sibling
+`demand.json`/`demand.fulfillment.json` schemas — reused, not
+hand-duplicated), `evidenceSource` (the exact git blob the owner read), and
+`evidenceDigest` (a SHA-256 over that blob's full bytes at approval time).
+`found: false` is the answer for a `demandId` with no receipt on file —
+`unknownReason` (currently one enum value, `no-receipt-on-file`, left
+extensible for a future finer distinction) is then required and every
+approval-only field (`approvedAt`, `provenance`, `originEnvelope`,
+`fulfillmentEvidence`, `evidenceSource`, `evidenceDigest`) is forbidden by an
+`allOf`/`if`/`then`/`not` block — a caller cannot mistake an unapproved lookup
+for a partially-approved one. Because `demand.id` is itself never reused
+(`demand.json`'s own `id` description), there is exactly one lookup answer
+for a given `demandId`/`subDemand` for all time; a receipt is bound to the
+one fulfillment revision the owner actually approved by embedding that
+revision's full evidence plus its content digest, rather than a mutable
+pointer a later edit to the report file could silently reattach to.
+
+Cross-file `$ref`s use the sibling schemas' on-disk filenames
+(`demand.json`, `demand.fulfillment.json`), not their own shorter `$id`
+strings (`.../demand`, `.../demand.fulfillment`) — jsonschema2pojo resolves
+relative `$ref`s as same-directory file paths, so this is what makes
+`mvn -f gen/java/pom.xml test` actually generate `DemandApprovalReceipt`
+referencing the existing `Demand`/`DemandFulfillment` classes rather than
+duplicating them; verified by running the generation and tests, not assumed.
+`tests/validate_demand.py` gained matching found/unknown fixture coverage,
+registering both sibling schemas under their filename-resolved URIs for the
+`referencing`-backed validator to follow the same cross-file `$ref`s.
+
+TS/Python bindings untouched this release — no consumer of either currently
+needs this contract (mirrors the v0.6.1 precedent for a single-binding
+change).
+
 ## v0.23.0 — 2026-08-05
 
 **Additive, all three bindings.** `app.mission` gains an optional

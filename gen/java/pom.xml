@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.23.0</version>
+    <version>0.24.0</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -177,6 +177,7 @@
                             <sourcePaths>
                                 <sourcePath>${project.basedir}/../../schemas/demand-coordinator/demand.json</sourcePath>
                                 <sourcePath>${project.basedir}/../../schemas/demand-coordinator/demand.fulfillment.json</sourcePath>
+                                <sourcePath>${project.basedir}/../../schemas/demand-coordinator/demand.approval-receipt.json</sourcePath>
                             </sourcePaths>
                             <targetPackage>io.platform.contracts.demandcoordinator</targetPackage>
                             <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>

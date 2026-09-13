@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/demand-coordinator/demand.approval-receipt",
+  "title": "DemandApprovalReceipt",
+  "description": "The durable, immutable record of the coordinator's owner gate (spec-demand-coordinator.md's `pending-approval` → owner gate → `satisfied` step) for exactly one demand — what an exact-ID lookup (`GET` by `demandId`, optionally `subDemand`) returns. Fulfils demand `demand-coordinator-20260913-contracts-approved-evidence-receipt`. Once written for a given `demandId`/`subDemand` pair this record is never edited or replaced: `demand.id` is itself never reused (see `demand.json`), so there is exactly one lookup answer for that identifier for all time — a second attempt at the same underlying need is a new demand with a new id, never a second receipt on the old one. `found` is the single discriminant. `found: false` is the answer for a `demandId` the coordinator's ledger has no receipt for yet (never dispatched, still short of the owner gate, or simply mistyped) — every approval-specific field is then not just optional but forbidden (see the `allOf` below), so a caller cannot mistake a not-yet-approved lookup for a partially-approved one. `found: true` requires the full record and, critically, both `fulfillmentEvidence` (the exact `DemandFulfillment` envelope the owner actually approved, embedded verbatim rather than referenced by a mutable pointer) and `evidenceDigest` (a content hash of that same evidence at approval time). A demand can legitimately be sent back and re-claimed with an amended report before approval (spec-demand-coordinator.md's fold-in step); once approved, the digest is what proves *this* receipt binds to *that* one approved revision — if the report file in the target repo is ever edited afterward, recomputing the digest over its current content no longer matches this receipt, surfacing the drift instead of letting the receipt silently reattach to whatever the file now says.",
+  "type": "object",
+  "required": ["demandId", "found"],
+  "properties": {
+    "demandId": {
+      "type": "string",
+      "description": "The id of the demand this is a receipt lookup for (matches `demand.id`'s shape). Present on every response, found or not.",
+      "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$",
+      "examples": ["demand-coordinator-20260913-contracts-approved-evidence-receipt"]
+    },
+    "subDemand": {
+      "type": "string",
+      "description": "Present only when the lookup concerns one target of a multi-hexagon demand (matches `demand.fulfillment.subDemand`'s shape). Omitted for single-target demands.",
+      "examples": ["demand-coordinator-20260709-demand-schema:ai-gateway"]
+    },
+    "found": {
+      "type": "boolean",
+      "description": "Discriminant. `true` — an approval receipt exists for this exact `demandId`/`subDemand`; every field below is then required. `false` — no receipt on file for this identifier; every field below is then forbidden, see `unknownReason`."
+    },
+    "unknownReason": {
+      "type": "string",
+      "description": "Required, and meaningful, only when `found` is `false`. A single value today (the coordinator does not yet distinguish 'never raised' from 'raised but not yet approved' at this lookup), kept as an enum rather than a boolean so a future distinction is additive, not breaking.",
+      "enum": ["no-receipt-on-file"]
+    },
+    "approvedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the owner gate approved this demand — the moment spec-demand-coordinator.md's ledger moved `pending-approval` → `satisfied`. Required when `found` is `true`.",
+      "examples": ["2026-09-13T22:10:00Z"]
+    },
+    "provenance": {
+      "$ref": "#/$defs/approvalProvenance",
+      "description": "Who/how this was decided. Required when `found` is `true`."
+    },
+    "originEnvelope": {
+      "$ref": "demand.json",
+      "description": "The exact origin `Demand` envelope this receipt approves fulfillment of — embedded verbatim (not a pointer the origin's file could later drift out from under). Required when `found` is `true`. `$ref` is the sibling file's on-disk name (`demand.json`), not its own `$id` (`.../demand-coordinator/demand`, no `.json`) — jsonschema2pojo (the Java codegen path) resolves this `$ref` as a same-directory file path, so it must match the filename; the JSON-Schema-standard `$id` string on `demand.json` remains that document's own separate identity, unrelated to this sourcing choice."
+    },
+    "fulfillmentEvidence": {
+      "$ref": "demand.fulfillment.json",
+      "description": "The exact `DemandFulfillment` envelope the owner approved — embedded verbatim. Required when `found` is `true`. See `evidenceDigest` for how this receipt stays bound to this one revision of it. Same filename-not-`$id` `$ref` convention as `originEnvelope` above."
+    },
+    "evidenceSource": {
+      "$ref": "#/$defs/approvalEvidenceSource",
+      "description": "Where `fulfillmentEvidence`'s full report (frontmatter plus the free-form markdown body the envelope doesn't carry) actually lives, pinned to the exact git blob the owner read. Required when `found` is `true`."
+    },
+    "evidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 hex digest, computed over the full fulfillment report file's bytes at `evidenceSource.commit` (frontmatter and markdown body together — the whole thing the owner actually read and approved, not just the structured `fulfillmentEvidence` envelope this schema can express). Required when `found` is `true`. Recomputing this over the file's current content and finding a mismatch means the report was edited after approval; this receipt still describes the approved revision, never the edited one.",
+      "examples": ["3b50d5f4938d671bcf0f09e8f2113ba9eb69660b7885fd7f21f357ed8c8b1b1b"]
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "found": { "const": true } },
+        "required": ["found"]
+      },
+      "then": {
+        "required": ["approvedAt", "provenance", "originEnvelope", "fulfillmentEvidence", "evidenceSource", "evidenceDigest"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "found": { "const": false } },
+        "required": ["found"]
+      },
+      "then": {
+        "required": ["unknownReason"],
+        "not": {
+          "anyOf": [
+            { "required": ["approvedAt"] },
+            { "required": ["provenance"] },
+            { "required": ["originEnvelope"] },
+            { "required": ["fulfillmentEvidence"] },
+            { "required": ["evidenceSource"] },
+            { "required": ["evidenceDigest"] }
+          ]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "approvalProvenance": {
+      "title": "ApprovalProvenance",
+      "type": "object",
+      "description": "How this approval happened. `decidedBy` is a fixed const rather than a free-text name — spec-demand-coordinator.md's gate is explicit that a worker's `done` is a claim never a verdict and 'no self-certification, ever'; the only party this contract can ever attribute an approval to is the owner, so the field says that structurally instead of trusting whoever calls the write path to type it correctly.",
+      "required": ["decidedBy"],
+      "properties": {
+        "decidedBy": {
+          "type": "string",
+          "const": "owner",
+          "description": "Always `owner` — see schema description. Not an enum of possible actors, because there is deliberately only one."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional free-text note the owner attached at approval time."
+        }
+      },
+      "additionalProperties": false
+    },
+    "approvalEvidenceSource": {
+      "title": "ApprovalEvidenceSource",
+      "type": "object",
+      "description": "Pins `fulfillmentEvidence`/`evidenceDigest` to one exact, addressable git blob rather than a path that keeps moving with `main`.",
+      "required": ["repoPath", "commit"],
+      "properties": {
+        "repoPath": {
+          "type": "string",
+          "description": "Path, relative to the worker repo's root, to the fulfillment report file (matches `demand.fulfillment.summaryRef`'s convention).",
+          "examples": ["demands/fulfilled/demand-coordinator-20260913-contracts-approved-evidence-receipt-report.md"]
+        },
+        "commit": {
+          "type": "string",
+          "description": "The worker repo's commit SHA the report was read at for approval.",
+          "pattern": "^[0-9a-f]{7,40}$",
+          "examples": ["9eb777c"]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
