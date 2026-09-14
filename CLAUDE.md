@@ -69,7 +69,7 @@ local build. Two past releases (v0.2.1 npm, v0.6.2 Python) shipped believing an
 untested packaging assumption — verify, don't assume.
 
 <!-- brain-adopt:section -->
-## `.brain` — operational memory (adopted 2026-08-02, brain-toolkit v0.6.2)
+## `.brain` — operational memory (adopted 2026-08-02, brain-toolkit v0.6.3)
 
 This repo carries `.brain/`, the platform's operational-memory system
 (`../platform-vault/spec-agent-memory-system.md`, governed by D052/D061).
@@ -87,16 +87,17 @@ prefix `python`, and check that a new file appeared under
 `.brain/sessions/`.
 
 - **Open** (PowerShell / cmd, from the repo root):
-  `python .brain\bin\brain session open "<task>" --priority <1-3>` before
-  any code change. Under bash/sh use forward slashes:
-  `python .brain/bin/brain session open "<task>" --priority <1-3>`.
+  `python .brain\bin\brain session open "<task>" --priority <1-3> --model <your-actual-model-id>` before
+  any code change. Replace `<your-actual-model-id>` with the model you're actually using
+  (e.g. `claude-haiku-4-5-20251001`, `claude-sonnet-5`, `claude-opus-5`). Under bash/sh use forward slashes:
+  `python .brain/bin/brain session open "<task>" --priority <1-3> --model <your-actual-model-id>`.
 - **Close:** `python .brain\bin\brain session close` (bash:
   `python .brain/bin/brain session close`) -- fills/confirms `status`,
   `changes`, `lessons`, `vault_sync`; the `PROGRESS.md` handoff block is a
   generated projection of the session file, never hand-authored separately.
 - **Pin mechanism:** `.brain/bin/brain` and `.brain/bin/structurer` are thin
   shims resolving `../brain-toolkit-worktrees/<pin>/bin/<tool>` via
-  `.brain/toolkit-pin` (currently `v0.6.2`) -- a fix or version bump is a
+  `.brain/toolkit-pin` (currently `v0.6.3`) -- a fix or version bump is a
   one-line edit to `.brain/toolkit-pin`, never a hand-edit of the shim
   itself.
 - Never hand-edit generated files (`AGENT.md`, `.brain/knowledge/*`,
