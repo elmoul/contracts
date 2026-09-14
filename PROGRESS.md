@@ -684,3 +684,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-14_0144_close-the-loop-on-demand-contracts-20260
+
+## Session 51 (2026-09-14)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-14_0159_fulfill-demand-dashboard-20260914-demand.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand dashboard-20260914-demand-dispatch-order (capability: Demands can declare which other demands must be owner-approved before they are dispatched, and the dispatch queue carries a governed order number (wave) plus the still-waiting demands, so the /agents Dispatch queue can show an Orde... -- status: done.
+- Next step: Coordinator should advance dashboard-20260914-demand-dispatch-order past the contracts leg and dispatch the remaining targets (demand-coordinator -> runtime -> agent-runner). Any Python consumer needing `after`/DemandQueueEntry must raise a demand rather than regenerate blindly.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-14_0159_fulfill-demand-dashboard-20260914-demand
