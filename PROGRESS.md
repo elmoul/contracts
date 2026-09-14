@@ -658,3 +658,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-13_2352_fulfill-demand-demand-coordinator-202609
+
+## Session 49 (2026-09-14)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-14_0052_fulfill-demand-factory-20260911-interfac.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand factory-20260911-interface-extraction (capability: Govern Factory delivery and runner idempotency interfaces before cross-repo consumption, from: factory, target: contracts). Acceptance criteria: - Review the proven local Factory models and publish additive outcome, evidence, continua... -- status: done.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-14_0052_fulfill-demand-factory-20260911-interfac

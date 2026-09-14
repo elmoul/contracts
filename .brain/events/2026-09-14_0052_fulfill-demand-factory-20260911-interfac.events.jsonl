@@ -1,0 +1,22 @@
+{"ev": "read", "ts": "2026-09-14T00:53:03+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\.brain\\sessions\\2026-09-14_0052_fulfill-demand-factory-20260911-interfac.md"}
+{"ev": "read", "ts": "2026-09-14T00:53:24+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\factory\\demands\\2026-09-11-contracts-factory-interfaces.md"}
+{"ev": "read", "ts": "2026-09-14T00:53:28+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\CHANGELOG.md"}
+{"ev": "read", "ts": "2026-09-14T00:53:49+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\platform-vault\\spec-factory.md"}
+{"ev": "read", "ts": "2026-09-14T00:53:55+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\factory\\src\\factory\\domain.py"}
+{"ev": "read", "ts": "2026-09-14T00:53:58+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\factory\\src\\factory\\coordination.py"}
+{"ev": "read", "ts": "2026-09-14T00:54:06+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\factory\\src\\factory\\service.py"}
+{"ev": "read", "ts": "2026-09-14T00:54:16+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\agent-runner\\src\\domain\\run.ts"}
+{"ev": "read", "ts": "2026-09-14T00:54:24+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\agent-runner\\src\\api\\app.ts"}
+{"ev": "read", "ts": "2026-09-14T00:55:26+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\schemas\\demand-coordinator\\demand.approval-receipt.json"}
+{"ev": "read", "ts": "2026-09-14T00:55:29+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\tests\\run_all.py"}
+{"ev": "read", "ts": "2026-09-14T00:55:35+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\gen\\python\\platform_contracts\\demand_coordinator\\demand.py"}
+{"ev": "read", "ts": "2026-09-14T00:55:40+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\DEPLOYMENT.md"}
+{"ev": "read", "ts": "2026-09-14T00:56:27+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\factory\\src\\factory\\service.py"}
+{"ev": "read", "ts": "2026-09-14T00:59:01+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\gen\\python\\platform_contracts\\factory\\__init__.py"}
+{"ev": "read", "ts": "2026-09-14T00:59:26+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\gen\\python\\platform_contracts\\factory\\factory_outcome.py"}
+{"ev": "read", "ts": "2026-09-14T00:59:29+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\gen\\python\\platform_contracts\\factory\\factory_evidence_receipt.py"}
+{"ev": "read", "ts": "2026-09-14T00:59:29+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\gen\\python\\platform_contracts\\agent_runner\\runner_run_record.py"}
+{"ev": "read", "ts": "2026-09-14T00:59:40+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\tests\\validate_demand.py"}
+{"ev": "read", "ts": "2026-09-14T01:01:25+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\DEPLOYMENT.md"}
+{"ev": "read", "ts": "2026-09-14T01:01:55+01:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\demands\\fulfilled\\demand-coordinator-20260913-contracts-approved-evidence-receipt-report.md"}
+{"ev": "session_stop", "ts": "2026-09-14T01:04:00+01:00"}
