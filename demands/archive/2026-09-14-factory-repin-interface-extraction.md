@@ -9,7 +9,7 @@ acceptance-criteria:
   - "factory confirms whether it adopts platform_contracts.factory.{factory_outcome,factory_evidence_receipt,factory_continuation,factory_recovery_checkpoint} and platform_contracts.agent_runner.{runner_dispatch_request,runner_run_record,runner_transcript_snapshot} in place of its private local dicts/pydantic models, or explains by when/why not."
   - "factory reviews the fulfillment report's note that agent-runner's real run 'state' enum is only launched/finished/failed/stopped — narrower than factory.domain's own ACTIVE_RUNS/TERMINAL_RUNS constants — and confirms whether that local constant set should be tightened to match (factory's own code change, not a contracts follow-up)."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Interface extraction — close the consuming leg
