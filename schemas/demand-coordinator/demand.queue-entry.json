@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/demand-coordinator/demand.queue-entry",
+  "title": "DemandQueueEntry",
+  "description": "One row of the dispatch queue: a routed demand as demand-coordinator and agent-runner present it for scheduling, carrying the governed dispatch order (`wave`) and the specific ids still holding it back (`waitingOn`) that neither repo should hand-roll. Deliberately a lean reference-and-ordering record rather than a second copy of the `demand` envelope — the full envelope (capability, acceptance-criteria, provenance) already has exactly one home, and duplicating it here would give the fleet two records of the same demand that can disagree. A consumer needing the prose joins back to the board on `demandId`. Field casing is camelCase, matching the sibling `demand.fulfillment` and `demand.approval-receipt` envelopes and their interim convention (spec-demand-coordinator.md §7) rather than the kebab-case of the `demand` schema itself. IMPORTANT — `wave` and `waitingOn` are NOT each other's inverse, and a consumer must not assume `waitingOn` empty implies `wave` 1: `wave` is elevated by two independent causes. The first is this demand's own unresolved `demand.after` edges (which is what `waitingOn` reports). The second is sequence position within a multi-hexagon demand — the coordinator orders a demand's targets into sub-demands, and a sub-demand never shows a lower wave than the target before it, so a sub-demand can legitimately sit at wave 3 with an empty `waitingOn` purely because the target it follows is at wave 3. `waitingOn` therefore answers \"is anything of my own still unresolved?\" while `wave` answers \"when may I go?\" — two different questions, deliberately kept as two fields.",
+  "type": "object",
+  "required": ["demandId", "date", "from", "to", "wave", "waitingOn"],
+  "properties": {
+    "demandId": {
+      "type": "string",
+      "description": "The routed demand's id (matches `demand.id`'s shape exactly, and is the join key back to the board for the full envelope).",
+      "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$",
+      "examples": ["dashboard-20260914-demand-dispatch-order"]
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "The demand's own raised date (`demand.date`), carried here as the queue's second sort key: agent-runner orders dispatchable entries by wave, then date, then demandId, so that within a wave the queue stays in the order the asks were actually raised rather than an order that reshuffles as rows are read.",
+      "examples": ["2026-09-14"]
+    },
+    "from": {
+      "type": "string",
+      "description": "Origin repo's functional name (`demand.from`) — carried so a queue reader can render who is blocked without a second lookup.",
+      "pattern": "^[a-z][a-z0-9-]+$",
+      "examples": ["dashboard"]
+    },
+    "to": {
+      "type": "array",
+      "description": "Target repo(s) this demand routed to (`demand.to`), in the coordinator's sequenced order. More than one entry means the demand was split into ordered sub-demands and this entry is one target's leg of it.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]+$"
+      },
+      "minItems": 1,
+      "examples": [["contracts", "demand-coordinator", "runtime", "agent-runner"]]
+    },
+    "wave": {
+      "type": "integer",
+      "description": "The governed dispatch order. 1 when nothing this demand waits on is unresolved; otherwise 1 + the highest wave among its unresolved dependencies — and never lower than the target sequenced before it when this demand is a leg of a multi-hexagon demand. Minimum 1: wave 0 is not a \"not yet scheduled\" sentinel, it is a bug — an out-of-range value fails validation rather than quietly sorting ahead of everything.",
+      "minimum": 1,
+      "examples": [1, 2]
+    },
+    "waitingOn": {
+      "type": "array",
+      "description": "The demand ids from this demand's own `demand.after` list that are not yet owner-approved — \"what is still holding me\", not \"what I declared\". Ids drop out of this list as the owner approves them, so it shrinks on its own; an id whose origin later archives the demand is still resolved and must NOT reappear here (approval is the fact that counts, and it survives archiving and a service restart). Empty for a demand with no unresolved `after` edges, which is the normal state of every entry on a ready queue — but see this schema's own description: empty `waitingOn` does not by itself pin `wave` to 1. Must never carry an id that is not on the board and not approved: that case is surfaced by the coordinator naming the id (D023), never reported as though it were a dependency that will eventually clear.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$"
+      },
+      "uniqueItems": true,
+      "examples": [
+        [],
+        ["contracts-20260914-factory-repin-interface-extraction"]
+      ]
+    }
+  },
+  "additionalProperties": false
+}

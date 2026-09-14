@@ -16,6 +16,91 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.26.0 — 2026-09-14
+
+**Additive, Java + TypeScript bindings.** Fulfils the `contracts` leg of demand
+`dashboard-20260914-demand-dispatch-order` (a multi-hexagon demand —
+`to: [contracts, demand-coordinator, runtime, agent-runner]` — which the
+coordinator sequences, this repo first). Python is deliberately **not**
+regenerated this release; see the caveat at the end of this entry, which is a
+finding rather than an oversight.
+
+**`schemas/demand-coordinator/demand.json`** gains an optional **`after`**
+field: an array of demand ids (same `pattern` as `id` itself, `uniqueItems`,
+`minItems: 1`) naming the demands that must each be owner-approved before this
+one may be dispatched. It is an edge list, not a wave number, and that is the
+substance of the change: a number written by the origin would be a guess about
+the rest of the fleet's board and would rot silently as other demands move,
+whereas an edge either stays true or is visibly dangling. The coordinator
+derives waves from these edges; the origin only declares the ordering. `after`
+is distinct from the existing `needs-owner` — that says "this demand needs a
+ruling of its own", this says "this demand is gated behind someone else's".
+Being optional, every demand file written before it existed remains valid, and
+`tests/validate_demand.py` now proves that against a real committed demand file
+read off disk (`demands/2026-09-14-factory-repin-interface-extraction.md`)
+rather than a hand-written sample of a pre-`after` file.
+
+**`schemas/demand-coordinator/demand.queue-entry.json`** (new,
+`DemandQueueEntry`) is one row of the dispatch queue: `demandId`/`date`/`from`/
+`to` plus the two fields this demand exists to stop `demand-coordinator` and
+`agent-runner` hand-rolling — **`wave`** (`integer`, `minimum: 1`) and
+**`waitingOn`** (the ids from `after` not yet owner-approved). It is
+deliberately a lean reference-and-ordering record rather than a second copy of
+the `demand` envelope: the prose already has exactly one home, and duplicating
+it would give the fleet two records of the same demand that can disagree. A
+consumer needing detail joins back on `demandId`, and the Java binding test
+asserts an entry never serializes `capability`/`acceptance-criteria`.
+
+**The one subtlety worth reading before consuming this.** `wave` and
+`waitingOn` are **not** each other's inverse, and `waitingOn` empty does *not*
+imply `wave` 1. Wave is elevated by two independent causes: this demand's own
+unresolved `after` edges (what `waitingOn` reports), and sequence position
+within a multi-hexagon demand (a sub-demand never shows a lower wave than the
+target before it). A sub-demand can therefore sit at wave 3 with an empty
+`waitingOn` purely because the target it follows is at wave 3. A consumer that
+"simplifies" the pair to `wave = 1 + waitingOn.size` is wrong in a way no schema
+error would catch, so the schema documents the case, `validate_demand.py` pins
+it as a known-good document, and `DemandDispatchOrderContractsTest` asserts such
+a row round-trips. `wave` has `minimum: 1` on purpose: `0` is not a "not yet
+scheduled" sentinel, it is a bug, and an out-of-range value should fail
+validation rather than quietly sort ahead of every real wave.
+
+**Bindings.** Java (`io.platform.contracts.demandcoordinator.DemandQueueEntry`,
+wired into the existing `demand-coordinator` execution in `gen/java/pom.xml`)
+and TypeScript (`gen/ts/demand-queue-entry.ts`, re-exported from `index.ts`,
+`dist/` rebuilt — D031, committed). `demand.ts` regenerated for `after` with a
+clean 8-line diff. One cross-language difference consumers must code against:
+`uniqueItems: true` makes jsonschema2pojo 1.2.1 emit `Set<String>`/
+`LinkedHashSet` for both `Demand.after` and `DemandQueueEntry.waitingOn`, while
+TypeScript gets a plain array (`to`, which has no `uniqueItems`, stays a
+`List`). `DemandDispatchOrderContractsTest` asserts the field types outright, so
+a future generator that flattens them fails loudly instead of silently changing
+the Java API. That test (8 cases) also covers the backwards-compatibility claim
+in Java terms — an absent `after` reads as an empty set, never `null` — and
+pins that an unset `wave` is omitted by `@JsonInclude(NON_NULL)` rather than
+serialized as `0`.
+
+**Caveat — the Python binding is now stale for `after`, on purpose.** Adding
+`after` to `demand.json` makes `gen/python/platform_contracts/
+demand_coordinator/demand.py` out of date, and because that model sets
+`extra='forbid'`, a Python consumer validating a demand file that carries
+`after` would be rejected. It was left alone because regenerating it with the
+installed `datamodel-codegen` **0.68.1** also rewrites the pre-existing `to`
+field from `list[constr(...)]` to `list[ToItem]` (a `RootModel` wrapper) —
+verified to be pure generator-version drift by regenerating from the
+*unmodified* v0.25.0 schema and reproducing the same diff. That is an unrelated
+breaking change: `demand.to[0] == "factory"` would become `False` for every
+Python consumer, and no part of this demand asks for it. Since no repo in the
+fleet imports `platform_contracts.demand_coordinator` (checked across
+`../platform/` — the only hits are copies of this repo's own pinned tree), the
+honest trade was to ship no Python change at all rather than smuggle a
+breaking rewrite into a minor release. `pyproject.toml` therefore stays at
+`0.25.0`, consistent with this repo's per-language versioning (cf. v0.25.0,
+Python-only, which left Java at `0.24.0` and TS at `0.23.0`). Whoever needs a
+Python binding for `after`/`demand.queue-entry` should raise a demand; the fix
+is either a deliberate, separately-reviewed acceptance of the `ToItem` change
+or a pinned older generator, and it should not ride along with this contract.
+
 ## v0.25.0 — 2026-09-14
 
 **Additive, Python binding only** (both consumers of this release —

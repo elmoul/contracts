@@ -150,6 +150,9 @@ npx json-schema-to-typescript ../../schemas/connector/connector.invoke.request.j
 npx json-schema-to-typescript ../../schemas/connector/connector.invoke.response.json -o connector-invoke-response.ts
 npx json-schema-to-typescript ../../schemas/app-studio/app.mission.json -o app-mission.ts
 npx json-schema-to-typescript ../../schemas/app-studio/app.task-plan.json -o app-task-plan.ts
+npx json-schema-to-typescript ../../schemas/demand-coordinator/demand.json -o demand.ts
+npx json-schema-to-typescript ../../schemas/demand-coordinator/demand.fulfillment.json -o demand-fulfillment.ts
+npx json-schema-to-typescript ../../schemas/demand-coordinator/demand.queue-entry.json -o demand-queue-entry.ts
 npx openapi-typescript ../../schemas/ai-gateway/request.yaml -o ai-gateway-request.ts
 ```
 

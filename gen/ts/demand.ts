@@ -45,4 +45,12 @@ export interface Demand {
    * Origin-owned lifecycle field. Deliberately excludes the coordinator-internal states (ingested/evaluated/ready/in-progress/done-claimed/pending-approval) — those live in the coordinator's own ledger, not the origin's file.
    */
   status: "open" | "satisfied" | "archived";
+  /**
+   * Optional. The demand ids that must each be owner-approved before this demand may be dispatched to any target — the origin's own declaration of ordering, not a request for a status change. The coordinator (never the origin) derives each demand's dispatch wave from these edges: a demand with nothing unresolved is wave 1, otherwise 1 + the highest wave among its unresolved dependencies. Deliberately an edge list rather than a wave number: a number written by the origin would be a guess about the rest of the fleet's board and would silently rot as other demands move, while an edge stays true or is visibly dangling. An id that is neither on the board nor approved, a self-reference, and a cycle are each surfaced by the coordinator naming the ids involved — never waited on silently and never released silently (D023). Distinct from `needs-owner`: that says this demand needs a ruling of its own, this says it is gated behind someone else's. Absent means unconstrained, exactly as it read before this field existed — every demand file written without it remains valid.
+   *
+   * @minItems 1
+   *
+   * Items: A demand id to wait on, same shape as this schema's own `id`.
+   */
+  after?: [string, ...string[]];
 }

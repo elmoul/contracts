@@ -7,13 +7,16 @@ Run: python tests/validate_demand.py
 """
 import json
 import sys
+from datetime import date, datetime
 from pathlib import Path
 
+import yaml
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMAS = ROOT / "schemas" / "demand-coordinator"
+DEMANDS = ROOT / "demands"
 
 GOOD_DEMAND = {
     "id": "demand-coordinator-20260709-demand-schema",
@@ -48,6 +51,94 @@ BAD_DEMAND_MALFORMED_ID = {
     "acceptance-criteria": ["something"],
     "needs-owner": False,
     "status": "open",
+}
+
+# v0.26.0: the optional `after` ordering field (dashboard-20260914-demand-dispatch-order).
+GOOD_DEMAND_WITH_AFTER = {
+    **GOOD_DEMAND,
+    "after": ["contracts-20260914-factory-repin-interface-extraction"],
+}
+
+BAD_DEMAND_AFTER_EMPTY = {
+    # `after` present but empty: the field's whole meaning is "wait for these", so an
+    # empty list is a producer that meant to constrain something and didn't. Omit the
+    # field instead — absent means unconstrained.
+    **GOOD_DEMAND,
+    "after": [],
+}
+
+BAD_DEMAND_AFTER_DUPLICATE = {
+    # The same id twice would make a demand wait on one dependency "twice" — a producer
+    # bug that should fail here, not become two identical board warnings downstream.
+    **GOOD_DEMAND,
+    "after": [
+        "contracts-20260914-factory-repin-interface-extraction",
+        "contracts-20260914-factory-repin-interface-extraction",
+    ],
+}
+
+BAD_DEMAND_AFTER_MALFORMED_ID = {
+    # Same shape rule as `id` itself — a bare slug can never match a real demand.
+    **GOOD_DEMAND,
+    "after": ["factory-repin"],
+}
+
+# One row of the dispatch queue (demand.queue-entry.json) — the shape
+# demand-coordinator and agent-runner both present.
+GOOD_QUEUE_ENTRY_READY = {
+    "demandId": "dashboard-20260914-demand-dispatch-order",
+    "date": "2026-09-14",
+    "from": "dashboard",
+    "to": ["contracts"],
+    "wave": 1,
+    "waitingOn": [],
+}
+
+GOOD_QUEUE_ENTRY_WAITING = {
+    "demandId": "dashboard-20260914-demand-dispatch-order",
+    "date": "2026-09-14",
+    "from": "dashboard",
+    "to": ["contracts", "demand-coordinator", "runtime", "agent-runner"],
+    "wave": 2,
+    "waitingOn": ["contracts-20260914-factory-repin-interface-extraction"],
+}
+
+GOOD_QUEUE_ENTRY_ELEVATED_WAVE_EMPTY_WAITING = {
+    # The non-inverse case this schema's description exists to pin: a sub-demand can sit
+    # at wave 3 with NOTHING of its own unresolved, because it is a leg of a multi-hexagon
+    # demand whose preceding target is itself at wave 3. If a consumer ever "simplifies"
+    # this to `wave = 1 + len(waitingOn)`, this document stops being valid.
+    "demandId": "dashboard-20260914-demand-dispatch-order",
+    "date": "2026-09-14",
+    "from": "dashboard",
+    "to": ["contracts", "demand-coordinator"],
+    "wave": 3,
+    "waitingOn": [],
+}
+
+BAD_QUEUE_ENTRY_WAVE_ZERO = {
+    # wave 0 as a "not yet scheduled" sentinel would sort ahead of every real wave.
+    **GOOD_QUEUE_ENTRY_READY,
+    "wave": 0,
+}
+
+BAD_QUEUE_ENTRY_MISSING_WAVE = {
+    k: v for k, v in GOOD_QUEUE_ENTRY_READY.items() if k != "wave"
+}
+
+BAD_QUEUE_ENTRY_DUPLICATE_WAITING = {
+    **GOOD_QUEUE_ENTRY_WAITING,
+    "waitingOn": [
+        "contracts-20260914-factory-repin-interface-extraction",
+        "contracts-20260914-factory-repin-interface-extraction",
+    ],
+}
+
+BAD_QUEUE_ENTRY_CARRIES_ENVELOPE_PROSE = {
+    # The queue entry is deliberately a lean reference, not a second copy of the demand
+    # envelope — a consumer that starts embedding `capability` here must fail loudly.
+    **GOOD_QUEUE_ENTRY_READY,
+    "capability": "a second home for the same prose",
 }
 
 GOOD_FULFILLMENT = {
@@ -126,6 +217,25 @@ def load(name: str) -> dict:
     return json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
 
 
+def frontmatter(path: Path) -> dict:
+    """
+    A committed demand file's YAML frontmatter, as the coordinator ingests it.
+
+    The one normalization: every committed demand file writes `date:` unquoted, which
+    YAML resolves to a datetime.date object, while the schema types it as a string. Any
+    YAML-aware ingest has to stringify it (this predates `after` entirely — it is a
+    property of the on-disk convention, not of this field), so the coercion lives here
+    rather than weakening the schema's type to accommodate the loader.
+    """
+    _, _, rest = path.read_text(encoding="utf-8").partition("---\n")
+    body, _, _ = rest.partition("\n---")
+    loaded = yaml.safe_load(body)
+    return {
+        key: (value.isoformat() if isinstance(value, (date, datetime)) else value)
+        for key, value in loaded.items()
+    }
+
+
 def expect_valid(schema, doc: dict, label: str) -> None:
     validator = schema if isinstance(schema, Draft202012Validator) else Draft202012Validator(schema)
     errors = list(validator.iter_errors(doc))
@@ -146,6 +256,7 @@ def main() -> int:
     demand_schema = load("demand.json")
     fulfillment_schema = load("demand.fulfillment.json")
     receipt_schema = load("demand.approval-receipt.json")
+    queue_entry_schema = load("demand.queue-entry.json")
 
     # demand.approval-receipt.json $refs its siblings by on-disk filename ("demand.json",
     # "demand.fulfillment.json") rather than by their own $id ("…/demand",
@@ -173,6 +284,65 @@ def main() -> int:
         demand_schema,
         BAD_DEMAND_MALFORMED_ID,
         "demand: id missing embedded YYYYMMDD segment (known-bad)",
+    )
+    expect_valid(demand_schema, GOOD_DEMAND_WITH_AFTER, "demand: optional `after` ordering field (known-good)")
+    expect_invalid(
+        demand_schema,
+        BAD_DEMAND_AFTER_EMPTY,
+        "demand: `after` present but empty (known-bad)",
+    )
+    expect_invalid(
+        demand_schema,
+        BAD_DEMAND_AFTER_DUPLICATE,
+        "demand: `after` repeating the same id (known-bad)",
+    )
+    expect_invalid(
+        demand_schema,
+        BAD_DEMAND_AFTER_MALFORMED_ID,
+        "demand: `after` entry not shaped like a demand id (known-bad)",
+    )
+    # The backwards-compatibility claim made concrete: a real demand file committed
+    # BEFORE `after` existed, read off disk and validated unmodified. Not a hand-written
+    # sample of a pre-`after` file — the actual artifact other repos are pinned against.
+    expect_valid(
+        demand_schema,
+        frontmatter(DEMANDS / "2026-09-14-factory-repin-interface-extraction.md"),
+        "demand: real pre-`after` demand file on disk still validates (known-good)",
+    )
+    expect_valid(
+        queue_entry_schema,
+        GOOD_QUEUE_ENTRY_READY,
+        "demand.queue-entry: ready, wave 1, nothing waiting (known-good)",
+    )
+    expect_valid(
+        queue_entry_schema,
+        GOOD_QUEUE_ENTRY_WAITING,
+        "demand.queue-entry: waiting, wave 2 with one unresolved dependency (known-good)",
+    )
+    expect_valid(
+        queue_entry_schema,
+        GOOD_QUEUE_ENTRY_ELEVATED_WAVE_EMPTY_WAITING,
+        "demand.queue-entry: wave>1 with empty waitingOn — the non-inverse case (known-good)",
+    )
+    expect_invalid(
+        queue_entry_schema,
+        BAD_QUEUE_ENTRY_WAVE_ZERO,
+        "demand.queue-entry: wave 0 (known-bad)",
+    )
+    expect_invalid(
+        queue_entry_schema,
+        BAD_QUEUE_ENTRY_MISSING_WAVE,
+        "demand.queue-entry: missing wave (known-bad)",
+    )
+    expect_invalid(
+        queue_entry_schema,
+        BAD_QUEUE_ENTRY_DUPLICATE_WAITING,
+        "demand.queue-entry: waitingOn repeating the same id (known-bad)",
+    )
+    expect_invalid(
+        queue_entry_schema,
+        BAD_QUEUE_ENTRY_CARRIES_ENVELOPE_PROSE,
+        "demand.queue-entry: carrying envelope prose instead of referencing it (known-bad)",
     )
     expect_valid(fulfillment_schema, GOOD_FULFILLMENT, "demand.fulfillment: single-target report (known-good)")
     expect_valid(
