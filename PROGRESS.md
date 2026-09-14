@@ -710,3 +710,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-14_0231_close-the-loop-on-demand-contracts-20260
+
+## Session 53 (2026-09-14)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-14_0330_close-the-loop-on-demand-contracts-20260.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Close the loop on demand contracts-20260914-dashboard-repin-dispatch-order. It was approved at 2026-09-14T02:30:30.614675Z -- the only thing left is this repo's own archive bookkeeping, which nobody has done yet. 1. GET http://localhost:8082/satisfied/contracts -- find contracts-20260914-dashboard-r... -- status: done.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-14_0330_close-the-loop-on-demand-contracts-20260
