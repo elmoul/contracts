@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/factory/factory.recovery-checkpoint",
+  "title": "FactoryRecoveryCheckpoint",
+  "description": "A Factory outcome's recovery checkpoint — the branch, commits and remaining checks preserved across a paused or interrupted dispatch attempt, so a retry resumes only what is left rather than restarting or silently redoing completed work (spec-factory.md §2 'recovery checkpoints'). Carried verbatim into the next dispatch attempt's prompt and into any continuation's `factory.outcome.json` record. Modeled from the repo's own proven `factory.service` checkpoint handling. Fulfils demand `factory-20260911-interface-extraction` criterion 1.",
+  "type": "object",
+  "required": ["branch", "commits", "summary", "remainingChecks"],
+  "additionalProperties": false,
+  "properties": {
+    "branch": {
+      "type": "string",
+      "description": "The working branch the in-progress attempt left work on. Empty string before any attempt has recorded a checkpoint."
+    },
+    "commits": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Commit SHAs already made on `branch` as of this checkpoint — preserved so a retry never re-does or force-overwrites them."
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable account of what this checkpoint represents."
+    },
+    "remainingChecks": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "The specific checks (tests, verifications) still outstanding as of this checkpoint. A retry is scoped to resuming exactly these, not the whole step."
+    }
+  }
+}

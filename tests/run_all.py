@@ -26,6 +26,8 @@ VALIDATORS = [
     "validate_ai_job.py",
     "validate_stage_companion_turn.py",
     "validate_app_studio.py",
+    "validate_factory.py",
+    "validate_runner.py",
     "check_state_event_sync.py",
 ]
 

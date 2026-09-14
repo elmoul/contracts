@@ -1,4 +1,4 @@
-# Generated Python bindings for platform-contracts v0.10.0
+# Generated Python bindings for platform-contracts v0.25.0
 # Do not edit by hand — regenerate from schemas/ using datamodel-code-generator.
 
 from platform_contracts.app import manifest, health, usage_event, dimension_event, telemetry
@@ -14,6 +14,17 @@ from platform_contracts.connector import (
 from platform_contracts.demand_coordinator import demand, demand_fulfillment
 from platform_contracts.stage import companion_turn
 from platform_contracts.app_studio import app_mission, app_task_plan
+from platform_contracts.factory import (
+    factory_outcome,
+    factory_evidence_receipt,
+    factory_continuation,
+    factory_recovery_checkpoint,
+)
+from platform_contracts.agent_runner import (
+    runner_dispatch_request,
+    runner_run_record,
+    runner_transcript_snapshot,
+)
 
 __all__ = [
     "manifest",
@@ -38,4 +49,11 @@ __all__ = [
     "companion_turn",
     "app_mission",
     "app_task_plan",
+    "factory_outcome",
+    "factory_evidence_receipt",
+    "factory_continuation",
+    "factory_recovery_checkpoint",
+    "runner_dispatch_request",
+    "runner_run_record",
+    "runner_transcript_snapshot",
 ]

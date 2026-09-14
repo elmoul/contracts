@@ -191,6 +191,32 @@ files under `schemas/`. For OpenAPI documents (`ai.request`), add
 `--input-file-type openapi`. Wire any new module into
 `platform_contracts/__init__.py`.
 
+**Cross-file `$ref`s (v0.25.0):** when a schema `$ref`s a sibling file in the
+same directory (`factory.outcome.json` → `factory.continuation.json`/
+`factory.recovery-checkpoint.json`, same convention `demand.approval-
+receipt.json`, v0.24.0, established), point `--input` at the whole directory
+and `--output` at a directory, not a single file:
+
+```bash
+cd gen/python
+datamodel-codegen \
+  --input ../../schemas/factory \
+  --input-file-type jsonschema \
+  --output /tmp/factory_gen \
+  --output-model-type pydantic_v2.BaseModel \
+  --target-python-version 3.11 --use-specialized-enum
+```
+
+then copy the generated `factory_*.py` files into
+`platform_contracts/factory/`. This batch mode emits one module per input
+schema and a real `from . import factory_continuation, ...` for the `$ref`s —
+verified this session. A single-file `--output <file>.py` invocation on
+`factory.outcome.json` alone either fails ("Modular references require an
+output directory, not a file") or, given a directory `--output` but only that
+one file as `--input`, silently INLINES the referenced schemas as duplicate
+classes instead of importing them — batch mode over the whole directory is
+what actually reuses, not duplicates, the sibling classes.
+
 For any schema with an `enum`, add `--target-python-version 3.11
 --use-specialized-enum`: every generated `Status`/`Level`/`Env`-style enum in
 this repo is `StrEnum`, matching `requires-python = ">=3.11"` in

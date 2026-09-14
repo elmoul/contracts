@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/runner.transcript-snapshot",
+  "title": "RunnerTranscriptSnapshot",
+  "description": "The normalized transcript view `agent-runner`'s `GET /runs/{id}` serves alongside a `runner.run-record.json`, ALWAYS populated (not gated behind a query parameter) — the server-side reduction of a run's raw stream-json/JSONL transcript into the few fields a remote caller actually needs, so no consumer has to parse the CLI's own wire format itself. Fulfils demand `factory-20260911-interface-extraction` criterion 2. Deliberately scoped to the tail/result summary a caller like Factory reconciles against — NOT the full structured per-event timeline (`session`/`events`/`transcriptSummary`) that `GET /runs/{id}` also serves for dashboard/design-studio's own richer UIs; that deeper taxonomy is those consumers' own proven need and is not extracted here, so this contract stays additive and proportional to what this demand's origin actually consumes.",
+  "type": "object",
+  "required": ["transcriptTail", "result", "resultTruncated"],
+  "additionalProperties": false,
+  "properties": {
+    "transcriptTail": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "The last N raw lines of the run's transcript file (N defaults to the server's own window; `?tail=` overrides it). Always present, even for a still-`launched` run (may then be a shorter or empty tail)."
+    },
+    "result": {
+      "type": ["string", "null"],
+      "description": "The CLI's own final terminal answer, parsed from its terminal `result` line. `null` when the run has not yet produced one (still `launched`, or ended without a parseable result line) — never a placeholder string standing in for absence."
+    },
+    "resultTruncated": {
+      "type": "boolean",
+      "description": "True when `result` was clipped to a server-side budget rather than being the CLI's full, untruncated answer."
+    }
+  }
+}

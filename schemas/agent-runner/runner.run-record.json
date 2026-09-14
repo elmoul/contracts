@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/runner.run-record",
+  "title": "RunnerRunRecord",
+  "description": "The run record `agent-runner` returns from `POST /dispatch` and lists/serves from `GET /runs` / `GET /runs/{id}` (agent-runner's own `RunRecord`, `src/domain/run.ts`). Fulfils demand `factory-20260911-interface-extraction` criterion 2 — additive only, copied from the real, shipped TypeScript type, not invented ahead of it.\n\n**Receipt semantics.** This record — specifically `state`, `exitCode`, `transcriptPath` and (via `runner.transcript-snapshot.json`) the normalized transcript it is served alongside — is the ONLY authoritative receipt that a dispatch happened and how it ended. An HTTP error from `POST /dispatch` does not prove no run started (the request can fail after the runner already accepted it); absence of a matching record in `GET /runs` is likewise never proof of non-dispatch, only 'no evidence yet' (`factory.service.reconcile`'s own comment: 'Absence/ambiguity never proves no dispatch occurred').\n\n**Stable operation correlation.** A caller that embedded its own operation token as the first line of `prompt` at dispatch time (see `runner.dispatch-request.json`) re-identifies its run by finding the single record whose `id` equals the id returned at dispatch, OR whose `prompt` starts with `\"<token>\\n\"`. Zero or ambiguous (>1) matches are both 'still uncertain, do not resend'; only exactly one match is a resolved receipt.",
+  "type": "object",
+  "required": ["id", "repo", "prompt", "state", "startedAt", "exitCode", "timedOut", "stopped", "transcriptPath"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "This run's own identifier, minted by agent-runner at dispatch time."
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+$"
+    },
+    "prompt": {
+      "type": "string",
+      "description": "The exact prompt this run was dispatched with — what a caller matches its own operation token against for correlation (see top-level description)."
+    },
+    "demandId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$"
+    },
+    "state": {
+      "type": "string",
+      "enum": ["launched", "finished", "failed", "stopped"],
+      "description": "Lifecycle state. Same enum as `state.event.json`'s `AgentRunPayload.phase` (agent-runner's own `RunState` is, at the type level, a direct alias of it — the two can never drift apart). `launched` is the only non-terminal value; `finished`/`failed`/`stopped` are all terminal. A caller reconciling a dispatch treats any OTHER apparent value, or no matching record, as still unresolved — never as evidence of failure."
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "endedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Present once `state` is terminal."
+    },
+    "exitCode": {
+      "type": ["integer", "null"],
+      "description": "The dispatched process's exit code; `null` while `state` is `launched`, or if the process never produced one (e.g. `stopped`/timed-out)."
+    },
+    "timedOut": {
+      "type": "boolean",
+      "description": "True if the run was ended by the runner's own wall-clock timeout rather than the process exiting on its own."
+    },
+    "stopped": {
+      "type": "boolean",
+      "description": "True if the run was ended by an explicit `POST /runs/{id}/stop` rather than exiting or timing out."
+    },
+    "transcriptPath": {
+      "type": "string",
+      "description": "Server-local path to this run's raw transcript file. Opaque to a remote caller — use `GET /runs/{id}` for the normalized view (`runner.transcript-snapshot.json`), never this path directly."
+    },
+    "tokensUsed": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total tokens consumed, parsed from the CLI's own terminal result line. Sum of `tokensIn`/`tokensOut` when both are present."
+    },
+    "tokensIn": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tokensOut": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "model": {
+      "type": "string",
+      "description": "The model the CLI itself reported actually running — parsed from its own init line, so it reflects reality even when it differs from a requested `model` override."
+    },
+    "runtime": {
+      "type": "string",
+      "description": "Name of the runtime profile this run actually dispatched on."
+    },
+    "usageProvider": {
+      "type": "string",
+      "description": "The `usage.event` provider string denormalized at dispatch time from the resolved runtime profile — describes the dimension in force when the run happened, immune to later config edits."
+    },
+    "error": {
+      "type": "string",
+      "description": "Present when `state` is `failed` — a short description of the failure."
+    }
+  }
+}

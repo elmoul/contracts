@@ -16,6 +16,85 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.25.0 — 2026-09-14
+
+**Additive, Python binding only** (both consumers of this release —
+`factory` and, for the runner shapes, whichever repo re-pins next — are
+Python). Six new schemas fulfil demand `factory-20260911-interface-
+extraction`:
+
+`schemas/factory/`: `factory.outcome.json` (`FactoryOutcome` — Factory's own
+new workflow record: requested outcome, bounded plan, acceptance criteria and
+lifecycle, spec-factory.md §2), `factory.evidence-receipt.json`
+(`FactoryEvidenceReceipt` — one immutable evidence observation, provenance
+fixed to `owner-attestation` since spec-factory.md open question 3 states this
+slice never machine-verifies CI/deployment evidence), `factory.continuation
+.json` (`FactoryContinuation` — the link an outcome's `source` carries back to
+a *terminal* legacy `app-studio` mission, `system` a fixed `const:
+"app-studio"`), and `factory.recovery-checkpoint.json`
+(`FactoryRecoveryCheckpoint` — branch/commits/remaining-checks preserved
+across a paused or interrupted dispatch). `factory.outcome.json` `$ref`s the
+other two by their on-disk filename (`factory.continuation.json`,
+`factory.recovery-checkpoint.json`), same convention `demand.approval-
+receipt.json` (v0.24.0) established for cross-file `$ref`s — resolved
+correctly by `datamodel-codegen` batch mode (`--input schemas/factory
+--output <dir>`), which emits one module per schema and imports the siblings,
+rather than the single-file invocation, which inlines them instead (verified
+both ways this session; batch mode is what actually reuses, not duplicates,
+the referenced classes for Python). None of these four touch `app.mission.json`
+or any other existing schema — a Factory outcome is a brand-new Factory-owned
+record, never an edit of app-studio's own mission history (spec-factory.md
+§3: "never rewrite history").
+
+`schemas/agent-runner/`: `runner.dispatch-request.json`
+(`RunnerDispatchRequest`) and `runner.run-record.json` (`RunnerRunRecord`)
+are the exact, already-shipped `agent-runner` `POST /dispatch` request body
+and `RunRecord` (`agent-runner`'s own `src/domain/run.ts`), transcribed field
+-for-field, not invented ahead of them — `state`'s four-value enum
+(`launched`/`finished`/`failed`/`stopped`) matches `state.event.json`'s
+`AgentRunPayload.phase` exactly, because `agent-runner`'s own `RunState` type
+is a direct alias of it. `runner.transcript-snapshot.json`
+(`RunnerTranscriptSnapshot`) is the normalized `transcriptTail`/`result`/
+`resultTruncated` view `GET /runs/{id}` always serves — deliberately NOT the
+full structured per-event timeline (`session`/`events`/`transcriptSummary`)
+`agent-runner` also serves for dashboard/design-studio's richer UIs; that
+deeper taxonomy is those consumers' own proven need, not this demand's, so
+extracting it here would be scope creep, not the additive/proportional
+publish this demand asked for.
+
+**Stable operation correlation and receipt semantics** (spec-factory.md open
+question 2: "agent-runner has no idempotency-key contract") are documented in
+`runner.dispatch-request.json`/`runner.run-record.json`'s own descriptions
+rather than modeled as a new field: `agent-runner`'s real wire has no
+dedicated idempotency key today, so this release does not invent one. The
+real, already-proven convention (`factory.service.dispatch`/`reconcile`) is
+transcribed instead — a caller mints its own operation token and embeds it as
+literally the first line of `prompt`; it is later re-identified by an exact
+`RunnerRunRecord.id` match or by `prompt` starting with `"<token>\n"`; zero or
+ambiguous matches both mean "still uncertain, do not resend," never "assume
+failure" or "assume success." This is a documentation-only publish of an
+existing behavior, not a schema-enforced structure — `agent-runner`'s own
+`prompt` field stays opaque free text on the wire.
+
+**Archive-independent approval receipt contracts** (this demand's criterion
+3) were already coordinated with `demand-coordinator` and shipped in v0.24.0
+as `DemandApprovalReceipt` (`schemas/demand-coordinator/demand.approval-
+receipt.json`, fulfilling `demand-coordinator-20260913-contracts-approved-
+evidence-receipt`) — not repeated here.
+
+`tests/validate_factory.py` and `tests/validate_runner.py` added, both
+following `validate_demand.py`'s direct-JSON-Schema-validation pattern (good/
+bad fixtures per schema, no language binding involved), wired into
+`tests/run_all.py`. Full `python tests/run_all.py` passes. Round-trip
+verified for real: `pip install -e ./gen/python` in this repo's own venv,
+then `model_dump_json()` → `model_validate_json()` on a `FactoryOutcome` (with
+its embedded `checkpoint`) and construction of `RunnerDispatchRequest`/
+`RunnerRunRecord`/`RunnerTranscriptSnapshot`.
+
+Java/TS bindings untouched this release — this demand's origin (`factory`)
+and the runner shapes' first consumer are both Python-only, mirroring the
+v0.24.0/v0.6.1 precedent for a single-binding change.
+
 ## v0.24.0 — 2026-09-13
 
 **Additive, Java binding only** (demand-coordinator is the only consumer and is

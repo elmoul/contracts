@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/factory/factory.evidence-receipt",
+  "title": "FactoryEvidenceReceipt",
+  "description": "One immutable observation recorded against a Factory outcome (spec-factory.md §2 'record immutable evidence observations'; §5 'immutable evidence receipts'). Never mutated or deleted once recorded — a correction is a new receipt, never an edit of this one. Modeled from the repo's own proven `factory.domain.EvidenceInput`/`add_evidence`, not invented ahead of what ships. Fulfils demand `factory-20260911-interface-extraction` criterion 1.",
+  "type": "object",
+  "required": ["id", "kind", "criteria", "result", "revision", "deployment", "summary", "source", "observer", "recordedAt", "provenance", "planHash", "hash"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "This receipt's own identifier."
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["reproduce", "inspect", "outcome", "plan", "product", "design", "architecture", "acceptance", "registration", "implementation", "tests", "merge", "deployment", "live"],
+      "description": "Which workflow step this evidence closes. Which kinds a given outcome actually requires depends on its `kind` (bug/feature/new-app) — this schema does not re-derive that mapping, only enumerates every kind Factory's own workflows can produce."
+    },
+    "criteria": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "The acceptance criterion IDs (from the outcome's `criteria`) this evidence covers. Required and non-empty for `implementation`/`tests`/`live`; may be empty for outcome-level kinds like `merge`/`deployment` that are not per-criterion."
+    },
+    "result": {
+      "type": "string",
+      "enum": ["passed", "failed"],
+      "description": "Only a `passed` receipt at the current candidate revision counts toward completion (see `factory.domain.receipt`); a `failed` receipt is retained, never discarded, as the honest record of what was tried."
+    },
+    "revision": {
+      "type": "string",
+      "description": "The candidate revision this evidence was observed at. Required (and must equal the outcome's current `candidate`) for revision-scoped kinds (`implementation`, `tests`, `merge`, `acceptance`, `deployment`, `live`); empty string otherwise."
+    },
+    "deployment": {
+      "type": "string",
+      "description": "The exact deployment identifier — never only an app URL — for `deployment`/`live` evidence; empty string for other kinds."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 6000,
+      "description": "Human-readable account of what was observed."
+    },
+    "source": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 2000,
+      "description": "Where this observation came from (a CI run URL, a transcript reference, a manual check description)."
+    },
+    "observer": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 160,
+      "description": "Who or what recorded this evidence."
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provenance": {
+      "type": "string",
+      "const": "owner-attestation",
+      "description": "How this evidence was authorized. A fixed const, not a free-text field: spec-factory.md open question 3 states plainly that in this slice every receipt is an explicit owner attestation, never an automatic CI/deployment verification — the contract states that structurally rather than trusting a caller to type it correctly. A future machine-verified provenance is an additive enum value, not a shape change."
+    },
+    "planHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 over the outcome's approved scope at the moment this evidence was recorded — binds the receipt to one exact plan, so a later plan revision can never silently inherit an old receipt (see `factory.domain.plan_hash`/`receipt`)."
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 over this receipt's own full recorded content (including `id`/`recordedAt`) — the receipt's own tamper-evident content digest, distinct from `planHash`."
+    }
+  }
+}

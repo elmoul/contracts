@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/factory/factory.continuation",
+  "title": "FactoryContinuation",
+  "description": "The link a Factory outcome (`factory.outcome.json`'s `source`) carries back to the terminal legacy record it continues, WITHOUT rewriting that record's own history (spec-factory.md §3: 'a continuation is a new Factory ID with a unique source link, never an in-place edit of an app-studio record'). This schema describes the link only — it never re-specifies `app.mission`'s own shape or lifecycle, and `app.mission.json` gains nothing from this release. Modeled from the repo's own proven PlantPal migration path (`factory.service.migrate_plantpal`), which is the only continuation Factory has actually built to date (spec-factory.md open question 5 — 'the migration example, not a completed delivery pilot').",
+  "type": "object",
+  "required": ["system", "id", "legacyStage"],
+  "additionalProperties": false,
+  "properties": {
+    "system": {
+      "type": "string",
+      "const": "app-studio",
+      "description": "The owning hexagon of the legacy record — always `app-studio` today (the only system Factory reads legacy missions from, spec-factory.md §4). A `const` rather than an open enum: a second legacy source is a new capability, not a value this field should silently start accepting."
+    },
+    "id": {
+      "type": "string",
+      "description": "The legacy `app.mission` id this outcome continues. Read-only reference — Factory never writes to this id."
+    },
+    "receipts": {
+      "type": "object",
+      "description": "Opaque per-artifact provenance receipts captured at continuation time (one entry per legacy artifact read, e.g. `plan.json`, `registration.json`, keyed by artifact name; `mission` for the mission record itself). Left as an open map rather than re-specified here: the receipt shape is app-studio's own artifact-read provenance, not a Factory- or contracts-owned type, and duplicating it here would risk drifting from whatever app-studio's own read API actually returns.",
+      "additionalProperties": true
+    },
+    "approvedWaves": {
+      "type": "array",
+      "description": "Legacy wave identifiers already approved before this continuation was created — carried forward so Factory's own criteria never re-litigate already-approved scope.",
+      "items": {}
+    },
+    "outstandingWaves": {
+      "type": "array",
+      "description": "Legacy wave identifiers not yet delivered as of the continuation — the scope this outcome's `criteria` were derived from.",
+      "items": {}
+    },
+    "claimBoundary": {
+      "type": "string",
+      "description": "The legacy record's own claim-boundary text at continuation time, preserved verbatim so a later reader can see exactly what the legacy record claimed and did not claim."
+    },
+    "legacyStage": {
+      "type": "string",
+      "description": "The legacy record's own lifecycle stage at the moment this continuation was created — must be a terminal stage (spec-factory.md §3: 'only terminal legacy missions may create a continuation'). Free text over app-studio's own stage enum, not duplicated here, so a new legacy stage name is never a breaking change to this schema.",
+      "examples": ["closed"]
+    }
+  }
+}

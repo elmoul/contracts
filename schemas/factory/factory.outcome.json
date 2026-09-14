@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/factory/factory.outcome",
+  "title": "FactoryOutcome",
+  "description": "A Factory delivery-workflow record: one requested outcome (bug fix, feature, or new app) with its bounded plan and acceptance criteria, plus the workflow's own lifecycle state (spec-factory.md §2/§9). Fulfils demand `factory-20260911-interface-extraction` criterion 1. This is Factory's OWN new workflow ID, never an edit of an existing `app.mission` (app-studio) record — `source` (see `$defs/continuationSource`) is the only link back to legacy history, and it is additive: publishing this schema changes nothing about `app.mission`'s own shape or lifecycle. Modeled from the repo's own proven `factory.domain` module (`Intake`, `new_mission`), not invented ahead of what actually ships.",
+  "type": "object",
+  "required": ["id", "version", "app", "kind", "risk", "title", "plan", "criteria", "phase", "status", "createdAt", "candidate", "paused", "checkpoint"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Factory's own workflow record identifier — a new id minted at intake, never an app-studio mission id."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Optimistic-concurrency counter for this record; incremented on every accepted mutation."
+    },
+    "app": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,79}$",
+      "description": "Functional name (D002) of the target app repo this outcome is delivered into.",
+      "examples": ["plantpal"]
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["bug", "feature", "new-app"],
+      "description": "Which of the three proportional workflow shapes this outcome runs (spec-factory.md §2) — each has its own ordered phase sequence."
+    },
+    "risk": {
+      "type": "string",
+      "enum": ["low", "high"],
+      "description": "Low-risk plans may auto-release on a passing plan approval; high-risk work always needs a separate release decision at the candidate revision. Escalated to `high` automatically when the requested outcome text matches a sensitive-work pattern (auth/session/password/security/payment/delete/migration), even if intake left it at `low`."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 160,
+      "description": "Short human title for the requested outcome."
+    },
+    "plan": {
+      "type": "string",
+      "minLength": 15,
+      "maxLength": 16000,
+      "description": "The bounded implementation plan an owner approved (or will approve) at this outcome's `planHash`."
+    },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": { "$ref": "#/$defs/criterion" },
+      "description": "Requested outcomes with their acceptance test, one entry per criterion id. IDs are unique within one record."
+    },
+    "phase": {
+      "type": "string",
+      "description": "Current step in this outcome's `kind`-specific workflow sequence (e.g. `implement`, `test`, `deploy`, `verify`, or `complete`). The full ordered sequence is workflow-shape-specific and lives in Factory's own code, not duplicated here — this field is free text over that private enum so a new phase name never becomes a breaking schema change.",
+      "examples": ["implement", "deploy", "complete"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "paused", "complete"],
+      "description": "Record-level lifecycle. Only `active` records accept new evidence or decisions (spec-factory.md §3 — archived/partial/complete records are read-only)."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this outcome was requested."
+    },
+    "candidate": {
+      "type": "string",
+      "description": "The revision (commit SHA or equivalent) currently under implementation/test/release for this outcome. Empty string before a candidate exists."
+    },
+    "paused": {
+      "type": "boolean",
+      "description": "True while future dispatch is paused; an already-active run may still be in flight (spec-factory.md's recovery posture — pausing never claims to have stopped a live run)."
+    },
+    "source": {
+      "$ref": "factory.continuation.json",
+      "description": "Present only when this outcome is a continuation of a terminal legacy app-studio mission. Absent for outcomes requested directly against an app with no such lineage."
+    },
+    "parent": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "This outcome's own `id` if it superseded an earlier Factory outcome (e.g. a new-app continuation carrying forward an unfinished checkpoint), else `null`."
+    },
+    "followup": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "The `id` of a later Factory outcome that superseded this one, else `null`. Inverse of `parent`."
+    },
+    "approvals": {
+      "type": "array",
+      "description": "Owner decisions recorded against this outcome's plan/release checksums (spec-factory.md's separate-facts rule — a plan approval and a release approval are always distinct entries).",
+      "items": { "$ref": "#/$defs/approval" }
+    },
+    "checkpoint": {
+      "$ref": "factory.recovery-checkpoint.json",
+      "description": "This outcome's current recovery checkpoint. Present (possibly empty) from creation onward."
+    }
+  },
+  "$defs": {
+    "criterion": {
+      "title": "FactoryCriterion",
+      "type": "object",
+      "required": ["id", "outcome", "acceptance"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,79}$",
+          "description": "Unique (within the outcome) identifier this criterion is referenced by from evidence and completion checks."
+        },
+        "outcome": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 2000,
+          "description": "What must be true when this criterion is met."
+        },
+        "acceptance": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 4000,
+          "description": "How the criterion will be verified."
+        }
+      }
+    },
+    "approval": {
+      "title": "FactoryApproval",
+      "type": "object",
+      "required": ["kind", "planHash", "revision", "autoRelease", "at", "note"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["plan", "release"],
+          "description": "A plan approval authorizes implementation at the current `planHash`; a release approval authorizes deploying `revision` — always a separate, explicit decision (spec-factory.md §3: 'never approve its own work')."
+        },
+        "planHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 over the outcome's `app`/`kind`/`risk`/`plan`/`criteria` at approval time — binds this decision to one exact scope."
+        },
+        "revision": {
+          "type": "string",
+          "description": "The candidate revision this approval concerns; empty string for a plan approval made before a candidate exists."
+        },
+        "autoRelease": {
+          "type": "boolean",
+          "description": "True when a plan approval also pre-authorized low-risk auto-release; always `false` for a `release`-kind approval and never usable for `risk: high` work."
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 10,
+          "description": "The concrete reason recorded with this decision — never a bare approve/reject flag."
+        }
+      }
+    }
+  }
+}

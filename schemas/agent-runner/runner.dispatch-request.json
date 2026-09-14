@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/runner.dispatch-request",
+  "title": "RunnerDispatchRequest",
+  "description": "The `agent-runner` `POST /dispatch` request body (agent-runner's own `DispatchInput`, `src/domain/run.ts`). Published so a caller in another language (Factory, Python) can validate against the exact proven wire shape instead of an opaque hand-rolled dict. Fulfils demand `factory-20260911-interface-extraction` criterion 2 — additive only, no field here is new, every one is copied from the real, shipped TypeScript type.\n\n**Stable operation correlation.** `agent-runner` has no dedicated idempotency-key field on this request (spec-factory.md open question 2: 'agent-runner has no idempotency-key contract'). The proven, real convention a caller uses instead — see `factory.service.dispatch` — is to mint its own operation token (`<caller>-operation:<uuid>`) and embed it as the literal first line of `prompt`. See `runner.run-record.json` for how that token is later matched against a `RunnerRunRecord` to resolve what actually happened, without ever blindly resending.",
+  "type": "object",
+  "required": ["repo", "prompt"],
+  "additionalProperties": false,
+  "properties": {
+    "repo": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+$",
+      "description": "Functional name (D002) of the allow-listed repo to dispatch a session into. Non-allow-listed repos are rejected before any run starts.",
+      "examples": ["plantpal", "design-studio"]
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The full dispatch prompt. See this schema's top-level description for the operation-correlation convention (an operation token as the prompt's own first line) — agent-runner treats this as opaque text, so the convention is producer/consumer discipline, not schema-enforced structure."
+    },
+    "demandId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$",
+      "description": "The demand this session was dispatched to fulfill, when there is one (same shape as `demand.json`'s `id`). Recorded on the run and echoed into the `agent.run` state-event, but does not itself resolve a prompt in this chunk — `prompt` is still required."
+    },
+    "model": {
+      "type": "string",
+      "description": "Per-dispatch `--model` override. Omitted (not present at all) falls back to the runner's configured default; an explicit empty string means 'no `--model` argument', not 'use the default' — the two are different requests."
+    },
+    "effort": {
+      "type": "string",
+      "description": "Per-dispatch `--effort` override, same omitted-vs-explicit-value semantics as `model`."
+    },
+    "runtime": {
+      "type": "string",
+      "description": "Which configured inference backend/runtime profile to dispatch on. Omitted resolves from `model` if a profile claims it, else the configured default. An unrecognized name is rejected before any run starts, never silently defaulted."
+    }
+  }
+}
