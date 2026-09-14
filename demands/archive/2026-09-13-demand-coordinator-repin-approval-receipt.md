@@ -9,7 +9,7 @@ acceptance-criteria:
   - "demand-coordinator's approval-lookup endpoint returns io.platform.contracts.demandcoordinator.DemandApprovalReceipt (found:true/false per the schema's discriminant), not a locally-defined receipt class"
   - "any existing hand-rolled receipt/lookup DTO in demand-coordinator is deleted, or the gap from doing so is written down with a reason"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand — re-pin `contracts` v0.24.0 and adopt `DemandApprovalReceipt`
