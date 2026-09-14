@@ -9,7 +9,7 @@ acceptance-criteria:
   - "dashboard confirms it consumes the generated DemandQueueEntry type for its /agents Dispatch queue Order column instead of hand-rolling wave/waitingOn, or explains by when/why not."
   - "dashboard acknowledges that wave/waitingOn will read as absent until demand-coordinator and agent-runner land their own legs of dashboard-20260914-demand-dispatch-order — the Order column renders correctly against an entry whose waitingOn is empty and whose wave is 1, which is the state every demand is in before those legs ship."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Dispatch order — close the consuming leg
