@@ -751,3 +751,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-14_1559_fulfill-demand-brain-toolkit-20260914-fl
+
+## Session 56 (2026-09-19)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-19_0251_fulfill-demand-ai-gateway-20260917-contr.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand ai-gateway-20260917-contracts-research-evidence-envelope (capability: An additive async job envelope for evidence-gathering (URL-retrieval) requests, distinct from ai.request/ai.job's existing shapes, from: ai-gateway, target: contracts). Acceptance criteria: - A caller-generated dura... -- status: partial.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-19_0251_fulfill-demand-ai-gateway-20260917-contr
