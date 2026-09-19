@@ -4,6 +4,7 @@
 export type { paths as AiGatewayRequestPaths, components as AiGatewayRequestComponents } from "./ai-gateway-request";
 export type { paths as AiGatewayPreflightPaths, components as AiGatewayPreflightComponents } from "./ai-gateway-preflight";
 export type { paths as AiGatewayJobPaths, components as AiGatewayJobComponents } from "./ai-gateway-job";
+export type { paths as AiGatewayResearchPaths, components as AiGatewayResearchComponents } from "./ai-gateway-research";
 export type { paths as AppManifestPaths, components as AppManifestComponents } from "./app-manifest";
 export type { paths as AppHealthPaths, components as AppHealthComponents } from "./app-health";
 export type { UsageEvent } from "./usage-event";

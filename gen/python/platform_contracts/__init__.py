@@ -2,7 +2,7 @@
 # Do not edit by hand — regenerate from schemas/ using datamodel-code-generator.
 
 from platform_contracts.app import manifest, health, usage_event, dimension_event, telemetry
-from platform_contracts.ai_gateway import request, preflight, model_manifest, job
+from platform_contracts.ai_gateway import request, preflight, model_manifest, job, research
 from platform_contracts.state_feed import state_event
 from platform_contracts.ci_runner import build_command, build_result
 from platform_contracts.control_plane import hexagon_descriptor, registry_entry
@@ -36,6 +36,7 @@ __all__ = [
     "preflight",
     "model_manifest",
     "job",
+    "research",
     "state_event",
     "build_command",
     "build_result",

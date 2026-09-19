@@ -16,6 +16,75 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.27.0 — 2026-09-19
+
+**Additive, all three bindings.** Fulfils demand
+`ai-gateway-20260917-contracts-research-evidence-envelope`: a new async job
+envelope for evidence-gathering (URL-retrieval) requests, structurally
+separate from `ai.request`/`ai.job.request`/`ai.job.status` — neither of
+those shapes is modified.
+
+**New file `schemas/ai-gateway/research.yaml`** (OpenAPI 3.1, same idiom as
+`job.yaml`) defines `ResearchJobRequest`/`ResearchJobStatus`, routed via
+`POST /ai/research-jobs` and `GET /ai/research-jobs/{id}`:
+
+- `ResearchJobRequest.jobId` is caller-generated (same idiom as
+  `AiJobRequest.jobId`), so `GET /ai/research-jobs/{id}` gives an interrupted
+  caller a terminal-status reconciliation route instead of forcing it to
+  guess whether the (paid) retrieval already ran.
+- `ResearchJobRequest.sources` is an array of `SourceRequest` (`url`,
+  `maxDurationMs`, `maxBytesPerSource` — all required), letting a caller
+  bound retrieval time and payload size independently per source.
+- `ResearchJobStatus.evidence` is an array of `EvidenceItem` (`url`,
+  `status: retrieved | unavailable | rejected`, plus `fetchedAt`/`excerpt`
+  when retrieved, `reason` when not, and `enforcedMaxDurationMs`/
+  `enforcedMaxBytes` echoing back what bound the gateway actually enforced
+  for that source). This schema carries no model-narrative field at all, so
+  there is no shared field a model-invented citation could be serialized
+  into alongside gateway-fetched evidence — the separation is structural,
+  not a convention to remember.
+- `ResearchJobStatus` carries its own `ResearchJobError` (`code`/`message`,
+  same shape as `job.yaml`'s `JobError` but not shared/`$ref`'d across
+  files, keeping this pair self-contained) and the same D023-style
+  conditional-required clause as `AiJobStatus`: `status: failed` requires
+  `error`.
+
+All three bindings regenerated:
+
+- **Java:** `openapi-generator-cli` 7.23.0 direct invocation (`--library
+  resttemplate`, same flags as `request.yaml`/`job.yaml`) emitted
+  `ResearchJobRequest.java`, `SourceRequest.java`, `ResearchJobStatus.java`,
+  `EvidenceItem.java`, `ResearchJobError.java` into
+  `io.platform.contracts.aigateway` (same package as `AiRequest`/`AiJobRequest`
+  — no class-name collisions). `mvn -B -f gen/java/pom.xml test` — 34 tests
+  run, 0 failures (the sole error present is a pre-existing, unrelated
+  fixture-path issue in `DemandDispatchOrderContractsTest`, reproduced
+  identically on a clean `git stash` checkout before this session touched
+  anything — see "Not done / caveats" in this release's fulfillment report).
+- **TypeScript:** `npx openapi-typescript` emitted `ai-gateway-research.ts`;
+  re-exported as `AiGatewayResearchPaths`/`AiGatewayResearchComponents` from
+  `index.ts`; `npm run build` + `npx tsc --noEmit --strict` clean.
+- **Python:** `datamodel-codegen --input-file-type openapi
+  --output-model-type pydantic_v2.BaseModel --target-python-version 3.11
+  --use-specialized-enum` emitted `platform_contracts/ai_gateway/research.py`
+  (both `status` enums come out `StrEnum`, matching repo convention); wired
+  `research` into `platform_contracts/__init__.py`. Round-tripped
+  `ResearchJobRequest`/`ResearchJobStatus` construction and
+  `model_dump_json()` manually — clean.
+
+`tests/validate_research.py` (new, wired into `tests/run_all.py`) covers both
+schemas directly, independent of any language binding: known-good two-source
+request, known-bad missing/empty `sources` and a source missing
+`maxBytesPerSource`; known-good queued/succeeded (mixed
+retrieved/unavailable/rejected evidence)/failed statuses, known-bad missing
+`submittedAt`, unknown `status` enum (both job-level and evidence-item-level),
+and failed-with-no-error (proving the conditional-required clause). All pass.
+
+Minor bump, `v0.26.0` → `v0.27.0` — additive only (new file, new schemas; no
+existing required field, enum, or path changed).
+
+---
+
 ## v0.26.0 — 2026-09-14
 
 **Additive, Java + TypeScript bindings.** Fulfils the `contracts` leg of demand

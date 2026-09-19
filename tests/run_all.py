@@ -24,6 +24,7 @@ VALIDATORS = [
     "validate_demand.py",
     "validate_model_manifest.py",
     "validate_ai_job.py",
+    "validate_research.py",
     "validate_stage_companion_turn.py",
     "validate_app_studio.py",
     "validate_factory.py",
