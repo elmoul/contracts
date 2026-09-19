@@ -9,7 +9,7 @@ acceptance-criteria:
   - "ai-gateway confirms it routes POST /ai/research-jobs and GET /ai/research-jobs/{id} through the generated ResearchJobRequest/ResearchJobStatus types instead of hand-rolling the shape, or explains by when/why not."
   - "ai-gateway acknowledges that EvidenceItem carries no model-narrative field by design, so any narrative/summary text produced about the evidence must live in a field this schema does not define -- never folded into EvidenceItem.excerpt, which is reserved for verbatim retrieved content."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Research evidence envelope — close the consuming leg
