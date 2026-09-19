@@ -764,3 +764,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-19_0251_fulfill-demand-ai-gateway-20260917-contr
+
+## Session 57 (2026-09-19)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-14_1559_test-pin-v0-6-3.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: test-pin-v0.6.3 -- status: done.
+- Next step: ai-gateway re-pins to contracts v0.27.0 and adopts ResearchJobRequest/ResearchJobStatus per the raised demand
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-14_1559_test-pin-v0-6-3
