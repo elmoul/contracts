@@ -9,7 +9,7 @@ acceptance-criteria:
   - "backlog-planner emits `note` on plan-run detail when a preview is empty or trimmed because existing issues already cover the request, and omits it or sends null otherwise."
   - "youtrack's conformance suite covers an empty and a trimmed preview validated against the v0.29.0 schema, or youtrack explains by when/why not."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # `note` on `planner.plan-run` — close the consuming leg
