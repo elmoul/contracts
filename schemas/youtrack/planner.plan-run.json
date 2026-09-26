@@ -77,7 +77,12 @@
     "issues": {
       "type": "array",
       "items": { "$ref": "planner.plan-issue.json" },
-      "description": "The preview as proposed."
+      "description": "The preview as proposed. No `minItems`: an empty array is a valid preview -- nothing to confirm (e.g. the owner's request is already covered by existing issues), and `note` explains why."
+    },
+    "note": {
+      "type": ["string", "null"],
+      "description": "Optional short human-readable text from the planner about the preview -- chiefly, when the owner's request is already fully or partly covered by existing issues, which ones cover it (so an empty or trimmed preview does not read as a failure). Absent or `null` when there is nothing to say.",
+      "examples": ["Both items are already covered: guest trial by PLA-39..PLA-42, bug reports by PLA-43..PLA-47."]
     },
     "confirmedAt": {
       "type": ["string", "null"],

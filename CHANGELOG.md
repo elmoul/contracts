@@ -16,6 +16,28 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.29.0 — 2026-09-26
+
+**Additive, TypeScript + Python bindings only** (tag `v0.29.0`). Fulfils
+demand `youtrack-20260926-contracts-planner-plan-run-note` (after
+`youtrack-20260926-platform-vault-planner-empty-plan`).
+
+- `schemas/youtrack/planner.plan-run.json`: new optional `note`
+  (`string | null`, not in `required`) — a short human-readable text from the
+  planner about the preview, chiefly naming the existing issues that already
+  cover the owner's request so an empty or trimmed preview does not read as a
+  failure. Absent or `null` when there is nothing to say. Consumers pinned to
+  v0.28.0 keep validating.
+- `issues` still has no `minItems`; its description now states that an empty
+  array is a valid preview (nothing to confirm, `note` explains why).
+
+Regenerated `gen/ts/planner-plan-run.ts` (+ `dist/`) and
+`gen/python/platform_contracts/youtrack/planner_plan_run.py`. D031 acceptance:
+fresh-venv pip install + round-trip with and without `note`; `file:` npm
+install + `tsc --strict` against `PlannerPlanRun["note"]`.
+
+---
+
 ## v0.28.0 — 2026-09-26
 
 **Additive, TypeScript + Python bindings only** (no Java binding requested).

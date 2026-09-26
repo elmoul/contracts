@@ -41,9 +41,13 @@ export interface PlannerPlanRun {
      */
     areas: string[];
     /**
-     * The preview as proposed.
+     * The preview as proposed. No `minItems`: an empty array is a valid preview -- nothing to confirm (e.g. the owner's request is already covered by existing issues), and `note` explains why.
      */
     issues: PlannerPlanIssue[];
+    /**
+     * Optional short human-readable text from the planner about the preview -- chiefly, when the owner's request is already fully or partly covered by existing issues, which ones cover it (so an empty or trimmed preview does not read as a failure). Absent or `null` when there is nothing to say.
+     */
+    note?: string | null;
     confirmedAt: string | null;
     created: {
         /**
