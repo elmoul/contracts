@@ -53,7 +53,10 @@ raise):
    Additive releases raise **only** the origin demand — no fleet-wide
    "everyone bump" (D031 pins are deliberate; an additive release obligates no
    consumer to move).
-3. The tag itself, `CHANGELOG.md`, and D031 acceptance can all be green and
+3. **Every tag gets a pinned worktree:** right after pushing the tag, run
+   `git worktree add --detach ../contracts-worktrees/vX.Y.Z vX.Y.Z` (sibling
+   repos build against these). Check it with `git worktree list`.
+4. The tag itself, `CHANGELOG.md`, and D031 acceptance can all be green and
    the release is still incomplete until these demands are raised and pushed.
 
 Prospective only (per D043's own recorded scope) — this does not retroactively

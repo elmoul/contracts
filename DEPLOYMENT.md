@@ -252,6 +252,9 @@ Verify: `pip install ./gen/python` in a scratch venv, then
    (v0.2.1 npm, v0.6.2 Python) shipped on an untested packaging assumption;
    don't repeat that.
 5. `git tag vX.Y.Z && git push origin main --tags`.
+   Then add the pinned worktree sibling repos build against:
+   `git worktree add --detach ../contracts-worktrees/vX.Y.Z vX.Y.Z` — every
+   tag gets one; a release is not done without it.
 6. **Raise the release-notification demands (D043 — see CLAUDE.md's Release
    checklist section for the full rule).** Always a demand `to: [<origin>]`
    ("re-pin and adopt"); on a breaking release, also a demand to every
