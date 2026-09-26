@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.plan-issue",
+  "title": "PlannerPlanIssue",
+  "description": "One proposed (or confirmed) issue inside a `planner.plan-run`'s `issues` array (`youtrack/planner/src/backlog_planner/domain/planning.py`). This is the model-proposed shape, before any owner edit at confirm time.",
+  "type": "object",
+  "required": ["key", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+      "description": "A key unique within this plan, referenced by `parent`/`dependsOn`/`relatesTo` on sibling issues. Not the tracker's own issue id -- see `planner.plan-run.created` for that."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The issue title."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 20000,
+      "default": "",
+      "description": "The issue body."
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "default": {},
+      "description": "Tracker field name to value."
+    },
+    "parent": {
+      "type": ["string", "null"],
+      "description": "The `key` of this issue's parent within the same plan, or `null`."
+    },
+    "dependsOn": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Keys of issues in the same plan this one depends on."
+    },
+    "relatesTo": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Keys of issues in the same plan this one relates to."
+    }
+  }
+}

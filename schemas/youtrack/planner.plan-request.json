@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.plan-request",
+  "title": "PlannerPlanRequest",
+  "description": "The `backlog-planner` `POST /plans` request body (`youtrack/planner/src/backlog_planner/api.py`'s `PlanBody`). Exactly one of `project` / `newProject` must be given -- picking an existing project or defining one to create.",
+  "type": "object",
+  "required": ["prompt", "model"],
+  "additionalProperties": false,
+  "oneOf": [
+    { "required": ["project"] },
+    { "required": ["newProject"] }
+  ],
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "The id of an existing project (`planner.project.id`)."
+    },
+    "newProject": {
+      "type": "object",
+      "required": ["name", "shortKey"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Display name for the project to create."
+        },
+        "shortKey": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]{1,9}$",
+          "description": "Short key for the project to create, upper-cased before this pattern is checked."
+        }
+      }
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The planning prompt. The planner caps it at 20000 characters after trimming; this schema does not enforce that upper bound."
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The requested model id."
+    }
+  }
+}

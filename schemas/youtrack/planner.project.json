@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.project",
+  "title": "PlannerProject",
+  "description": "One YouTrack project as `backlog-planner`'s `GET /projects` serves it (`youtrack/planner/src/backlog_planner/api.py`, `projects()`). Build-then-extract (D066): copied from the shipped route, not predicted ahead of it.",
+  "type": "object",
+  "required": ["id", "shortName", "name"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The tracker's own project id."
+    },
+    "shortName": {
+      "type": "string",
+      "description": "The project's short key, e.g. `PLA`."
+    },
+    "name": {
+      "type": "string",
+      "description": "The project's display name."
+    }
+  }
+}

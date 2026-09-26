@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.plan-run",
+  "title": "PlannerPlanRun",
+  "description": "The full `backlog-planner` plan-run detail, as `POST /plans`, `POST /plans/{id}/confirm`, and `GET /plans/{id}` all serve it (`detail_view()` in `youtrack/planner/src/backlog_planner/api.py`). This is `planner.plan-summary`'s fields plus the run's full preview/confirmation detail -- kept as one flat object (not a `planner.plan-summary` `$ref`-extension) because `additionalProperties: false` does not compose across `allOf` branches.",
+  "type": "object",
+  "required": [
+    "id", "createdAt", "status", "project", "prompt", "model", "proposedCount", "createdCount",
+    "usage", "areas", "issues", "confirmedAt", "created", "dropped", "lastError"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Always carries a UTC offset."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["previewed", "partial", "confirmed"]
+    },
+    "project": {
+      "type": "object",
+      "required": ["id", "shortName", "name", "isNew"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": ["string", "null"],
+          "description": "`null` for a new project until it is actually created in the tracker."
+        },
+        "shortName": { "type": "string" },
+        "name": { "type": "string" },
+        "isNew": { "type": "boolean" }
+      }
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "model": {
+      "type": "object",
+      "required": ["requested", "used", "provider"],
+      "additionalProperties": false,
+      "properties": {
+        "requested": { "type": "string" },
+        "used": { "type": ["string", "null"] },
+        "provider": { "type": ["string", "null"] }
+      }
+    },
+    "proposedCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "createdCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "usage": {
+      "type": "object",
+      "required": ["tokensIn", "tokensOut", "cost", "attempts"],
+      "additionalProperties": false,
+      "properties": {
+        "tokensIn": { "type": "integer", "minimum": 0 },
+        "tokensOut": { "type": "integer", "minimum": 0 },
+        "cost": { "type": "number", "minimum": 0 },
+        "attempts": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "areas": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Model-proposed Area values, non-empty only for a new project."
+    },
+    "issues": {
+      "type": "array",
+      "items": { "$ref": "planner.plan-issue.json" },
+      "description": "The preview as proposed."
+    },
+    "confirmedAt": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "created": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "id", "title", "url"],
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The `planner.plan-issue.key` this created record corresponds to."
+          },
+          "id": {
+            "type": "string",
+            "description": "The readable YouTrack id, e.g. `PLA-12`.",
+            "examples": ["PLA-12"]
+          },
+          "title": { "type": "string" },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Link into YouTrack for this issue."
+          }
+        }
+      }
+    },
+    "dropped": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Human-readable notes on links and Area values dropped by the owner's selection."
+    },
+    "lastError": {
+      "type": ["string", "null"],
+      "description": "Set on a `partial` run as `\"<code>: <message>\"`."
+    }
+  }
+}

@@ -1,4 +1,4 @@
-# Generated Python bindings for platform-contracts v0.25.0
+# Generated Python bindings for platform-contracts v0.28.0
 # Do not edit by hand — regenerate from schemas/ using datamodel-code-generator.
 
 from platform_contracts.app import manifest, health, usage_event, dimension_event, telemetry
@@ -24,6 +24,16 @@ from platform_contracts.agent_runner import (
     runner_dispatch_request,
     runner_run_record,
     runner_transcript_snapshot,
+)
+from platform_contracts.youtrack import (
+    planner_project,
+    planner_model,
+    planner_plan_request,
+    planner_plan_issue,
+    planner_plan_summary,
+    planner_plan_run,
+    planner_confirm_request,
+    planner_error,
 )
 
 __all__ = [
@@ -57,4 +67,12 @@ __all__ = [
     "runner_dispatch_request",
     "runner_run_record",
     "runner_transcript_snapshot",
+    "planner_project",
+    "planner_model",
+    "planner_plan_request",
+    "planner_plan_issue",
+    "planner_plan_summary",
+    "planner_plan_run",
+    "planner_confirm_request",
+    "planner_error",
 ]

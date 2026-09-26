@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.model",
+  "title": "PlannerModel",
+  "description": "One selectable AI model as `backlog-planner`'s `GET /models` serves it (`youtrack/planner/src/backlog_planner/api.py`, `models()`). The `id` values are ai-gateway's `ai.catalog.models` ids -- this schema does not redefine that catalog, it only names the field the planner passes through.",
+  "type": "object",
+  "required": ["id"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "An ai-gateway `ai.catalog.models` model id."
+    }
+  }
+}

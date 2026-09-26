@@ -16,6 +16,63 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.28.0 — 2026-09-26
+
+**Additive, TypeScript + Python bindings only** (no Java binding requested).
+Fulfils demand `youtrack-20260926-contracts-backlog-planner-schema-set`:
+publishes `youtrack`'s `backlog-planner` service's schema set under
+`schemas/youtrack/` so `dashboard`'s `/youtrack` page can build against
+proven shapes instead of hand-rolled types (D111, spec-youtrack.md §7).
+
+Build-then-extract (D066): every shape is copied field-for-field from the
+already-shipped `youtrack/planner/src/backlog_planner/api.py` route bodies
+and `domain/errors.py` codes, not predicted ahead of them.
+
+**New files under `schemas/youtrack/`** (JSON Schema 2020-12):
+
+- `planner.project.json` — `GET /projects` element (`id`/`shortName`/`name`).
+- `planner.model.json` — `GET /models` element (`id`, an ai-gateway
+  `ai.catalog.models` id).
+- `planner.plan-request.json` — `POST /plans` body; `oneOf` enforces exactly
+  one of `project` / `newProject`.
+- `planner.plan-issue.json` — one proposed/confirmed issue inside a plan's
+  `issues` array.
+- `planner.plan-summary.json` — the `GET /plans` list element.
+- `planner.plan-run.json` — the full detail `POST /plans`,
+  `POST /plans/{id}/confirm`, and `GET /plans/{id}` all return; kept as one
+  flat object (not a `planner.plan-summary` `$ref`-extension) since
+  `additionalProperties: false` does not compose across `allOf` branches.
+  `issues` is a cross-file `$ref` to `planner.plan-issue.json` (same
+  directory-batch codegen convention as `factory.outcome.json`, v0.25.0).
+- `planner.confirm-request.json` — `POST /plans/{id}/confirm` body; the
+  entire body is optional (absent means "confirm everything, unchanged").
+  Fields and links are deliberately not accepted (D111 clause 2).
+- `planner.error.json` — the `error` payload of the `{"error": ...}`
+  envelope; `code` is an open string (documented values listed in the
+  description), not a closed enum, so a new code is never a breaking change
+  for an older consumer.
+
+**Envelopes.** Every route wraps its payload in `{"data": ...}` on success or
+`{"error": planner.error}` on failure (fixed HTTP status per code, see
+`planner.error.json`'s description table) — these 8 schemas are the payload
+shapes carried inside that envelope, not the envelope itself, matching how
+the demand's field-by-field table is written.
+
+**TypeScript** (`gen/ts`): one `.ts` file per schema via
+`json-schema-to-typescript`, re-exported from `index.ts`; `dist/` rebuilt and
+committed. Verified with a real `file:` install into a scratch npm project
+(D031 acceptance).
+
+**Python** (`gen/python/platform_contracts/youtrack/`): generated via
+`datamodel-codegen` in directory-batch mode (same batch-over-`schemas/youtrack`
+invocation as the factory precedent) so `planner_plan_run.py`'s `issues` field
+imports `planner_plan_issue.PlannerPlanIssue` instead of duplicating it.
+Wired into `platform_contracts/__init__.py`. Verified with a real
+`pip install ./gen/python` into a fresh venv plus a `model_dump_json()` /
+`model_validate_json()` round-trip on `PlannerPlanRun` (D031 acceptance).
+
+No Java binding in this release — not requested by the fulfilled demand.
+
 ## v0.27.0 — 2026-09-19
 
 **Additive, all three bindings.** Fulfils demand

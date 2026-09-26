@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.confirm-request",
+  "title": "PlannerConfirmRequest",
+  "description": "The `backlog-planner` `POST /plans/{id}/confirm` request body (`youtrack/planner/src/backlog_planner/api.py`'s `ConfirmBody`). The whole body is optional -- an absent body means 'confirm everything proposed, unchanged'. Fields and links are deliberately not accepted here (D111 clause 2): only deselecting an issue and editing its title/description.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "issues": {
+      "type": "array",
+      "description": "Leaving an issue's `key` out of this array deselects it. Absent (the whole property missing) means 'all, unchanged'.",
+      "items": {
+        "type": "object",
+        "required": ["key"],
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The `planner.plan-issue.key` this edit/selection applies to."
+          },
+          "summary": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "areas": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "The Area values kept, for a new project only. Absent means 'all proposed'."
+    }
+  }
+}

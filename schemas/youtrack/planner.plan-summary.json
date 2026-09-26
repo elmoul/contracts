@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.plan-summary",
+  "title": "PlannerPlanSummary",
+  "description": "A `backlog-planner` plan-run summary, as `GET /plans` serves it (list, newest first) and as `summary_view()` builds it in `youtrack/planner/src/backlog_planner/api.py`. `planner.plan-run` is this shape plus the run's full detail.",
+  "type": "object",
+  "required": ["id", "createdAt", "status", "project", "prompt", "model", "proposedCount", "createdCount"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Always carries a UTC offset."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["previewed", "partial", "confirmed"]
+    },
+    "project": {
+      "type": "object",
+      "required": ["id", "shortName", "name", "isNew"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": ["string", "null"],
+          "description": "`null` for a new project until it is actually created in the tracker."
+        },
+        "shortName": { "type": "string" },
+        "name": { "type": "string" },
+        "isNew": { "type": "boolean" }
+      }
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "model": {
+      "type": "object",
+      "required": ["requested", "used", "provider"],
+      "additionalProperties": false,
+      "properties": {
+        "requested": { "type": "string" },
+        "used": { "type": ["string", "null"] },
+        "provider": { "type": ["string", "null"] }
+      }
+    },
+    "proposedCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "createdCount": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}
