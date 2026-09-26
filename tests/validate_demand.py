@@ -303,10 +303,11 @@ def main() -> int:
     )
     # The backwards-compatibility claim made concrete: a real demand file committed
     # BEFORE `after` existed, read off disk and validated unmodified. Not a hand-written
-    # sample of a pre-`after` file — the actual artifact other repos are pinned against.
+    # sample of a pre-`after` file — the actual artifact other repos are pinned against
+    # (archived after it was satisfied; the archived copy is the same committed file).
     expect_valid(
         demand_schema,
-        frontmatter(DEMANDS / "2026-09-14-factory-repin-interface-extraction.md"),
+        frontmatter(DEMANDS / "archive" / "2026-09-14-factory-repin-interface-extraction.md"),
         "demand: real pre-`after` demand file on disk still validates (known-good)",
     )
     expect_valid(
