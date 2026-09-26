@@ -830,3 +830,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none needed
 - Session: 2026-09-26_0834_fix-tests-validate-demand-py-archived-de
+
+## Session 62 (2026-09-26)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-26_0845_add-v0-29-0-pinned-worktree-document-wor.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: add v0.29.0 pinned worktree; document worktree step in release checklist -- status: done.
+- Next step: await coordinator verdict on youtrack-20260926-contracts-planner-plan-run-note
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none needed
+- Session: 2026-09-26_0845_add-v0-29-0-pinned-worktree-document-wor
