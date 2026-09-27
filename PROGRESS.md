@@ -1026,3 +1026,18 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-27_1108_fulfill-demand-factory-20260927-sync-rec
+
+## Session 76 (2026-09-27)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-27_1207_fulfill-demand-factory-20260927-sync-rec.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+agent-runner's dispatch supervisor from an auto-drafted, unconfirmed close --
+not a second hand-written account, and not yet reviewed by a human or the
+worker agent itself).
+
+- State: Fulfill demand factory-20260927-sync-recovery-retention (capability: Clarify task delivery operation retention and safe missing-operation recovery, from: factory, target: contracts). Acceptance criteria: - Publish a tagged clarification or additive interface distinguishing a never-seen operation fro... -- status: done (close: auto-drafted, unconfirmed).
+- Next step: Review this session's auto-drafted close (`.brain/sessions/2026-09-27_1207_fulfill-demand-factory-20260927-sync-rec.md`) and confirm or correct it.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-27_1207_fulfill-demand-factory-20260927-sync-rec
