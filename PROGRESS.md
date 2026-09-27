@@ -957,3 +957,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-27_1130_fulfill-demand-ci-runner-20260927-contra
+
+## Session 71 (2026-09-27)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-27_1039_fulfill-demand-agent-runner-20260927-con.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand agent-runner-20260927-contracts-runner-keyed-dispatch (keyed dispatch, dispatch-key lookup, observed workspace identity, producer-result routes) -- status: done.
+- Next step: Owner validates the v0.33.0 fulfillment; agent-runner repins to ../contracts-worktrees/v0.33.0/gen/ts and implements reserve/replay/conflict/lookup per docs/task-delivery.md section Runner routes. Note: the working tree still carries UNCOMMITTED changes from the failed ci-runner session (schemas/ci-runner/build-result.yaml, schemas/delivery/delivery.error.json, schemas/state-feed/*, tests/validate_delivery.py, tests/validate_state_event.py, schemas/delivery-api/ci-runner-results.openapi.yaml) -- left untouched, and tests/run_all.py passes with them in place.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-27_1039_fulfill-demand-agent-runner-20260927-con
