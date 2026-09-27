@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/delivery/delivery.workflow",
+  "title": "DeliveryWorkflow",
+  "description": "A project's EXISTING workflow state metadata, returned by `GET /delivery/v1/projects/{project}/workflow`. Read-only: nothing on the delivery surface creates or alters workflow fields or states. Mapping Factory stages (in progress, ready for testing, accepted) onto these states is Factory configuration reviewed by the owner at setup; a stage with no equivalent state is reported through linked comments instead (D113 work order).",
+  "type": "object",
+  "required": ["project", "stateField", "states", "complete", "readAt"],
+  "additionalProperties": false,
+  "properties": {
+    "project": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "stateField": {
+      "type": ["string", "null"],
+      "description": "Name of the state custom field; `null` when the project has none (then every `transition`/`resolve` is rejected `state_unmapped`)."
+    },
+    "states": {
+      "type": "array",
+      "items": {
+        "title": "DeliveryWorkflowState",
+        "type": "object",
+        "required": ["id", "name", "resolved", "ordinal", "archived"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "resolved": {
+            "type": "boolean",
+            "description": "Vendor `isResolved`. A `resolve` target MUST have `resolved: true`; a `transition` target MUST have `resolved: false` (only owner acceptance resolves, D113 clause 2)."
+          },
+          "ordinal": { "type": "integer" },
+          "archived": { "type": "boolean" }
+        }
+      }
+    },
+    "complete": {
+      "type": "boolean",
+      "description": "`false` if the service could not read the full state bundle; Factory must not enable a project mapping from an incomplete read."
+    },
+    "readAt": { "type": "string", "format": "date-time" }
+  }
+}

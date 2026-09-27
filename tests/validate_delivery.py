@@ -1,0 +1,543 @@
+"""
+Schema-level validation for schemas/delivery/*.json (D113 task delivery, v0.31.0)
+plus a parse check of schemas/delivery-api/youtrack-delivery.openapi.yaml and a
+round-trip through the generated Python binding.
+
+Mirrors validate_factory.py: validates the JSON Schemas directly against example
+documents, independent of any language binding.
+Run: python tests/validate_delivery.py
+"""
+import copy
+import json
+import sys
+from pathlib import Path
+
+import yaml
+from jsonschema import Draft202012Validator, FormatChecker
+from referencing import Registry, Resource
+
+ROOT = Path(__file__).resolve().parent.parent
+SCHEMAS = ROOT / "schemas" / "delivery"
+API = ROOT / "schemas" / "delivery-api" / "youtrack-delivery.openapi.yaml"
+
+SHA_A = "a" * 64
+SHA_B = "b" * 64
+SHA_C = "c" * 64
+REV_TASK = "1" * 40
+REV_MERGED = "2" * 40
+DELIVERY = "3c9c9b2a-2c8b-4a8b-9b3d-2f7e5b6c1a10"
+NOW = "2026-09-27T10:00:00Z"
+
+ISSUE_REF = {"vendorId": "2-17", "idReadable": "PLA-12", "project": "PLA"}
+
+GOOD_ISSUE = {
+    "issue": ISSUE_REF,
+    "summary": "Show watering reminders on the dashboard",
+    "description": "As an owner I want reminders.\n\n## Acceptance criteria\n- reminder card visible",
+    "acceptance": "- reminder card visible",
+    "type": "Task",
+    "priority": "Normal",
+    "state": {"field": "State", "name": "Open", "resolved": False},
+    "created": "2026-09-20T09:00:00Z",
+    "updated": "2026-09-27T09:00:00Z",
+    "resolvedAt": None,
+    "scope": {
+        "fingerprint": SHA_A,
+        "algorithm": "sha256-canonical-json-v1",
+        "fields": ["summary", "description", "acceptance", "type", "priority", "parent", "dependencies"],
+    },
+    "parent": {"vendorId": "2-3", "idReadable": "PLA-1", "project": "PLA"},
+    "subtasks": [],
+    "dependencies": [
+        {"direction": "depends-on", "issue": {"vendorId": "2-9", "idReadable": "PLA-8", "project": "PLA"}, "status": "resolved"},
+    ],
+    "dependenciesComplete": True,
+    "deliveryLinks": [],
+    "readAt": NOW,
+}
+
+# Dependency that could not be read: valid shape, but consumers must treat it as blocked.
+GOOD_ISSUE_UNKNOWN_DEPENDENCY = {
+    **GOOD_ISSUE,
+    "dependencies": [{"direction": "depends-on", "issue": None, "status": "unknown"}],
+    "dependenciesComplete": False,
+}
+
+BAD_ISSUE_DEPENDENCY_SATISFIED_BY_OMISSION = {
+    **GOOD_ISSUE,
+    "dependencies": [{"direction": "depends-on", "issue": None, "status": "satisfied"}],  # not an enum value
+}
+
+BAD_ISSUE_CARRIES_TOKEN = {**GOOD_ISSUE, "token": "perm:abc"}  # closed shape, no credential field
+
+BAD_ISSUE_READABLE_AS_VENDOR_ID = {**GOOD_ISSUE, "issue": {**ISSUE_REF, "vendorId": "PLA-12"}}
+
+GOOD_PAGE_INTERMEDIATE = {
+    "items": [GOOD_ISSUE],
+    "nextCursor": "opaque-1",
+    "complete": False,
+    "query": {"projects": ["PLA"], "openOnly": True},
+    "unavailableProjects": [],
+    "readAt": NOW,
+}
+
+GOOD_PAGE_LAST_PARTIAL = {
+    "items": [],
+    "nextCursor": None,
+    "complete": False,
+    "query": {"projects": ["PLA", "OPS"], "openOnly": True},
+    "unavailableProjects": [{"project": "OPS", "code": "tracker_permission_denied"}],
+    "readAt": NOW,
+}
+
+BAD_PAGE_NO_COMPLETE_FLAG = {k: v for k, v in GOOD_PAGE_INTERMEDIATE.items() if k != "complete"}
+
+GOOD_WORKFLOW = {
+    "project": "PLA",
+    "stateField": "State",
+    "states": [
+        {"id": "s-1", "name": "Open", "resolved": False, "ordinal": 0, "archived": False},
+        {"id": "s-2", "name": "In Progress", "resolved": False, "ordinal": 1, "archived": False},
+        {"id": "s-3", "name": "Done", "resolved": True, "ordinal": 2, "archived": False},
+    ],
+    "complete": True,
+    "readAt": NOW,
+}
+
+CORRELATION = {"deliveryId": DELIVERY, "planHash": SHA_B, "candidateRevision": REV_MERGED, "stage": "accepted"}
+
+ACCEPTANCE_REF = {
+    "decisionId": "7a1c2e3d-2c8b-4a8b-9b3d-2f7e5b6c1a10",
+    "decisionHash": SHA_C,
+    "kind": "owner-acceptance",
+    "basis": "owner",
+    "candidateRevision": REV_MERGED,
+    "deploymentId": "plantpal-dev-2026-09-27-01",
+    "decidedAt": NOW,
+}
+
+GOOD_SYNC_RESOLVE = {
+    "operationKey": f"{DELIVERY}:resolve:accepted:1",
+    "issue": ISSUE_REF,
+    "correlation": CORRELATION,
+    "expectedScope": SHA_A,
+    "expectedState": "In Progress",
+    "payload": {"kind": "resolve", "targetState": "Done", "acceptance": ACCEPTANCE_REF},
+}
+
+GOOD_SYNC_COMMENT_NO_SCOPE = {
+    "operationKey": f"{DELIVERY}:comment:scope-changed:1",
+    "issue": ISSUE_REF,
+    "correlation": {**CORRELATION, "candidateRevision": None, "stage": "plan-invalidated"},
+    "expectedScope": None,
+    "expectedState": None,
+    "payload": {"kind": "comment", "text": "Scope changed; plan re-approval required."},
+}
+
+GOOD_SYNC_LINK = {
+    **GOOD_SYNC_COMMENT_NO_SCOPE,
+    "operationKey": f"{DELIVERY}:link:delivery:1",
+    "payload": {"kind": "link", "url": "http://127.0.0.1:8093/deliveries/" + DELIVERY, "title": "Factory delivery"},
+}
+
+GOOD_SYNC_TRANSITION = {
+    **GOOD_SYNC_RESOLVE,
+    "operationKey": f"{DELIVERY}:transition:implementing:1",
+    "payload": {"kind": "transition", "targetState": "In Progress"},
+}
+
+# Ready-for-test / worker completion / policy / coordinator approval cannot stand in for acceptance.
+BAD_RESOLVE_WITH_POLICY = copy.deepcopy(GOOD_SYNC_RESOLVE)
+BAD_RESOLVE_WITH_POLICY["payload"]["acceptance"].update({"kind": "policy-authorization", "basis": "policy"})
+
+BAD_RESOLVE_READY_FOR_TEST = copy.deepcopy(GOOD_SYNC_RESOLVE)
+BAD_RESOLVE_READY_FOR_TEST["payload"]["acceptance"]["kind"] = "ready-for-testing"
+
+BAD_RESOLVE_WORKER_EXIT = copy.deepcopy(GOOD_SYNC_RESOLVE)
+BAD_RESOLVE_WORKER_EXIT["payload"]["acceptance"] = {"runId": "run-1", "exitCode": 0}
+
+BAD_RESOLVE_COORDINATOR_APPROVAL = copy.deepcopy(GOOD_SYNC_RESOLVE)
+BAD_RESOLVE_COORDINATOR_APPROVAL["payload"]["acceptance"]["basis"] = "coordinator"
+
+BAD_RESOLVE_WITHOUT_ACCEPTANCE = copy.deepcopy(GOOD_SYNC_RESOLVE)
+del BAD_RESOLVE_WITHOUT_ACCEPTANCE["payload"]["acceptance"]
+
+BAD_RESOLVE_WITHOUT_SCOPE = {**GOOD_SYNC_RESOLVE, "expectedScope": None}
+BAD_TRANSITION_WITHOUT_SCOPE = {**GOOD_SYNC_TRANSITION, "expectedScope": None}
+
+BAD_SYNC_SHORT_KEY = {**GOOD_SYNC_LINK, "operationKey": "k1"}
+
+BAD_SYNC_SHORT_SHA = copy.deepcopy(GOOD_SYNC_RESOLVE)
+BAD_SYNC_SHORT_SHA["correlation"]["candidateRevision"] = "2222222"
+
+OP_BASE = {
+    "operationKey": GOOD_SYNC_RESOLVE["operationKey"],
+    "requestHash": SHA_C,
+    "kind": "resolve",
+    "issue": ISSUE_REF,
+    "correlation": CORRELATION,
+    "createdAt": NOW,
+    "updatedAt": NOW,
+}
+
+GOOD_OP_CONFIRMED = {
+    **OP_BASE,
+    "status": "confirmed",
+    "attempts": 1,
+    "readBack": {"observedAt": NOW, "effectPresent": True, "vendorRef": None, "observedState": "Done", "observedScope": SHA_A},
+    "error": None,
+    "retainUntil": "2026-12-26T10:00:00Z",
+}
+
+GOOD_OP_UNCERTAIN = {
+    **OP_BASE,
+    "status": "uncertain",
+    "attempts": 1,
+    "readBack": {"observedAt": NOW, "effectPresent": None, "vendorRef": None, "observedState": None, "observedScope": None},
+    "error": {"code": "tracker_unavailable", "message": "timeout after send", "retryable": False, "ownerAction": None},
+    "retainUntil": None,
+}
+
+GOOD_OP_REJECTED_SCOPE = {
+    **OP_BASE,
+    "status": "rejected",
+    "attempts": 0,
+    "readBack": None,
+    "error": {
+        "code": "scope_changed",
+        "message": "issue description edited since plan approval",
+        "retryable": False,
+        "ownerAction": "Review the edited issue and re-approve the plan.",
+        "details": {"currentScope": SHA_B},
+    },
+    "retainUntil": "2026-12-26T10:00:00Z",
+}
+
+GOOD_OP_RESERVED = {**OP_BASE, "status": "reserved", "attempts": 0, "readBack": None, "error": None, "retainUntil": None}
+
+BAD_OP_CONFIRMED_WITHOUT_READBACK = {**GOOD_OP_CONFIRMED, "readBack": None}
+BAD_OP_CONFIRMED_EFFECT_ABSENT = copy.deepcopy(GOOD_OP_CONFIRMED)
+BAD_OP_CONFIRMED_EFFECT_ABSENT["readBack"]["effectPresent"] = False
+BAD_OP_EXACTLY_ONCE = {**GOOD_OP_CONFIRMED, "status": "delivered-exactly-once"}
+
+EVIDENCE_BASE = {
+    "id": "5d1e2f3a-2c8b-4a8b-9b3d-2f7e5b6c1a10",
+    "deliveryId": DELIVERY,
+    "issue": ISSUE_REF,
+    "criteria": [{"criterionId": "reminder-card", "evaluableAt": "tests"}],
+    "scope": {"planHash": SHA_B, "issueScope": SHA_A},
+    "repository": "plantpal",
+    "observer": "ci-runner",
+    "observedAt": NOW,
+    "recordedAt": NOW,
+    "summary": "CI workflow `test` concluded success at the task revision",
+    "supersedes": None,
+    "legacyReceipt": None,
+    "hash": SHA_C,
+}
+
+GOOD_EVIDENCE_CI_TASK = {
+    **EVIDENCE_BASE,
+    "stage": "ci",
+    "basis": "machine-observation",
+    "result": "passed",
+    "exitCode": 0,
+    "branch": "factory/pla-12",
+    "revision": REV_TASK,
+    "revisionRole": "task",
+    "source": {"producer": "ci-runner", "recordRef": "ci-runner:ci.run/9001/42", "runId": "9001", "artifactRef": None, "url": None},
+    "environment": None,
+}
+
+GOOD_EVIDENCE_LIVE = {
+    **EVIDENCE_BASE,
+    "stage": "live",
+    "basis": "machine-observation",
+    "result": "passed",
+    "exitCode": None,
+    "criteria": [{"criterionId": "reminder-card", "evaluableAt": "live"}],
+    "branch": "dev",
+    "revision": REV_MERGED,
+    "revisionRole": "merged",
+    "source": {"producer": "app-deploy", "recordRef": "plantpal:deployments/plantpal-dev-2026-09-27-01", "runId": None, "artifactRef": "sha256:" + "d" * 64, "url": None},
+    "environment": {
+        "name": "dev",
+        "appIdentity": "plantpal",
+        "deploymentId": "plantpal-dev-2026-09-27-01",
+        "deployedRevision": REV_MERGED,
+        "url": "http://planotell.platform.localhost",
+    },
+    "summary": "Smoke check: reminder card rendered on the deployed dev candidate",
+}
+
+# Missing exit code stays unknown; a worker's report is only a claim.
+GOOD_EVIDENCE_WORKER_CLAIM_UNKNOWN = {
+    **GOOD_EVIDENCE_CI_TASK,
+    "stage": "tests",
+    "basis": "worker-claim",
+    "result": "unknown",
+    "exitCode": None,
+    "source": {"producer": "agent-runner", "recordRef": None, "runId": "run-77", "artifactRef": None, "url": None},
+    "summary": "Agent report says tests pass; run record has no exit code",
+}
+
+GOOD_EVIDENCE_FROM_LEGACY = {
+    **GOOD_EVIDENCE_CI_TASK,
+    "stage": "implementation",
+    "basis": "owner-attestation",
+    "source": {"producer": "owner", "recordRef": None, "runId": None, "artifactRef": None, "url": None},
+    "legacyReceipt": {"id": "6f8f2e2a-2c8b-4a8b-9b3d-2f7e5b6c1a10", "hash": SHA_B},
+}
+
+BAD_EVIDENCE_LIVE_NO_ENV = {**GOOD_EVIDENCE_LIVE, "environment": None}
+BAD_EVIDENCE_LIVE_TASK_REVISION = {**GOOD_EVIDENCE_LIVE, "revisionRole": "task"}
+BAD_EVIDENCE_MERGE_TASK_REVISION = {**GOOD_EVIDENCE_CI_TASK, "stage": "merge", "revisionRole": "task"}
+BAD_EVIDENCE_SHORT_SHA = {**GOOD_EVIDENCE_CI_TASK, "revision": "1111111"}
+BAD_EVIDENCE_ACCEPTANCE_STAGE = {**GOOD_EVIDENCE_CI_TASK, "stage": "acceptance"}  # acceptance is a decision
+BAD_EVIDENCE_POLICY_BASIS = {**GOOD_EVIDENCE_CI_TASK, "basis": "policy-authorization"}
+BAD_EVIDENCE_MACHINE_NO_RECORD = copy.deepcopy(GOOD_EVIDENCE_CI_TASK)
+BAD_EVIDENCE_MACHINE_NO_RECORD["source"]["recordRef"] = None
+BAD_EVIDENCE_PROD_ENV = copy.deepcopy(GOOD_EVIDENCE_LIVE)
+BAD_EVIDENCE_PROD_ENV["environment"]["name"] = "production"
+BAD_EVIDENCE_URL_AS_DEPLOYMENT = copy.deepcopy(GOOD_EVIDENCE_LIVE)
+del BAD_EVIDENCE_URL_AS_DEPLOYMENT["environment"]["deploymentId"]
+BAD_EVIDENCE_PRE_DEPLOY_WITH_ENV = {**GOOD_EVIDENCE_CI_TASK, "environment": GOOD_EVIDENCE_LIVE["environment"]}
+
+DECISION_BASE = {
+    "id": ACCEPTANCE_REF["decisionId"],
+    "deliveryId": DELIVERY,
+    "issue": ISSUE_REF,
+    "actor": "owner",
+    "policy": None,
+    "scope": {"planHash": SHA_B, "issueScope": SHA_A},
+    "decidedAt": NOW,
+    "note": "Tested on dev; accepted.",
+    "hash": SHA_C,
+}
+
+GOOD_DECISION_ACCEPT = {
+    **DECISION_BASE,
+    "kind": "owner-acceptance",
+    "basis": "owner",
+    "candidateRevision": REV_MERGED,
+    "deploymentId": "plantpal-dev-2026-09-27-01",
+    "evidence": [SHA_A],
+}
+
+GOOD_DECISION_PLAN = {**DECISION_BASE, "kind": "plan-approval", "basis": "owner", "candidateRevision": None, "deploymentId": None, "evidence": []}
+
+GOOD_DECISION_POLICY = {
+    **GOOD_DECISION_PLAN,
+    "kind": "policy-authorization",
+    "basis": "policy",
+    "actor": "factory-policy",
+    "policy": {"policyId": "routine-v1", "policyVersion": 1, "policyHash": SHA_A},
+}
+
+BAD_DECISION_POLICY_AS_ACCEPTANCE = {**GOOD_DECISION_ACCEPT, "basis": "policy", "policy": GOOD_DECISION_POLICY["policy"]}
+BAD_DECISION_POLICY_AS_OWNER_CLICK = {**GOOD_DECISION_POLICY, "basis": "owner", "policy": None}
+BAD_DECISION_POLICY_NO_REF = {**GOOD_DECISION_POLICY, "policy": None}
+BAD_DECISION_ACCEPT_NO_CANDIDATE = {**GOOD_DECISION_ACCEPT, "candidateRevision": None}
+BAD_DECISION_ACCEPT_NO_EVIDENCE = {**GOOD_DECISION_ACCEPT, "evidence": []}
+BAD_DECISION_COORDINATOR = {**GOOD_DECISION_ACCEPT, "kind": "coordinator-approval"}
+BAD_DECISION_READY_FOR_TEST = {**GOOD_DECISION_ACCEPT, "kind": "ready-for-testing"}
+
+GOOD_PRODUCER_RUNNER_UNKNOWN = {
+    "producer": "agent-runner",
+    "operationId": "run-77",
+    "correlation": {"deliveryId": DELIVERY, "operationKey": f"{DELIVERY}:dispatch:implement:1"},
+    "repository": "plantpal",
+    "branch": "factory/pla-12",
+    "revision": None,
+    "outcome": "unknown",
+    "exitCode": None,
+    "observedAt": NOW,
+    "nativeRef": "agent-runner:runs/run-77",
+    "artifactRef": None,
+    "environment": None,
+    "checks": [],
+}
+
+GOOD_PRODUCER_DEPLOY = {
+    "producer": "app-deploy",
+    "operationId": "plantpal-dev-2026-09-27-01",
+    "correlation": {"deliveryId": DELIVERY, "operationKey": None},
+    "repository": "plantpal",
+    "branch": "dev",
+    "revision": REV_MERGED,
+    "outcome": "passed",
+    "exitCode": None,
+    "observedAt": NOW,
+    "nativeRef": "plantpal:deployments/plantpal-dev-2026-09-27-01",
+    "artifactRef": None,
+    "environment": GOOD_EVIDENCE_LIVE["environment"],
+    "checks": [{"name": "smoke:reminder-card", "criterionId": "reminder-card", "outcome": "passed", "exitCode": 0}],
+}
+
+GOOD_PRODUCER_CI_UNAVAILABLE = {
+    **GOOD_PRODUCER_RUNNER_UNKNOWN,
+    "producer": "ci-runner",
+    "operationId": "9001/42",
+    "outcome": "unavailable",
+    "nativeRef": "ci-runner:ci.run/9001/42",
+}
+
+BAD_PRODUCER_EXIT_DEFAULTED = {**GOOD_PRODUCER_RUNNER_UNKNOWN, "exitCode": "0"}
+BAD_PRODUCER_ACCEPTED = {**GOOD_PRODUCER_DEPLOY, "outcome": "accepted"}
+BAD_PRODUCER_OTHER = {**GOOD_PRODUCER_DEPLOY, "producer": "demand-coordinator"}
+
+GOOD_ERROR = {"code": "operation_key_conflict", "message": "same key, different body", "retryable": False}
+BAD_ERROR_NO_RETRYABLE = {"code": "scope_changed", "message": "changed"}
+
+CASES = [
+    ("delivery.issue-ref.json", ISSUE_REF, True),
+    ("delivery.issue.json", GOOD_ISSUE, True),
+    ("delivery.issue.json", GOOD_ISSUE_UNKNOWN_DEPENDENCY, True),
+    ("delivery.issue.json", BAD_ISSUE_DEPENDENCY_SATISFIED_BY_OMISSION, False),
+    ("delivery.issue.json", BAD_ISSUE_CARRIES_TOKEN, False),
+    ("delivery.issue.json", BAD_ISSUE_READABLE_AS_VENDOR_ID, False),
+    ("delivery.issue-page.json", GOOD_PAGE_INTERMEDIATE, True),
+    ("delivery.issue-page.json", GOOD_PAGE_LAST_PARTIAL, True),
+    ("delivery.issue-page.json", BAD_PAGE_NO_COMPLETE_FLAG, False),
+    ("delivery.workflow.json", GOOD_WORKFLOW, True),
+    ("delivery.sync-request.json", GOOD_SYNC_RESOLVE, True),
+    ("delivery.sync-request.json", GOOD_SYNC_COMMENT_NO_SCOPE, True),
+    ("delivery.sync-request.json", GOOD_SYNC_LINK, True),
+    ("delivery.sync-request.json", GOOD_SYNC_TRANSITION, True),
+    ("delivery.sync-request.json", BAD_RESOLVE_WITH_POLICY, False),
+    ("delivery.sync-request.json", BAD_RESOLVE_READY_FOR_TEST, False),
+    ("delivery.sync-request.json", BAD_RESOLVE_WORKER_EXIT, False),
+    ("delivery.sync-request.json", BAD_RESOLVE_COORDINATOR_APPROVAL, False),
+    ("delivery.sync-request.json", BAD_RESOLVE_WITHOUT_ACCEPTANCE, False),
+    ("delivery.sync-request.json", BAD_RESOLVE_WITHOUT_SCOPE, False),
+    ("delivery.sync-request.json", BAD_TRANSITION_WITHOUT_SCOPE, False),
+    ("delivery.sync-request.json", BAD_SYNC_SHORT_KEY, False),
+    ("delivery.sync-request.json", BAD_SYNC_SHORT_SHA, False),
+    ("delivery.sync-operation.json", GOOD_OP_CONFIRMED, True),
+    ("delivery.sync-operation.json", GOOD_OP_UNCERTAIN, True),
+    ("delivery.sync-operation.json", GOOD_OP_REJECTED_SCOPE, True),
+    ("delivery.sync-operation.json", GOOD_OP_RESERVED, True),
+    ("delivery.sync-operation.json", BAD_OP_CONFIRMED_WITHOUT_READBACK, False),
+    ("delivery.sync-operation.json", BAD_OP_CONFIRMED_EFFECT_ABSENT, False),
+    ("delivery.sync-operation.json", BAD_OP_EXACTLY_ONCE, False),
+    ("delivery.evidence.json", GOOD_EVIDENCE_CI_TASK, True),
+    ("delivery.evidence.json", GOOD_EVIDENCE_LIVE, True),
+    ("delivery.evidence.json", GOOD_EVIDENCE_WORKER_CLAIM_UNKNOWN, True),
+    ("delivery.evidence.json", GOOD_EVIDENCE_FROM_LEGACY, True),
+    ("delivery.evidence.json", BAD_EVIDENCE_LIVE_NO_ENV, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_LIVE_TASK_REVISION, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_MERGE_TASK_REVISION, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_SHORT_SHA, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_ACCEPTANCE_STAGE, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_POLICY_BASIS, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_MACHINE_NO_RECORD, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_PROD_ENV, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_URL_AS_DEPLOYMENT, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_PRE_DEPLOY_WITH_ENV, False),
+    ("delivery.decision.json", GOOD_DECISION_ACCEPT, True),
+    ("delivery.decision.json", GOOD_DECISION_PLAN, True),
+    ("delivery.decision.json", GOOD_DECISION_POLICY, True),
+    ("delivery.decision.json", BAD_DECISION_POLICY_AS_ACCEPTANCE, False),
+    ("delivery.decision.json", BAD_DECISION_POLICY_AS_OWNER_CLICK, False),
+    ("delivery.decision.json", BAD_DECISION_POLICY_NO_REF, False),
+    ("delivery.decision.json", BAD_DECISION_ACCEPT_NO_CANDIDATE, False),
+    ("delivery.decision.json", BAD_DECISION_ACCEPT_NO_EVIDENCE, False),
+    ("delivery.decision.json", BAD_DECISION_COORDINATOR, False),
+    ("delivery.decision.json", BAD_DECISION_READY_FOR_TEST, False),
+    ("delivery.producer-result.json", GOOD_PRODUCER_RUNNER_UNKNOWN, True),
+    ("delivery.producer-result.json", GOOD_PRODUCER_DEPLOY, True),
+    ("delivery.producer-result.json", GOOD_PRODUCER_CI_UNAVAILABLE, True),
+    ("delivery.producer-result.json", BAD_PRODUCER_EXIT_DEFAULTED, False),
+    ("delivery.producer-result.json", BAD_PRODUCER_ACCEPTED, False),
+    ("delivery.producer-result.json", BAD_PRODUCER_OTHER, False),
+    ("delivery.error.json", GOOD_ERROR, True),
+    ("delivery.error.json", BAD_ERROR_NO_RETRYABLE, False),
+]
+
+
+def registry() -> Registry:
+    reg = Registry()
+    for path in SCHEMAS.glob("*.json"):
+        resource = Resource.from_contents(json.loads(path.read_text(encoding="utf-8")))
+        # Resolve both the $id and the bare relative filename used in cross-file $refs.
+        reg = reg.with_resource(resource.contents["$id"], resource)
+        reg = reg.with_resource(path.name, resource)
+        reg = reg.with_resource("https://platform/contracts/delivery/" + path.name, resource)
+    return reg
+
+
+def schema_for(name: str) -> dict:
+    return json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
+
+
+def check_bindings() -> list[str]:
+    """Round-trip the positive fixtures through the generated Python models."""
+    sys.path.insert(0, str(ROOT / "gen" / "python"))
+    from platform_contracts.delivery import (
+        delivery_decision,
+        delivery_evidence,
+        delivery_issue,
+        delivery_issue_page,
+        delivery_producer_result,
+        delivery_sync_operation,
+        delivery_sync_request,
+        delivery_workflow,
+    )
+
+    models = {
+        "delivery.issue.json": delivery_issue.DeliveryIssue,
+        "delivery.issue-page.json": delivery_issue_page.DeliveryIssuePage,
+        "delivery.workflow.json": delivery_workflow.DeliveryWorkflow,
+        "delivery.sync-request.json": delivery_sync_request.DeliverySyncRequest,
+        "delivery.sync-operation.json": delivery_sync_operation.DeliverySyncOperation,
+        "delivery.evidence.json": delivery_evidence.DeliveryEvidence,
+        "delivery.decision.json": delivery_decision.DeliveryDecision,
+        "delivery.producer-result.json": delivery_producer_result.DeliveryProducerResult,
+    }
+    failures = []
+    for name, doc, ok in CASES:
+        model = models.get(name)
+        if model is None or not ok:
+            continue
+        try:
+            obj = model.model_validate(doc)
+            again = model.model_validate_json(obj.model_dump_json(by_alias=True))
+            assert again == obj
+        except Exception as exc:  # noqa: BLE001
+            failures.append(f"binding {name}: {exc}")
+    return failures
+
+
+def main() -> int:
+    reg = registry()
+    failures = []
+    for name, doc, expect_valid in CASES:
+        validator = Draft202012Validator(schema_for(name), registry=reg, format_checker=FormatChecker())
+        errors = list(validator.iter_errors(doc))
+        if expect_valid and errors:
+            failures.append(f"{name}: expected valid, got {errors[0].message}")
+        if not expect_valid and not errors:
+            failures.append(f"{name}: expected INVALID fixture to be rejected")
+
+    api = yaml.safe_load(API.read_text(encoding="utf-8"))
+    for route in [
+        "/delivery/v1/projects/{project}/workflow",
+        "/delivery/v1/issues",
+        "/delivery/v1/issues/{vendorId}",
+        "/delivery/v1/operations/{operationKey}",
+        "/delivery/v1/operations/{operationKey}/reconcile",
+        "/delivery/v1/operations",
+    ]:
+        if route not in api["paths"]:
+            failures.append(f"openapi: missing route {route}")
+
+    failures += check_bindings()
+
+    for f in failures:
+        print("FAIL ", f)
+    print(f"{len(CASES)} schema cases, {len(failures)} failures")
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

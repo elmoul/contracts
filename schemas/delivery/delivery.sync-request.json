@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/delivery/delivery.sync-request",
+  "title": "DeliverySyncRequest",
+  "description": "Body of `PUT /delivery/v1/operations/{operationKey}`: Factory asks the `youtrack` service to perform ONE issue write (delivery link, comment, non-resolving transition, or owner-accepted resolve). The service is the only holder of the vendor credential and performs the write itself (D113 clause 1). Idempotency and recovery semantics are in `docs/task-delivery.md` §Recovery; in short: the same `operationKey` with the same canonical body replays the stored operation, the same key with a different body is `operation_key_conflict`, and an uncertain vendor outcome is settled by read-back, never by blind resend.",
+  "type": "object",
+  "required": ["operationKey", "issue", "correlation", "expectedScope", "expectedState", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "operationKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,199}$",
+      "description": "Minted by Factory and persisted in Factory's own store (reserved) BEFORE the first send, so a Factory restart can look the operation up instead of minting a new one. MUST equal the `{operationKey}` path segment. Recommended form: `<deliveryId>:<kind>:<stage-or-purpose>:<n>`."
+    },
+    "issue": { "$ref": "delivery.issue-ref.json" },
+    "correlation": { "$ref": "#/$defs/correlation" },
+    "expectedScope": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "The `scope.fingerprint` Factory's authorization was granted against. The service re-reads the issue and rejects with `scope_changed` (no write) on mismatch. May be `null` only for `link` and `comment` (so Factory can still post e.g. 'scope changed, re-approval required'); REQUIRED non-null for `transition` and `resolve`."
+    },
+    "expectedState": {
+      "type": ["string", "null"],
+      "description": "Optional precondition: the state name Factory last observed. Mismatch is rejected `state_changed` (no write). `null` = no state precondition."
+    },
+    "payload": {
+      "oneOf": [
+        { "$ref": "#/$defs/linkPayload" },
+        { "$ref": "#/$defs/commentPayload" },
+        { "$ref": "#/$defs/transitionPayload" },
+        { "$ref": "#/$defs/resolvePayload" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "payload": { "properties": { "kind": { "enum": ["transition", "resolve"] } }, "required": ["kind"] } },
+        "required": ["payload"]
+      },
+      "then": { "properties": { "expectedScope": { "type": "string" } } }
+    }
+  ],
+  "$defs": {
+    "correlation": {
+      "title": "DeliveryCorrelation",
+      "type": "object",
+      "required": ["deliveryId", "planHash", "candidateRevision", "stage"],
+      "additionalProperties": false,
+      "properties": {
+        "deliveryId": { "type": "string", "format": "uuid", "description": "Factory's delivery (outcome) record id." },
+        "planHash": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "The approved plan/scope hash this write belongs to." },
+        "candidateRevision": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Full 40-hex commit SHA of the candidate this write concerns; `null` before a candidate exists."
+        },
+        "stage": { "type": "string", "maxLength": 80, "description": "Factory stage name this write reports (e.g. `planned`, `implementing`, `ready-for-testing`, `accepted`). Free text over Factory's own stage list." }
+      }
+    },
+    "linkPayload": {
+      "title": "DeliveryLinkPayload",
+      "type": "object",
+      "required": ["kind", "url", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "const": "link" },
+        "url": { "type": "string", "format": "uri", "description": "Factory delivery page URL." },
+        "title": { "type": "string", "maxLength": 200 }
+      },
+      "description": "Attach Factory's delivery link to the issue. Representation on the vendor side (a marked comment or an existing URL field) is the service's choice, but it MUST be identifiable on read-back and surface in `delivery.issue.deliveryLinks`."
+    },
+    "commentPayload": {
+      "title": "DeliveryCommentPayload",
+      "type": "object",
+      "required": ["kind", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "const": "comment" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 20000, "description": "Markdown. The service appends an invisible or trailing marker carrying `operationKey` so read-back can find exactly this comment." }
+      }
+    },
+    "transitionPayload": {
+      "title": "DeliveryTransitionPayload",
+      "type": "object",
+      "required": ["kind", "targetState"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "const": "transition" },
+        "targetState": { "type": "string", "description": "An existing state name from `delivery.workflow` whose `resolved` is false. A resolved target is rejected `acceptance_required`: only `resolve` can resolve." }
+      }
+    },
+    "resolvePayload": {
+      "title": "DeliveryResolvePayload",
+      "type": "object",
+      "required": ["kind", "targetState", "acceptance"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "const": "resolve" },
+        "targetState": { "type": "string", "description": "An existing state whose `resolved` is true." },
+        "acceptance": { "$ref": "#/$defs/acceptanceRef" }
+      }
+    },
+    "acceptanceRef": {
+      "title": "DeliveryAcceptanceRef",
+      "type": "object",
+      "required": ["decisionId", "decisionHash", "kind", "basis", "candidateRevision", "deploymentId", "decidedAt"],
+      "additionalProperties": false,
+      "description": "Reference to the owner's explicit acceptance, a `delivery.decision` of kind `owner-acceptance`. The schema makes it structurally impossible to send a policy authorization, a ready-for-test state, a machine verification, a worker exit or a coordinator approval here, but a schema alone does NOT authenticate an owner: the service must also enforce the checks listed in `docs/task-delivery.md` §Resolve enforcement.",
+      "properties": {
+        "decisionId": { "type": "string", "format": "uuid" },
+        "decisionHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "kind": { "type": "string", "const": "owner-acceptance" },
+        "basis": { "type": "string", "const": "owner" },
+        "candidateRevision": { "type": "string", "pattern": "^[0-9a-f]{40}$", "description": "Must equal `correlation.candidateRevision`." },
+        "deploymentId": { "type": "string", "minLength": 1, "description": "The exact dev deployment the owner tested." },
+        "decidedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

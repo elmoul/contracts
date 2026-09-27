@@ -16,6 +16,41 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.31.0 — 2026-09-27
+
+**Additive, TypeScript + Python bindings** (tag `v0.31.0`). Fulfils demand
+`factory-20260927-task-delivery-contracts` (D113 YouTrack → Factory task
+delivery, work-order chunk 2). Full reference: `docs/task-delivery.md`.
+
+- New `schemas/delivery/` (JSON Schema 2020-12): `delivery.issue-ref`,
+  `delivery.issue`, `delivery.issue-page`, `delivery.workflow` (credential-owning
+  `youtrack` reads: stable identity, scope fingerprint that excludes Factory's own
+  writes, epic/subtasks, dependencies with `unknown` + `dependenciesComplete`,
+  pagination with `complete`/`unavailableProjects`); `delivery.sync-request`,
+  `delivery.sync-operation`, `delivery.error` (link/comment/transition/resolve
+  writes with durable `operationKey` + `requestHash`, replay/conflict, read-back,
+  `uncertain` + reconcile, restart, retention. It claims no transaction and no
+  exactly-once delivery); `delivery.evidence` (stage-aware observation: criterion
+  `evaluableAt`, full 40-hex revision + `task`/`merged` role, verified dev
+  `environment`, `basis` machine-observation/worker-claim/owner-attestation, results
+  `unknown`/`unavailable`, nullable `exitCode`, `legacyReceipt`);
+  `delivery.decision` (plan approval / policy authorization / owner acceptance /
+  request changes / abandon; policy is never an owner click);
+  `delivery.producer-result` (runner/CI/app-deploy normalized result).
+- New `schemas/delivery-api/youtrack-delivery.openapi.yaml`: `/delivery/v1`
+  routes for the `youtrack` service. The existing planner routes are unchanged.
+- **Unchanged:** every `schemas/factory/*`, `schemas/agent-runner/*` and
+  `schemas/youtrack/planner.*` file. Legacy `factory.evidence-receipt` records keep
+  their bytes and hashes.
+- Bindings: `gen/python/platform_contracts/delivery/` (datamodel-codegen,
+  directory batch) wired into `platform_contracts/__init__.py`; `gen/ts/delivery-*.ts`
+  + `dist/`, re-exported from `index.ts`. No Java binding (no Java producer or
+  consumer yet).
+- Tests: `tests/validate_delivery.py` (62 positive/negative fixtures, an OpenAPI
+  route check and a Python binding round-trip), added to `tests/run_all.py`.
+- **Not live:** no service implements these routes or producer mappings yet. See
+  the handoff matrix in `docs/task-delivery.md`.
+
 ## v0.30.0 — 2026-09-27
 
 **Additive, Java + TypeScript + Python bindings** (tag `v0.30.0`). Fulfils

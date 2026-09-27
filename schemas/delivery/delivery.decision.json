@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/delivery/delivery.decision",
+  "title": "DeliveryDecision",
+  "description": "One immutable AUTHORIZATION or ACCEPTANCE fact recorded by Factory for a D113 delivery, deliberately separate from `delivery.evidence` (observations). D113 clause 3: worker exit, report approval, coordinator approval and issue synchronization are separate facts, and none of them is a decision here. Clause 4: a policy authorization is recorded as policy-derived, never as an owner click. Only `owner-acceptance` resolves an issue (clause 2), and only it can be referenced by a `resolve` sync request. A schema cannot authenticate an owner: Factory must only create `basis: owner` records from an authenticated owner action in its own UI (see `docs/task-delivery.md`).",
+  "type": "object",
+  "required": ["id", "deliveryId", "issue", "kind", "basis", "actor", "policy", "scope", "candidateRevision", "deploymentId", "evidence", "decidedAt", "note", "hash"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "deliveryId": { "type": "string", "format": "uuid" },
+    "issue": { "oneOf": [{ "$ref": "delivery.issue-ref.json" }, { "type": "null" }] },
+    "kind": {
+      "type": "string",
+      "enum": ["plan-approval", "policy-authorization", "owner-acceptance", "request-changes", "abandon-candidate"],
+      "description": "`plan-approval`: owner approves the bounded plan at `scope`. `policy-authorization`: an owner-adopted policy authorized the plan (Phase 2). `owner-acceptance`: owner tested `candidateRevision` at `deploymentId` and accepts; the only kind that may resolve the issue. `request-changes`: owner rejects and starts a linked correction. `abandon-candidate`: owner releases the per-app dev candidate hold without accepting."
+    },
+    "basis": {
+      "type": "string",
+      "enum": ["owner", "policy"],
+      "description": "`owner`: an authenticated owner action. `policy`: derived by applying `policy`; never displayed or counted as an owner click."
+    },
+    "actor": { "type": "string", "minLength": 2, "maxLength": 160, "description": "Owner identity, or the policy engine's service name." },
+    "policy": {
+      "oneOf": [{ "$ref": "#/$defs/policyRef" }, { "type": "null" }],
+      "description": "Non-null exactly when `basis` is `policy`."
+    },
+    "scope": { "$ref": "delivery.evidence.json#/$defs/scopeBinding" },
+    "candidateRevision": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
+    "deploymentId": { "type": ["string", "null"], "minLength": 1 },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+      "description": "Hashes of the `delivery.evidence` records shown to the decider."
+    },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "note": { "type": "string", "minLength": 1, "maxLength": 6000 },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "SHA-256 over this record's canonical JSON with `hash` omitted; referenced as `decisionHash`." }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "enum": ["plan-approval", "owner-acceptance", "request-changes", "abandon-candidate"] } }, "required": ["kind"] },
+      "then": { "properties": { "basis": { "const": "owner" }, "policy": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "policy-authorization" } }, "required": ["kind"] },
+      "then": { "properties": { "basis": { "const": "policy" }, "policy": { "$ref": "#/$defs/policyRef" } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "owner-acceptance" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "candidateRevision": { "type": "string" },
+          "deploymentId": { "type": "string" },
+          "evidence": { "minItems": 1 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "policyRef": {
+      "title": "DeliveryPolicyRef",
+      "type": "object",
+      "required": ["policyId", "policyVersion", "policyHash"],
+      "additionalProperties": false,
+      "properties": {
+        "policyId": { "type": "string", "minLength": 1 },
+        "policyVersion": { "type": "integer", "minimum": 1 },
+        "policyHash": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Hash of the owner-adopted policy text in force." }
+      }
+    }
+  }
+}

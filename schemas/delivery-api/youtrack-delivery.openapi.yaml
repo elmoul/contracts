@@ -1,0 +1,211 @@
+openapi: 3.1.0
+info:
+  title: youtrack task-delivery surface (D113)
+  version: 0.31.0
+  description: >
+    Credential-owning delivery surface served by the `youtrack` service for its only
+    authorized consumer, `factory` (D113 clause 1). Payload shapes are the JSON Schemas
+    in `schemas/delivery/`; recovery semantics are in `docs/task-delivery.md`.
+    Publishing this document does NOT mean any route is implemented: as of v0.31.0
+    none is (see the handoff matrix in `docs/task-delivery.md`). The existing planner
+    routes (`/projects`, `/models`, `/plans...`) are unchanged and are not part of this
+    surface. Every response is `{"data": <payload>}` on success or
+    `{"error": delivery.error}` on failure. Host/port are the service's own
+    (PLATFORM_STATE §3), loopback-only (D040).
+
+    Caller trust: the service MUST authenticate the caller as the enrolled Factory
+    boundary (a service credential issued by and verified by `youtrack`, never the
+    YouTrack vendor token) and reject everything else with `caller_not_authorized`.
+    A free-text caller header is not sufficient. The mechanism is the `youtrack`
+    spec's choice, not fixed here.
+servers:
+  - url: http://127.0.0.1:{port}
+    variables:
+      port:
+        default: "8095"
+        description: Assigned in PLATFORM_STATE; not ruled by this contract.
+security:
+  - factoryCaller: []
+paths:
+  /delivery/v1/projects/{project}/workflow:
+    get:
+      operationId: getDeliveryWorkflow
+      summary: Existing workflow state metadata of an enabled project (read-only).
+      parameters:
+        - $ref: "#/components/parameters/project"
+      responses:
+        "200": { $ref: "#/components/responses/Workflow" }
+        default: { $ref: "#/components/responses/Error" }
+  /delivery/v1/issues:
+    get:
+      operationId: listDeliveryIssues
+      summary: Page through issues of enabled projects (Phase 2 poll).
+      parameters:
+        - name: project
+          in: query
+          required: true
+          style: form
+          explode: true
+          schema: { type: array, items: { type: string }, minItems: 1 }
+        - name: openOnly
+          in: query
+          schema: { type: boolean, default: true }
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        "200": { $ref: "#/components/responses/IssuePage" }
+        default: { $ref: "#/components/responses/Error" }
+  /delivery/v1/issues/{vendorId}:
+    get:
+      operationId: getDeliveryIssue
+      summary: Read one issue (Phase 1 selection, re-read before execution and before acceptance).
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[0-9]+-[0-9]+$" }
+      responses:
+        "200": { $ref: "#/components/responses/Issue" }
+        default: { $ref: "#/components/responses/Error" }
+  /delivery/v1/operations/{operationKey}:
+    parameters:
+      - $ref: "#/components/parameters/operationKey"
+    put:
+      operationId: submitDeliveryOperation
+      summary: Submit (or idempotently replay) one issue write.
+      description: >
+        201 = new key accepted; the body reports the status reached (normally
+        `confirmed` or `rejected`; `uncertain` if the vendor outcome is unknown).
+        200 = same key + same canonical body: the stored record is returned, no second
+        vendor write. 409 `operation_key_conflict` = same key, different body.
+        A `rejected` precondition failure is returned as 201/200 with the record (so it
+        is durable and lookup-able), not as an HTTP error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "../delivery/delivery.sync-request.json" }
+      responses:
+        "200": { $ref: "#/components/responses/Operation" }
+        "201": { $ref: "#/components/responses/Operation" }
+        default: { $ref: "#/components/responses/Error" }
+    get:
+      operationId: getDeliveryOperation
+      summary: Durable lookup after restart or an uncertain response. 404 `operation_not_found` means never stored.
+      responses:
+        "200": { $ref: "#/components/responses/Operation" }
+        default: { $ref: "#/components/responses/Error" }
+  /delivery/v1/operations/{operationKey}/reconcile:
+    parameters:
+      - $ref: "#/components/parameters/operationKey"
+    post:
+      operationId: reconcileDeliveryOperation
+      summary: Force a read-back of an `uncertain`/`submitted` operation.
+      description: >
+        Reads the issue and settles the record: effect present -> `confirmed`; proven
+        absent -> the service MAY resubmit the SAME stored request once (attempts+1)
+        and read back again; read-back failed -> stays `uncertain`. Terminal records
+        are returned unchanged. Never creates a new key.
+      responses:
+        "200": { $ref: "#/components/responses/Operation" }
+        default: { $ref: "#/components/responses/Error" }
+  /delivery/v1/operations:
+    get:
+      operationId: listDeliveryOperations
+      summary: List operations for restart reconciliation.
+      parameters:
+        - name: deliveryId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items: { type: string, enum: [reserved, submitted, confirmed, rejected, failed, uncertain] }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Page of operations.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [items, nextCursor]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "../delivery/delivery.sync-operation.json" }
+                      nextCursor: { type: [string, "null"] }
+        default: { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    factoryCaller:
+      type: http
+      scheme: bearer
+      description: >
+        Placeholder for the Factory-boundary service credential the youtrack spec
+        chooses. It is NOT a YouTrack vendor token and grants nothing at YouTrack.
+  parameters:
+    project:
+      name: project
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[A-Z][A-Z0-9_]*$" }
+    operationKey:
+      name: operationKey
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{15,199}$" }
+  responses:
+    Workflow:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "../delivery/delivery.workflow.json" } }
+    IssuePage:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "../delivery/delivery.issue-page.json" } }
+    Issue:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "../delivery/delivery.issue.json" } }
+    Operation:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "../delivery/delivery.sync-operation.json" } }
+    Error:
+      description: Error envelope; HTTP status per `delivery.error` code table.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties: { error: { $ref: "../delivery/delivery.error.json" } }

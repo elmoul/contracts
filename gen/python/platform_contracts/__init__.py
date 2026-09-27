@@ -35,6 +35,18 @@ from platform_contracts.youtrack import (
     planner_confirm_request,
     planner_error,
 )
+from platform_contracts.delivery import (
+    delivery_issue_ref,
+    delivery_issue,
+    delivery_issue_page,
+    delivery_workflow,
+    delivery_sync_request,
+    delivery_sync_operation,
+    delivery_error,
+    delivery_evidence,
+    delivery_decision,
+    delivery_producer_result,
+)
 
 __all__ = [
     "manifest",
@@ -75,4 +87,14 @@ __all__ = [
     "planner_plan_run",
     "planner_confirm_request",
     "planner_error",
+    "delivery_issue_ref",
+    "delivery_issue",
+    "delivery_issue_page",
+    "delivery_workflow",
+    "delivery_sync_request",
+    "delivery_sync_operation",
+    "delivery_error",
+    "delivery_evidence",
+    "delivery_decision",
+    "delivery_producer_result",
 ]

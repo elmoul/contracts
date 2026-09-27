@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/delivery/delivery.issue",
+  "title": "DeliveryIssue",
+  "description": "One YouTrack issue as read by the credential-owning `youtrack` service for `factory` (D113 clause 1). Returned by `GET /delivery/v1/issues/{vendorId}` and as the element of `delivery.issue-page`. A snapshot, not a live object: `readAt` says when it was true. Factory never receives a YouTrack credential; this shape carries no token, no authenticated vendor URL, and nothing that lets a consumer write to YouTrack directly.",
+  "type": "object",
+  "required": ["issue", "summary", "description", "acceptance", "type", "priority", "state", "created", "updated", "resolvedAt", "scope", "parent", "subtasks", "dependencies", "dependenciesComplete", "deliveryLinks", "readAt"],
+  "additionalProperties": false,
+  "properties": {
+    "issue": { "$ref": "delivery.issue-ref.json" },
+    "summary": { "type": "string", "maxLength": 1000 },
+    "description": {
+      "type": "string",
+      "maxLength": 200000,
+      "description": "Raw issue description as stored (Markdown). Empty string when the issue has none."
+    },
+    "acceptance": {
+      "type": ["string", "null"],
+      "maxLength": 50000,
+      "description": "Acceptance material the service could identify on the issue (a configured custom field, or an `Acceptance criteria` section of the description), verbatim. `null` when none was found. The service never synthesizes criteria; deriving testable criteria is Factory's job (work order step 2)."
+    },
+    "type": {
+      "type": "string",
+      "description": "The project's `Type` field value, verbatim (e.g. `Task`, `Bug`, `Epic`)."
+    },
+    "priority": {
+      "type": ["string", "null"],
+      "description": "The project's `Priority` value, verbatim; `null` when the project has no priority field or it is unset."
+    },
+    "state": { "$ref": "#/$defs/issueState" },
+    "created": { "type": "string", "format": "date-time" },
+    "updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Vendor last-modified time. Changes on ANY edit, including Factory's own comments/links/transitions, so it is an ordering key only, never a scope-change signal; use `scope.fingerprint` for that."
+    },
+    "resolvedAt": { "type": ["string", "null"], "format": "date-time" },
+    "scope": { "$ref": "#/$defs/scope" },
+    "parent": {
+      "oneOf": [{ "$ref": "delivery.issue-ref.json" }, { "type": "null" }],
+      "description": "The epic/parent issue (YouTrack `subtask of`), or `null`."
+    },
+    "subtasks": {
+      "type": "array",
+      "items": { "$ref": "delivery.issue-ref.json" },
+      "description": "Direct subtasks (`parent for`). Non-empty means this issue is a container; Factory treats containers as not directly executable (work order step 2: epics are containers, not jobs)."
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependency" },
+      "description": "Every `depends on` / `is required for` link the service could read."
+    },
+    "dependenciesComplete": {
+      "type": "boolean",
+      "description": "`true` only when every dependency link on the issue was read AND each linked issue's resolution was determined. `false` when any linked issue was inaccessible, the link list was truncated, or the link read failed. Consumer rule: dependencies are satisfied ONLY when this is `true` and every `depends-on` entry has `status: resolved`. Anything else is blocked or unknown, never satisfied."
+    },
+    "deliveryLinks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/deliveryLink" },
+      "description": "Factory delivery links this service previously wrote to the issue and can still read back (sync operation kind `link`). Lets Factory find and reopen its existing active delivery for the issue instead of creating a second one."
+    },
+    "readAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "issueState": {
+      "title": "DeliveryIssueState",
+      "type": "object",
+      "required": ["field", "name", "resolved"],
+      "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string", "description": "Name of the project's state custom field (usually `State`)." },
+        "name": { "type": "string", "description": "Actual current state value, verbatim from the project's own workflow." },
+        "resolved": { "type": "boolean", "description": "The vendor's own `isResolved` flag for this value, not inferred from the name." }
+      }
+    },
+    "scope": {
+      "title": "DeliveryIssueScope",
+      "type": "object",
+      "required": ["fingerprint", "algorithm", "fields"],
+      "additionalProperties": false,
+      "description": "Owner-authored scope of the issue, fingerprinted so Factory can detect material edits (D113 clause 3) without being invalidated by its own synchronization writes.",
+      "properties": {
+        "fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 over the canonical JSON (sorted keys, UTF-8, no insignificant whitespace) of an object holding exactly the fields named in `fields`, as read."
+        },
+        "algorithm": { "type": "string", "const": "sha256-canonical-json-v1" },
+        "fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Which fields entered the fingerprint, e.g. `summary`, `description`, `acceptance`, `type`, `priority`, `parent`, `dependencies`. MUST exclude `state`, comments, delivery links, `updated` and anything the delivery surface itself writes, so a Factory link/comment/transition never changes the fingerprint."
+        }
+      }
+    },
+    "dependency": {
+      "title": "DeliveryIssueDependency",
+      "type": "object",
+      "required": ["direction", "issue", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "direction": {
+          "type": "string",
+          "enum": ["depends-on", "required-for"],
+          "description": "`depends-on`: this issue waits on `issue`. `required-for`: `issue` waits on this one (ordering information only)."
+        },
+        "issue": {
+          "oneOf": [{ "$ref": "delivery.issue-ref.json" }, { "type": "null" }],
+          "description": "`null` when a link exists but the service cannot see the linked issue."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["resolved", "unresolved", "unknown"],
+          "description": "`unknown` when the linked issue's state could not be read. Never read as satisfied."
+        }
+      }
+    },
+    "deliveryLink": {
+      "title": "DeliveryIssueLink",
+      "type": "object",
+      "required": ["deliveryId", "url", "operationKey"],
+      "additionalProperties": false,
+      "properties": {
+        "deliveryId": { "type": "string", "format": "uuid" },
+        "url": { "type": "string", "format": "uri" },
+        "operationKey": { "type": "string", "description": "The sync operation that wrote this link." }
+      }
+    }
+  }
+}

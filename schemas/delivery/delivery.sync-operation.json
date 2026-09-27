@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/delivery/delivery.sync-operation",
+  "title": "DeliverySyncOperation",
+  "description": "The `youtrack` service's durable record of one issue write, returned by `PUT /delivery/v1/operations/{operationKey}`, `GET /delivery/v1/operations/{operationKey}`, `POST /delivery/v1/operations/{operationKey}/reconcile` and listed by `GET /delivery/v1/operations`. The service persists it (status `reserved`) BEFORE calling the vendor. It claims at-most-one confirmed effect per key, established by read-back; it does NOT claim a transaction with YouTrack or exactly-once vendor delivery, which the vendor API cannot provide.",
+  "type": "object",
+  "required": ["operationKey", "requestHash", "kind", "issue", "correlation", "status", "attempts", "createdAt", "updatedAt", "readBack", "error", "retainUntil"],
+  "additionalProperties": false,
+  "properties": {
+    "operationKey": { "type": "string" },
+    "requestHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 over the canonical JSON (sorted keys, UTF-8, compact) of the accepted `delivery.sync-request` body. A later PUT with the same key and the same hash replays this record; a different hash is `operation_key_conflict`."
+    },
+    "kind": { "type": "string", "enum": ["link", "comment", "transition", "resolve"] },
+    "issue": { "$ref": "delivery.issue-ref.json" },
+    "correlation": { "$ref": "delivery.sync-request.json#/$defs/correlation" },
+    "status": {
+      "type": "string",
+      "enum": ["reserved", "submitted", "confirmed", "rejected", "failed", "uncertain"],
+      "description": "`reserved`: stored, no vendor call yet. `submitted`: vendor call in flight (seen only by a concurrent lookup or after a crash). `confirmed` (terminal): read-back observed the effect. `rejected` (terminal): a precondition failed before any vendor write (scope/state/mapping/permission/acceptance); nothing was written. `failed` (terminal): vendor refused and read-back confirms no effect. `uncertain`: a write was sent but its outcome is unknown (timeout, connection loss, 5xx) and read-back has not settled it; the service NEVER resends from this state until read-back proves absence. On restart the service moves every `submitted` record to `uncertain` and reconciles it."
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Vendor write submissions made for this key. Greater than 1 only when a reconcile read-back proved the earlier attempt left no effect."
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "readBack": {
+      "oneOf": [{ "$ref": "#/$defs/readBack" }, { "type": "null" }],
+      "description": "`null` until a read-back has run. `confirmed` REQUIRES a read-back with `effectPresent: true`."
+    },
+    "error": {
+      "oneOf": [{ "$ref": "delivery.error.json" }, { "type": "null" }],
+      "description": "Set for `rejected`, `failed` and `uncertain`; `null` otherwise."
+    },
+    "retainUntil": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Earliest time the service may purge this record. Terminal records are retained at least 90 days; `reserved`/`submitted`/`uncertain` records are never purged (`null`) until settled, so a key can always be looked up while its outcome is open."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "confirmed" } }, "required": ["status"] },
+      "then": { "properties": { "readBack": { "$ref": "#/$defs/readBack", "properties": { "effectPresent": { "const": true } } } } }
+    }
+  ],
+  "$defs": {
+    "readBack": {
+      "title": "DeliveryReadBack",
+      "type": "object",
+      "required": ["observedAt", "effectPresent", "vendorRef", "observedState", "observedScope"],
+      "additionalProperties": false,
+      "properties": {
+        "observedAt": { "type": "string", "format": "date-time" },
+        "effectPresent": {
+          "type": ["boolean", "null"],
+          "description": "`true`: the write's effect is on the issue (comment/link carrying this key, or the state equals the target). `false`: proven absent. `null`: read-back itself failed; outcome stays uncertain."
+        },
+        "vendorRef": { "type": ["string", "null"], "description": "Vendor id of the comment/link written, when applicable." },
+        "observedState": { "type": ["string", "null"], "description": "Issue state name at read-back." },
+        "observedScope": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$", "description": "Scope fingerprint at read-back, so Factory sees drift that happened around the write." }
+      }
+    }
+  }
+}

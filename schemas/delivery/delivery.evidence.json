@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/delivery/delivery.evidence",
+  "title": "DeliveryEvidence",
+  "description": "One immutable, stage-aware OBSERVATION recorded by Factory against a D113 delivery (D113 clause 3). It records what was observed, not who authorized anything: plan approvals, policy authorizations and owner acceptance are `delivery.decision`, never evidence. This is the successor shape for new deliveries. `factory.evidence-receipt` (v0.25.0) is unchanged, and historical receipts stay valid under it with their original bytes and hashes; a new record may reference one through `legacyReceipt` but never rewrites it. A correction is a new record with `supersedes`, never an edit.",
+  "type": "object",
+  "required": ["id", "deliveryId", "issue", "stage", "basis", "result", "exitCode", "criteria", "scope", "repository", "branch", "revision", "revisionRole", "source", "observer", "observedAt", "recordedAt", "environment", "summary", "supersedes", "legacyReceipt", "hash"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "deliveryId": { "type": "string", "format": "uuid", "description": "Factory's delivery (outcome) record id." },
+    "issue": {
+      "oneOf": [{ "$ref": "delivery.issue-ref.json" }, { "type": "null" }],
+      "description": "Source YouTrack issue; `null` for deliveries not sourced from YouTrack."
+    },
+    "stage": {
+      "type": "string",
+      "enum": ["implementation", "tests", "ci", "security", "quality", "merge", "deployment", "live"],
+      "description": "Evidence stages in D113 order. `implementation` through `merge` are pre-deployment; `deployment` (the verified revision/environment) and `live` (criterion smoke checks against the running deployment) come after it. Owner acceptance is not a stage here; it is a `delivery.decision`."
+    },
+    "basis": {
+      "type": "string",
+      "enum": ["machine-observation", "worker-claim", "owner-attestation"],
+      "description": "Who stands behind the observation. `machine-observation`: taken from a verifiable producer record (`source.producer` + `source.recordRef`), e.g. a CI run conclusion or a deployment receipt. `worker-claim`: stated by an agent in its report or transcript; a source claim only, never independent proof that the named revision passed or runs, and it can never satisfy a gate by itself. `owner-attestation`: the owner recorded the observation by hand (the only basis the v0.25.0 receipt allowed)."
+    },
+    "result": {
+      "type": "string",
+      "enum": ["passed", "failed", "unknown", "unavailable"],
+      "description": "`unknown`: the producer ran but its result could not be determined (e.g. missing exit status, ambiguous run). `unavailable`: no producer exists or it could not be reached for this stage. Only `passed` can satisfy a gate; `unknown`/`unavailable` block like `failed` but are reported distinctly."
+    },
+    "exitCode": {
+      "type": ["integer", "null"],
+      "description": "Actual command exit status when the producer reported one. `null` means NOT REPORTED, never success; a missing exit code never becomes 0."
+    },
+    "criteria": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/criterionCoverage" },
+      "description": "Acceptance criteria this observation covers, each with the stage at which that criterion can be evaluated. A criterion whose `evaluableAt` is `deployment`/`live` is not blocked by, and cannot be satisfied by, pre-deploy evidence. May be empty for stage-level evidence (e.g. `merge`)."
+    },
+    "scope": { "$ref": "#/$defs/scopeBinding" },
+    "repository": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,79}$", "description": "Functional repo name (D002), e.g. `plantpal`." },
+    "branch": { "type": "string", "minLength": 1, "description": "Branch the revision was observed on (task branch or `dev`)." },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Full 40-hex commit SHA the observation is about. Short SHAs are not accepted. Evidence at a different revision cannot pass a gate for this one (D113 clause 3)."
+    },
+    "revisionRole": {
+      "type": "string",
+      "enum": ["task", "merged"],
+      "description": "`task`: a task-branch revision before merge. `merged`: the integration-branch revision produced by the merge. A `task` observation can never prove a `merged` SHA; `deployment` and `live` evidence MUST be `merged`."
+    },
+    "source": { "$ref": "#/$defs/source" },
+    "observer": { "type": "string", "minLength": 2, "maxLength": 160, "description": "Service or person that made the observation." },
+    "observedAt": { "type": "string", "format": "date-time", "description": "When the producer observed it." },
+    "recordedAt": { "type": "string", "format": "date-time", "description": "When Factory recorded it." },
+    "environment": {
+      "oneOf": [{ "$ref": "#/$defs/environment" }, { "type": "null" }],
+      "description": "Required non-null for `deployment` and `live`; `null` otherwise."
+    },
+    "summary": { "type": "string", "minLength": 10, "maxLength": 6000 },
+    "supersedes": { "type": ["string", "null"], "format": "uuid", "description": "Earlier evidence id this one corrects; the earlier record is retained." },
+    "legacyReceipt": {
+      "oneOf": [{ "$ref": "#/$defs/legacyReceipt" }, { "type": "null" }],
+      "description": "Pointer to a v0.25.0 `factory.evidence-receipt` this record was derived from, byte-for-byte unchanged."
+    },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "SHA-256 over this record's canonical JSON with `hash` omitted." }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "stage": { "enum": ["deployment", "live"] } }, "required": ["stage"] },
+      "then": {
+        "properties": {
+          "environment": { "$ref": "#/$defs/environment" },
+          "revisionRole": { "const": "merged" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["implementation", "tests", "ci", "security", "quality", "merge"] } }, "required": ["stage"] },
+      "then": { "properties": { "environment": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "stage": { "const": "merge" } }, "required": ["stage"] },
+      "then": { "properties": { "revisionRole": { "const": "merged" } } }
+    },
+    {
+      "if": { "properties": { "basis": { "const": "machine-observation" } }, "required": ["basis"] },
+      "then": { "properties": { "source": { "required": ["recordRef"], "properties": { "recordRef": { "type": "string" } } } } }
+    }
+  ],
+  "$defs": {
+    "criterionCoverage": {
+      "title": "DeliveryCriterionCoverage",
+      "type": "object",
+      "required": ["criterionId", "evaluableAt"],
+      "additionalProperties": false,
+      "properties": {
+        "criterionId": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,79}$" },
+        "evaluableAt": {
+          "type": "string",
+          "enum": ["implementation", "tests", "ci", "security", "quality", "merge", "deployment", "live"],
+          "description": "Earliest stage at which this criterion can be evaluated, fixed in the approved plan."
+        }
+      }
+    },
+    "scopeBinding": {
+      "title": "DeliveryScopeBinding",
+      "type": "object",
+      "required": ["planHash", "issueScope"],
+      "additionalProperties": false,
+      "properties": {
+        "planHash": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "The approved plan this evidence was gathered under." },
+        "issueScope": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "`delivery.issue.scope.fingerprint` the plan was approved against; `null` for non-YouTrack deliveries."
+        }
+      }
+    },
+    "source": {
+      "title": "DeliveryEvidenceSource",
+      "type": "object",
+      "required": ["producer", "recordRef", "runId", "artifactRef", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "producer": {
+          "type": "string",
+          "enum": ["agent-runner", "ci-runner", "app-deploy", "factory", "owner"],
+          "description": "Which boundary produced the underlying record. `app-deploy` is the app's own dev deployment mechanism (for `plantpal`, owned by `plantpal`; routing by `runtime`/`gateway`)."
+        },
+        "recordRef": {
+          "type": ["string", "null"],
+          "description": "Stable, re-fetchable identifier of the producer record, e.g. `agent-runner:runs/<id>`, `ci-runner:ci.run/<runId>/<jobId>`, `plantpal:deployments/<deploymentId>`. Required for `machine-observation`."
+        },
+        "runId": { "type": ["string", "null"] },
+        "artifactRef": { "type": ["string", "null"], "description": "Image digest or artifact id, when one exists." },
+        "url": { "type": ["string", "null"], "format": "uri" },
+        "resultHash": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 of the `delivery.producer-result` this evidence was derived from, when there was one."
+        }
+      }
+    },
+    "environment": {
+      "title": "DeliveryEnvironment",
+      "type": "object",
+      "required": ["name", "appIdentity", "deploymentId", "deployedRevision", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "const": "dev", "description": "D113 authorizes dev only; production is outside this contract." },
+        "appIdentity": { "type": "string", "minLength": 1, "description": "Identity the RUNNING app reported (e.g. its health/identity endpoint `app` name), not the configured name." },
+        "deploymentId": { "type": "string", "minLength": 1, "description": "Exact deployment identifier; never just a URL or a branch name." },
+        "deployedRevision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Revision the running app reported. Must equal `revision`; a mismatch is recorded as `failed`, never as `passed`."
+        },
+        "url": { "type": "string", "format": "uri", "description": "Test URL the owner uses." }
+      }
+    },
+    "legacyReceipt": {
+      "title": "DeliveryLegacyReceiptRef",
+      "type": "object",
+      "required": ["id", "hash"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "The legacy receipt's own stored `hash`, copied, never recomputed." }
+      }
+    }
+  }
+}

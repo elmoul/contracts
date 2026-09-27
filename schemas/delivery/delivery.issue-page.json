@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/delivery/delivery.issue-page",
+  "title": "DeliveryIssuePage",
+  "description": "One page of `GET /delivery/v1/issues?project=...&openOnly=true&cursor=...&limit=...`, the listing Factory's Phase 2 poll reads (all open issues in the enabled projects; selection and qualification stay in Factory). Consumer rule: an issue's ABSENCE from a listing proves nothing (not resolved, not deleted) unless the scan's final page has `complete: true` AND every page's `unavailableProjects` was empty.",
+  "type": "object",
+  "required": ["items", "nextCursor", "complete", "query", "unavailableProjects", "readAt"],
+  "additionalProperties": false,
+  "properties": {
+    "items": { "type": "array", "items": { "$ref": "delivery.issue.json" } },
+    "nextCursor": {
+      "type": ["string", "null"],
+      "description": "Opaque; pass back as `cursor` for the next page. `null` on the last page. Pages are ordered by (`created`, `issue.vendorId`), so an issue created mid-scan appears in this or a later scan and is never silently skipped by a page boundary."
+    },
+    "complete": {
+      "type": "boolean",
+      "description": "`true` only on the last page of a scan that read every requested project fully. `false` on intermediate pages and on any page where the service stopped early."
+    },
+    "query": {
+      "title": "DeliveryIssueQuery",
+      "type": "object",
+      "required": ["projects", "openOnly"],
+      "additionalProperties": false,
+      "properties": {
+        "projects": { "type": "array", "items": { "type": "string" } },
+        "openOnly": { "type": "boolean", "description": "Open = the state's vendor `isResolved` is false." }
+      }
+    },
+    "unavailableProjects": {
+      "type": "array",
+      "items": {
+        "title": "DeliveryUnavailableProject",
+        "type": "object",
+        "required": ["project", "code"],
+        "additionalProperties": false,
+        "properties": {
+          "project": { "type": "string" },
+          "code": { "type": "string", "description": "A `delivery.error` code, e.g. `tracker_permission_denied`, `project_not_found`, `tracker_unavailable`." }
+        }
+      },
+      "description": "Requested projects that could not be listed. Non-empty makes the scan incomplete regardless of `complete`."
+    },
+    "readAt": { "type": "string", "format": "date-time" }
+  }
+}
