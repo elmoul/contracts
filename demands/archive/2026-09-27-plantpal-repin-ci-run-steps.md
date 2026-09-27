@@ -9,7 +9,7 @@ acceptance-criteria:
   - "The follow-on demands plantpal-20260927-ci-runner-ci-run-steps and plantpal-20260927-dashboard-ci-stage-view name contracts v0.30.0 as the tag to pin."
   - "The rollout order is carried into that chain: every strict consumer on the ci.run path (state-feed, dashboard) re-pins to v0.30.0 before ci-runner starts emitting jobId/steps — or plantpal explains why not."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # `steps[]` on `ci.run` — close the consuming leg
