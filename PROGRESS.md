@@ -886,3 +886,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-27_0531_fulfill-demand-plantpal-20260927-contrac
+
+## Session 66 (2026-09-27)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-27_0508_close-the-loop-on-demand-contracts-20260.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Close the loop on demand contracts-20260927-plantpal-repin-ci-run-steps (archive) -- status: done.
+- Next step: No contracts-side follow-up. plantpal's report did not explicitly address acceptance criterion 3 (state-feed/dashboard re-pin before ci-runner emits); ci-runner's own fulfillment shows a CI_RUN_STEPS flag defaulting false until state-feed re-pins, so the chain carries it.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none needed
+- Session: 2026-09-27_0508_close-the-loop-on-demand-contracts-20260
