@@ -237,6 +237,18 @@ rewrites a field like `demand.to` (`items: {type: string, pattern: ...}`) to
 for consumers. Add `--collapse-root-models` to keep `list[constr(...)]`. This
 is how `demand_coordinator/demand.py` was regenerated in v0.32.0.
 
+**`if/then` is not generated (v0.35.0, and true of every release before it):**
+neither `datamodel-codegen` nor `json-schema-to-typescript` implements JSON Schema's
+`if`/`then`/`else`, so every conditionally-required field becomes an ordinary
+optional one in `gen/python` and `gen/ts`. This is not new, but v0.35.0 moved the
+delivery recovery rules *into* `if/then` (see `schemas/delivery/delivery.sync-operation.json`),
+which makes it load-bearing: the generated `DeliverySyncOperation` will happily accept
+the exact shapes the schema exists to refuse. When you add a conditional, add the
+matching schema-level fixture to the relevant `tests/validate_*.py` — the binding
+round-trip will not catch a regression in it, and note the conditional in the
+release's `CHANGELOG` entry. `docs/task-delivery.md` §Binding caveat carries the
+delivery-specific table.
+
 Verify: `pip install ./gen/python` in a scratch venv, then
 `python -c "import platform_contracts"` plus a round-trip
 (`model_dump_json()` → `model_validate_json()`) on any newly generated model.

@@ -69,6 +69,50 @@ bindings in all three languages — `CiRunPayload` (Java `io.platform.contracts.
 `gen/ts/build-result.ts`, `gen/python`) — because `ci-runner` and `control-plane` are
 Java services.
 
+## Binding caveat — the v0.35.0 rules are NOT enforced by the generated bindings
+
+Every recovery rule in this document that is written as an `if/then` conditional is
+**inert in the generated Python and TypeScript bindings.** `datamodel-codegen` and
+`json-schema-to-typescript` do not implement `if/then`, so they emit the fields as
+plain optional properties. Verified against the v0.35.0 tag: `DeliverySyncOperation`
+in a clean venv accepts an `uncertain` record with `readBack.effectPresent: false`
+and *no* `absentSince`/`absenceQuietUntil`, and accepts `attempts: 2` with no
+`absenceProvenAt` — both of which the JSON Schema rejects and both of which are
+exactly the shapes that authorise repeating a possibly-completed write.
+
+So, for any code that decides whether to resend:
+
+| Rule | Enforced by the schema | Enforced by the bindings |
+|---|---|---|
+| `confirmed` requires `effectPresent: true` | yes | no |
+| `effectPresent: false` requires `absentSince` + `absenceQuietUntil` | yes | **no** |
+| `attempts >= 2` requires `absenceProvenAt` | yes | **no** |
+| open records: `retainUntil` null; terminal records: present | yes | **no** |
+| `rejected`/`failed`/`uncertain` carry a non-retryable `error` | yes | **no** |
+| `operation_not_found` carries `reservedAt` + `coveredSince`, `retryable: true` | yes | **no** |
+| `operation_lookup_out_of_coverage` carries `coveredSince` + `reason`, `retryable: false` | yes | **no** |
+| `absenceProvenAt >= absenceQuietUntil` (cross-field arithmetic) | **no** — see below | no |
+
+Two consequences a producer or consumer must act on:
+
+1. **Validate against the JSON Schema, not the binding, wherever a resend decision
+   is made.** `tests/validate_delivery.py` is the executable reference for the
+   schema-level rules and `check_recovery_semantics` for the cross-field ones; port
+   both rather than trusting a parsed model.
+2. **The schemas are not bundled in the installed package.** `gen/python` ships
+   `platform_contracts*` only, so a consumer pinned to a tag cannot read
+   `schemas/delivery/*.json` from its install — it must fetch the same tag. Closing
+   this (bundling the consumed schemas as package data, or generating a validator
+   from them) is an open gap, recorded in the v0.35.0 fulfillment report, and is a
+   packaging decision for the owner rather than something this release changed.
+
+The `absenceProvenAt >= absenceQuietUntil` rule cannot be expressed as a JSON Schema
+keyword at all (draft 2020-12 has no timestamp arithmetic), so it is enforced only
+by `check_recovery_semantics` in `tests/validate_delivery.py` plus prose here. A
+service can emit a document that validates and still means the wrong thing; that is
+why the rule is stated as an explicit caller obligation in §Absence is not
+non-execution rather than left implicit in the shapes.
+
 ## Boundary
 
 - `youtrack` alone holds the YouTrack credential and performs every vendor call.
@@ -459,6 +503,11 @@ interface requirements, not implementation choices:
 
 Nothing is live because of this release: every `/delivery/v1` route remains
 unimplemented, and no service emits a `delivery.sync-operation` document yet.
+
+Obligation 4 is the one that does not survive the generated bindings — see
+§Binding caveat before implementing it. A service that creates its operation records
+through `DeliverySyncOperation` and never validates them against
+`schemas/delivery/delivery.sync-operation.json` will emit the unsafe shapes happily.
 
 ## Handoff matrix
 

@@ -67,6 +67,18 @@ effect after that observation.
   names — a Factory restart after terminal retention expiry, and a delayed vendor
   write.
 
+**The bindings do not enforce any of it.** Every rule above is an `if/then`
+conditional, which `datamodel-codegen` and `json-schema-to-typescript` do not
+implement — verified against the tag: the Python binding accepts an `effectPresent:
+false` record with no absence window, and `attempts: 2` with no `absenceProvenAt`,
+both of which the schema rejects. The safety properties therefore live in the JSON
+Schema, and `docs/task-delivery.md` §Binding caveat now carries the per-rule table
+plus the two consequences (validate against the schema where a resend decision is
+made; the schemas are not bundled in the installed package, so a consumer must fetch
+the same tag — an open gap, not fixed by this release). The one rule that is not
+expressible as a schema keyword at all, `absenceProvenAt >= absenceQuietUntil`, is
+enforced by `check_recovery_semantics` in `tests/validate_delivery.py`.
+
 **The two conditional tightenings** (both `if/then`, not new `required` entries, the
 pattern `delivery.sync-request`'s `expectedScope` already uses): `attempts >= 2` now
 requires a non-null `absenceProvenAt`, and `readBack.effectPresent: false` now
