@@ -1013,3 +1013,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-27_1150_fulfill-demand-ci-runner-20260927-contra
+
+## Session 75 (2026-09-27)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-27_1108_fulfill-demand-factory-20260927-sync-rec.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand factory-20260927-sync-recovery-retention (operation retention coverage + safe missing-operation recovery) -- status: done.
+- Next step: Session closed status done. Open follow-ups in the report: (1) owner decision on bundling schemas/ into the Python wheel -- filed, not fixed; (2) repo-wide decision on the inert format: date-time checker; (3) the D043 origin demand to factory is open and the youtrack producer obligations land when that service implements the operation store. Also noted at session start: a NEW plantpal demand (plantpal-20260927-contracts-app-deploy-receipt-and-identity) is in /inbox/contracts and was NOT worked this session.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-27_1108_fulfill-demand-factory-20260927-sync-rec
