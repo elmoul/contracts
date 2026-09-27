@@ -4,7 +4,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 /**
- * The `youtrack` service's durable record of one issue write, returned by `PUT /delivery/v1/operations/{operationKey}`, `GET /delivery/v1/operations/{operationKey}`, `POST /delivery/v1/operations/{operationKey}/reconcile` and listed by `GET /delivery/v1/operations`. The service persists it (status `reserved`) BEFORE calling the vendor. It claims at-most-one confirmed effect per key, established by read-back; it does NOT claim a transaction with YouTrack or exactly-once vendor delivery, which the vendor API cannot provide.
+ * The `youtrack` service's durable record of one issue write, returned by `PUT /delivery/v1/operations/{operationKey}`, `GET /delivery/v1/operations/{operationKey}`, `POST /delivery/v1/operations/{operationKey}/reconcile` and listed by `GET /delivery/v1/operations`. The service persists it (status `reserved`) BEFORE calling the vendor. It claims at-most-one confirmed effect per key, established by read-back; it does NOT claim a transaction with YouTrack or exactly-once vendor delivery, which the vendor API cannot provide. Absence is not non-execution (v0.35.0): a read-back that observes no effect is timestamped (`readBack.absentSince`) and carries the instant a resend could first be justified (`readBack.absenceQuietUntil`), because a vendor request that was already sent may still take effect after that observation. A resend is only ever justified by a recorded `absenceProvenAt`.
  */
 export type DeliverySyncOperation = {
     operationKey: string;
@@ -16,27 +16,56 @@ export type DeliverySyncOperation = {
     issue: DeliveryIssueRef;
     correlation: DeliveryCorrelation;
     /**
-     * `reserved`: stored, no vendor call yet. `submitted`: vendor call in flight (seen only by a concurrent lookup or after a crash). `confirmed` (terminal): read-back observed the effect. `rejected` (terminal): a precondition failed before any vendor write (scope/state/mapping/permission/acceptance); nothing was written. `failed` (terminal): vendor refused and read-back confirms no effect. `uncertain`: a write was sent but its outcome is unknown (timeout, connection loss, 5xx) and read-back has not settled it; the service NEVER resends from this state until read-back proves absence. On restart the service moves every `submitted` record to `uncertain` and reconciles it.
+     * `reserved`: stored, no vendor call yet. `submitted`: vendor call in flight (seen only by a concurrent lookup or after a crash). `confirmed` (terminal): read-back observed the effect. `rejected` (terminal): a precondition failed before any vendor write (scope/state/mapping/permission/acceptance); nothing was written. `failed` (terminal): the vendor definitively refused before executing, so non-execution is established by the vendor itself. `uncertain`: a write was sent but its outcome is unknown (timeout, connection loss, 5xx) and read-back has not settled it; the service NEVER resends from this state until absence has been observed for longer than `vendorInFlightBoundSeconds` and recorded in `absenceProvenAt`. On restart the service moves every `submitted` record to `uncertain` and reconciles it.
      */
     status: "reserved" | "submitted" | "confirmed" | "rejected" | "failed" | "uncertain";
     /**
-     * Vendor write submissions made for this key. Greater than 1 only when a reconcile read-back proved the earlier attempt left no effect.
+     * Vendor write submissions made for this key. `>= 2` means a resend happened, which the schema permits only alongside a non-null `absenceProvenAt` — a resend is never legal on the strength of a single absent read-back.
      */
     attempts: number;
     createdAt: string;
     updatedAt: string;
     /**
-     * `null` until a read-back has run. `confirmed` REQUIRES a read-back with `effectPresent: true`.
+     * `null` until a read-back has run. `confirmed` REQUIRES a read-back with `effectPresent: true`. An `effectPresent: false` read-back is an observation of absence at an instant, and carries the window that has to elapse before it could justify a resend.
      */
     readBack: DeliveryReadBack | null;
     /**
-     * Set for `rejected`, `failed` and `uncertain`; `null` otherwise.
+     * Set for `rejected`, `failed` and `uncertain`; `null` otherwise. For `uncertain` it MUST NOT be retryable: `tracker_unavailable` (retryable) means no write was sent, which is a different fact from an unknown outcome.
      */
     error: DeliveryError | null;
     /**
-     * Earliest time the service may purge this record. Terminal records are retained at least 90 days; `reserved`/`submitted`/`uncertain` records are never purged (`null`) until settled, so a key can always be looked up while its outcome is open.
+     * Earliest time the service may purge this record. Always `null` for `reserved`/`submitted`/`uncertain` (never purged at any age, so a key whose outcome is still open can always be looked up) and always set for a terminal record (retained at least 90 days). This is what makes `delivery.operation-coverage.coveredSince` computable: a purged record's reservation time is always at least one retention window in the past.
      */
     retainUntil: string | null;
+    /**
+     * Sticky: the last instant at which the service established that an earlier submission left no effect, strongly enough to authorize a resend. Establishes non-execution, which needs both (a) read-back showing absence continuously from `readBack.absentSince` for at least `readBack.absenceQuietUntil`, so a delayed original request can no longer land, and (b) no vendor-side record of the request where the vendor exposes one. REQUIRED non-null whenever `attempts >= 2`, so a resend is always auditable back to the absence that justified it. `null` means no resend has been justified.
+     */
+    absenceProvenAt?: string | null;
+    /**
+     * The bound in force for this record: a vendor request already sent may still take effect for up to this long. Written from the service's configured value (see `delivery.operation-coverage.vendorInFlightBoundSeconds`) when the first submission is made; `null` only while `attempts` is 0. `readBack.absenceQuietUntil` is computed as `readBack.absentSince` plus this many seconds.
+     */
+    vendorInFlightBoundSeconds?: number | null;
+};
+/**
+ * The `error` payload of the `{"error": ...}` envelope on every `/delivery/v1` route (youtrack and ci-runner) (same envelope convention as the planner: success is `{"data": ...}`). Also embedded in `delivery.sync-operation.error`. `code` is an open string so adding a code is never breaking. Lookup misses are classified, never bare (v0.35.0): `operation_not_found` is a conclusive never-stored statement and is only legal when the caller supplied key provenance inside the service's coverage window, while `operation_lookup_out_of_coverage` says the service CANNOT tell a never-seen key from a terminal record it has since purged and MUST NOT be read as permission to resubmit. | Code | Status | Meaning / owner action | | --- | --- | --- | | `invalid_request` | 422 | Body/shape invalid. | | `caller_not_authorized` | 403 | Caller is not the enrolled Factory boundary. | | `project_not_enabled` | 403 | Project not in the service's delivery allow-list. | | `project_not_found` | 404 | | | `issue_not_found` | 404 | | | `operation_not_found` | 404 | Conclusive: the service NEVER stored that key. Legal only when the caller's `details.reservedAt` is at/after `details.coveredSince`, so a terminal record for it cannot have been purged. `retryable: true` — resubmitting that key is safe because no vendor write was ever made under it. | | `operation_lookup_out_of_coverage` | 404 | INCONCLUSIVE: the key was first reserved before `details.coveredSince` (`reason: reserved_at_before_coverage`) or the caller supplied no provenance at all (`reason: no_key_provenance`), so the service cannot distinguish 'never stored' from 'stored, completed and purged'. `retryable: false`; resubmitting may duplicate a completed write. Reconcile by other means (see `docs/task-delivery.md` §Retention coverage). | | `operation_key_conflict` | 409 | Same key, different canonical body. Never overwritten. | | `scope_changed` | 409 | `expectedScope` differs from the live fingerprint; `details.currentScope`. Owner must re-approve. | | `state_changed` | 409 | `expectedState` differs; `details.currentState`. | | `state_unmapped` | 409 | Target state missing, archived, or of the wrong resolved-ness; owner must fix the mapping. | | `acceptance_required` | 422 | A resolving write without a valid owner-acceptance reference. | | `tracker_permission_denied` | 502 | The service's own YouTrack account lacks a permission; `details.permission`. Owner grants it. | | `tracker_rejected` | 502 | Vendor refused the write definitively, before executing it. Non-execution is established by the vendor itself. | | `tracker_unavailable` | 503 | Vendor unreachable BEFORE any write was sent (safe to retry the same key later). `retryable` is always `true`. | | `tracker_outcome_unknown` | 503 | The request WAS sent (timeout, connection loss, 5xx) and its outcome is unknown. Non-execution is NOT established. `retryable` is always `false`; reconcile by read-back over a quiet window, never blind resend. | | `tracker_not_configured` | 503 | Service has no credential configured. | | `ci_result_not_found` | 404 | ci-runner lookup: no record of that run/job (v0.34.0). Not a failure verdict. | | `producer_unavailable` | 503 | A producer lookup (ci-runner) could not reach its own store; retryable (v0.34.0). |
+ */
+export type DeliveryError = {
+    code: string;
+    message: string;
+    /**
+     * `true` only when resubmitting the SAME operation key is safe because no vendor write was sent (e.g. `tracker_unavailable`, or a conclusive `operation_not_found`). Never `true` for an uncertain outcome or for an inconclusive lookup; those are reconciled, see `delivery.sync-operation` and `docs/task-delivery.md` §Retention coverage.
+     */
+    retryable: boolean;
+    /**
+     * Plain-language action the owner must take (grant permission, fix state mapping, re-approve scope), for Factory to show in its waiting view.
+     */
+    ownerAction?: string | null;
+    /**
+     * Code-specific facts, e.g. `currentScope`, `currentState`, `permission`, and for the two lookup-miss codes `reservedAt`, `coveredSince`, `reason`.
+     */
+    details?: {
+        [k: string]: unknown;
+    };
 };
 /**
  * Stable identity of one YouTrack issue on the D113 task-delivery surface. `vendorId` is YouTrack's internal database id and never changes; `idReadable` (e.g. `PLA-12`) is what humans see and CAN change if an issue moves project, so correlation (operation keys, delivery records, evidence) binds to `vendorId` and carries `idReadable` for display and read-back only.
@@ -73,7 +102,7 @@ export interface DeliveryCorrelation {
 export interface DeliveryReadBack {
     observedAt: string;
     /**
-     * `true`: the write's effect is on the issue (comment/link carrying this key, or the state equals the target). `false`: proven absent. `null`: read-back itself failed; outcome stays uncertain.
+     * `true`: the write's effect is on the issue (comment/link carrying this key, or the state equals the target). `false`: absent at `observedAt` — which is NOT proof that a delayed original request cannot still take effect, so it is always paired with `absentSince`/`absenceQuietUntil`. `null`: read-back itself failed; outcome stays uncertain.
      */
     effectPresent: boolean | null;
     /**
@@ -88,25 +117,12 @@ export interface DeliveryReadBack {
      * Scope fingerprint at read-back, so Factory sees drift that happened around the write.
      */
     observedScope: string | null;
-}
-/**
- * The `error` payload of the `{"error": ...}` envelope on every `/delivery/v1` route (same envelope convention as the planner: success is `{"data": ...}`). Also embedded in `delivery.sync-operation.error`. `code` is an open string so adding a code is never breaking. | Code | Status | Meaning / owner action | | --- | --- | --- | | `invalid_request` | 422 | Body/shape invalid. | | `caller_not_authorized` | 403 | Caller is not the enrolled Factory boundary. | | `project_not_enabled` | 403 | Project not in the service's delivery allow-list. | | `project_not_found` | 404 | | | `issue_not_found` | 404 | | | `operation_not_found` | 404 | Lookup of a key the service never stored (Factory may then submit it). | | `operation_key_conflict` | 409 | Same key, different canonical body. Never overwritten. | | `scope_changed` | 409 | `expectedScope` differs from the live fingerprint; `details.currentScope`. Owner must re-approve. | | `state_changed` | 409 | `expectedState` differs; `details.currentState`. | | `state_unmapped` | 409 | Target state missing, archived, or of the wrong resolved-ness; owner must fix the mapping. | | `acceptance_required` | 422 | A resolving write without a valid owner-acceptance reference. | | `tracker_permission_denied` | 502 | The service's own YouTrack account lacks a permission; `details.permission`. Owner grants it. | | `tracker_rejected` | 502 | Vendor refused the write definitively. | | `tracker_unavailable` | 503 | Vendor unreachable BEFORE any write was sent (safe to retry the same key later). | | `tracker_not_configured` | 503 | Service has no credential configured. |
- */
-export interface DeliveryError {
-    code: string;
-    message: string;
     /**
-     * `true` only when resubmitting the SAME operation key is safe because no vendor write was sent (e.g. `tracker_unavailable`). Never `true` for an uncertain outcome; those are reconciled, see `delivery.sync-operation`.
+     * Non-null exactly when `effectPresent` is `false`: the earliest observation from which absence has been seen CONTINUOUSLY. It is cleared the moment any read-back shows presence or fails. Presence at any point after it resets the window, because a late-landing write would have been seen.
      */
-    retryable: boolean;
+    absentSince?: string | null;
     /**
-     * Plain-language action the owner must take (grant permission, fix state mapping, re-approve scope), for Factory to show in its waiting view.
+     * Non-null exactly when `effectPresent` is `false`: `absentSince` plus `vendorInFlightBoundSeconds`. A resend MUST NOT be sent before this instant, because until it passes a delayed original request could still take effect. Reaching it is necessary but not sufficient — `absenceProvenAt` is what records that non-execution was actually established.
      */
-    ownerAction?: string | null;
-    /**
-     * Code-specific facts, e.g. `currentScope`, `currentState`, `permission`.
-     */
-    details?: {
-        [k: string]: unknown;
-    };
+    absenceQuietUntil?: string | null;
 }

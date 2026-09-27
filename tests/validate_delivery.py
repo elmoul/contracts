@@ -13,6 +13,7 @@ Run: python tests/validate_delivery.py
 import copy
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -174,6 +175,18 @@ BAD_SYNC_SHORT_KEY = {**GOOD_SYNC_LINK, "operationKey": "k1"}
 BAD_SYNC_SHORT_SHA = copy.deepcopy(GOOD_SYNC_RESOLVE)
 BAD_SYNC_SHORT_SHA["correlation"]["candidateRevision"] = "2222222"
 
+# v0.35.0 — retention coverage. A Factory restart that looks up a key minted before
+# the service's coverage floor gets a miss it must NOT read as "never used": the
+# record may have been stored, completed and purged. Key provenance (reservedAt) is
+# what separates the two, and it travels in the request body so the write path can be
+# gated too. GOOD_SYNC_LINK_RESERVED is the recommended shape.
+GOOD_SYNC_LINK_RESERVED = {**GOOD_SYNC_LINK, "reservedAt": NOW}
+# A type violation, deliberately: `format: date-time` is declared on every timestamp
+# in these schemas but this suite does not enforce it (`jsonschema` has no rfc3339
+# checker installed, so `format` is inert -- pre-existing, repo-wide, and unchanged
+# here). Only the type is actually covered. Recorded in the v0.35.0 report.
+BAD_SYNC_RESERVED_AT_NOT_A_STRING = {**GOOD_SYNC_LINK, "reservedAt": 20260927}
+
 OP_BASE = {
     "operationKey": GOOD_SYNC_RESOLVE["operationKey"],
     "requestHash": SHA_C,
@@ -198,8 +211,9 @@ GOOD_OP_UNCERTAIN = {
     "status": "uncertain",
     "attempts": 1,
     "readBack": {"observedAt": NOW, "effectPresent": None, "vendorRef": None, "observedState": None, "observedScope": None},
-    "error": {"code": "tracker_unavailable", "message": "timeout after send", "retryable": False, "ownerAction": None},
+    "error": {"code": "tracker_outcome_unknown", "message": "timeout after send", "retryable": False, "ownerAction": None},
     "retainUntil": None,
+    "vendorInFlightBoundSeconds": 600,
 }
 
 GOOD_OP_REJECTED_SCOPE = {
@@ -223,6 +237,111 @@ BAD_OP_CONFIRMED_WITHOUT_READBACK = {**GOOD_OP_CONFIRMED, "readBack": None}
 BAD_OP_CONFIRMED_EFFECT_ABSENT = copy.deepcopy(GOOD_OP_CONFIRMED)
 BAD_OP_CONFIRMED_EFFECT_ABSENT["readBack"]["effectPresent"] = False
 BAD_OP_EXACTLY_ONCE = {**GOOD_OP_CONFIRMED, "status": "delivered-exactly-once"}
+
+# --- v0.35.0 negative recovery fixtures -------------------------------------
+# Three shapes the contract must refuse, each one a way a caller could otherwise
+# be told a possibly-completed write is safe to repeat.
+
+# (1) Absence in ONE read-back. The effect was not on the issue at one instant;
+# a delayed original request can still land, so an unwindowed absence observation
+# is not a recordable fact. `readBack.absentSince`/`absenceQuietUntil` are required
+# whenever `effectPresent` is false.
+ABSENT_SINCE = "2026-09-27T09:00:00Z"
+QUIET_UNTIL = "2026-09-27T09:10:00Z"  # ABSENT_SINCE + vendorInFlightBoundSeconds (600)
+OBSERVED_LATER = "2026-09-27T09:30:00Z"
+BAD_OP_ABSENT_WITHOUT_WINDOW = copy.deepcopy(GOOD_OP_UNCERTAIN)
+BAD_OP_ABSENT_WITHOUT_WINDOW["readBack"]["effectPresent"] = False
+
+GOOD_OP_ABSENT_IN_WINDOW = {
+    **GOOD_OP_UNCERTAIN,
+    "readBack": {
+        "observedAt": OBSERVED_LATER,
+        "effectPresent": False,
+        "vendorRef": None,
+        "observedState": "In Progress",
+        "observedScope": SHA_A,
+        "absentSince": ABSENT_SINCE,
+        "absenceQuietUntil": QUIET_UNTIL,
+    },
+}
+
+# (2) A resend WITHOUT proof of non-execution. `attempts >= 2` is only legal with a
+# recorded `absenceProvenAt`; there is no way to spell "we resent and hoped".
+GOOD_OP_RESENT_AFTER_QUIET = {**GOOD_OP_ABSENT_IN_WINDOW, "attempts": 2, "absenceProvenAt": QUIET_UNTIL}
+BAD_OP_RESENT_WITHOUT_PROOF_NULL = {**GOOD_OP_RESENT_AFTER_QUIET, "absenceProvenAt": None}
+BAD_OP_RESENT_WITHOUT_PROOF_MISSING = copy.deepcopy(GOOD_OP_RESENT_AFTER_QUIET)
+del BAD_OP_RESENT_WITHOUT_PROOF_MISSING["absenceProvenAt"]
+# Resend authorised before the quiet window closed. The schema cannot compare two
+# timestamps, so this document is schema-VALID and `check_recovery_semantics` below
+# is what refuses it.
+BAD_OP_RESENT_BEFORE_QUIET = {**GOOD_OP_RESENT_AFTER_QUIET, "absenceProvenAt": ABSENT_SINCE}
+
+# (3) Retention/purge bookkeeping. Open records are never purged (else a key could
+# vanish while its outcome is still open) and terminal records always carry the
+# deadline that makes the coverage floor computable.
+BAD_OP_UNCERTAIN_PURGEABLE = {**GOOD_OP_UNCERTAIN, "retainUntil": "2026-12-26T10:00:00Z"}
+BAD_OP_CONFIRMED_NO_RETENTION = {**GOOD_OP_CONFIRMED, "retainUntil": None}
+# An unknown outcome must never be reported as safe to resubmit.
+BAD_OP_UNCERTAIN_RETRYABLE = {
+    **GOOD_OP_UNCERTAIN,
+    "error": {"code": "tracker_outcome_unknown", "message": "timeout after send", "retryable": True, "ownerAction": None},
+}
+# `retryable: false` on an absent error is vacuous; the reason must be there at all.
+BAD_OP_UNCERTAIN_NO_ERROR = {**GOOD_OP_UNCERTAIN, "error": None}
+BAD_OP_UNCERTAIN_UNAVAILABLE_ERROR = {
+    **GOOD_OP_UNCERTAIN,
+    "error": {"code": "tracker_unavailable", "message": "vendor unreachable", "retryable": True, "ownerAction": None},
+}
+
+# The service's coverage statement: what a lookup miss can and cannot prove.
+COVERAGE_BASE = {
+    "observedAt": NOW,
+    "coveredSince": "2026-06-29T10:00:00Z",  # NOW - terminalRetentionDays
+    "terminalRetentionDays": 90,
+    "vendorInFlightBoundSeconds": 600,
+}
+GOOD_COVERAGE = COVERAGE_BASE
+BAD_COVERAGE_SHORT_RETENTION = {**COVERAGE_BASE, "terminalRetentionDays": 30}
+BAD_COVERAGE_ZERO_BOUND = {**COVERAGE_BASE, "vendorInFlightBoundSeconds": 0}
+BAD_COVERAGE_NO_FLOOR = {k: v for k, v in COVERAGE_BASE.items() if k != "coveredSince"}
+
+# The two lookup-miss answers, and the ways a caller could be misled by them.
+KEY_RESERVED_FRESH = "2026-09-27T09:55:00Z"
+KEY_RESERVED_EXPIRED = "2026-03-01T10:00:00Z"  # long before coveredSince
+
+ERR_OPERATION_NOT_FOUND = {
+    "code": "operation_not_found",
+    "message": "no record of key ...:transition:implementing:1",
+    "retryable": True,
+    "ownerAction": None,
+    "details": {"reservedAt": KEY_RESERVED_FRESH, "coveredSince": COVERAGE_BASE["coveredSince"]},
+}
+ERR_LOOKUP_OUT_OF_COVERAGE = {
+    "code": "operation_lookup_out_of_coverage",
+    "message": "key predates the operation store's coverage floor; a terminal record for it may have been purged",
+    "retryable": False,
+    "ownerAction": "Check the issue in YouTrack for this key's marker before resending; if the write is absent, mint a new key.",
+    "details": {"coveredSince": COVERAGE_BASE["coveredSince"], "reason": "reserved_at_before_coverage", "reservedAt": KEY_RESERVED_EXPIRED},
+}
+ERR_LOOKUP_NO_PROVENANCE = {
+    "code": "operation_lookup_out_of_coverage",
+    "message": "lookup miss with no reservedAt provenance; cannot be classified",
+    "retryable": False,
+    "ownerAction": "Re-look-up supplying the key's reservedAt from Factory's own store.",
+    "details": {"coveredSince": COVERAGE_BASE["coveredSince"], "reason": "no_key_provenance", "reservedAt": None},
+}
+# A bare miss dressed up as a conclusive one: no provenance, no floor, so nothing
+# supports "never stored". This is the exact shortcut the contract removes.
+BAD_ERR_NOT_FOUND_NO_PROVENANCE = {
+    "code": "operation_not_found",
+    "message": "not found",
+    "retryable": True,
+    "details": {},
+}
+BAD_ERR_NOT_FOUND_NOT_RETRYABLE = {**ERR_OPERATION_NOT_FOUND, "retryable": False}
+BAD_ERR_OUT_OF_COVERAGE_RETRYABLE = {**ERR_LOOKUP_OUT_OF_COVERAGE, "retryable": True}
+BAD_ERR_OUT_OF_COVERAGE_NO_REASON = {**ERR_LOOKUP_OUT_OF_COVERAGE, "details": {"coveredSince": COVERAGE_BASE["coveredSince"]}}
+BAD_ERR_OUT_OF_COVERAGE_BAD_REASON = {**ERR_LOOKUP_OUT_OF_COVERAGE, "details": {**ERR_LOOKUP_OUT_OF_COVERAGE["details"], "reason": "expired"}}
 
 EVIDENCE_BASE = {
     "id": "5d1e2f3a-2c8b-4a8b-9b3d-2f7e5b6c1a10",
@@ -433,6 +552,8 @@ CASES = [
     ("delivery.sync-request.json", BAD_TRANSITION_WITHOUT_SCOPE, False),
     ("delivery.sync-request.json", BAD_SYNC_SHORT_KEY, False),
     ("delivery.sync-request.json", BAD_SYNC_SHORT_SHA, False),
+    ("delivery.sync-request.json", GOOD_SYNC_LINK_RESERVED, True),
+    ("delivery.sync-request.json", BAD_SYNC_RESERVED_AT_NOT_A_STRING, False),
     ("delivery.sync-operation.json", GOOD_OP_CONFIRMED, True),
     ("delivery.sync-operation.json", GOOD_OP_UNCERTAIN, True),
     ("delivery.sync-operation.json", GOOD_OP_REJECTED_SCOPE, True),
@@ -440,6 +561,31 @@ CASES = [
     ("delivery.sync-operation.json", BAD_OP_CONFIRMED_WITHOUT_READBACK, False),
     ("delivery.sync-operation.json", BAD_OP_CONFIRMED_EFFECT_ABSENT, False),
     ("delivery.sync-operation.json", BAD_OP_EXACTLY_ONCE, False),
+    ("delivery.sync-operation.json", GOOD_OP_ABSENT_IN_WINDOW, True),
+    ("delivery.sync-operation.json", GOOD_OP_RESENT_AFTER_QUIET, True),
+    ("delivery.sync-operation.json", BAD_OP_ABSENT_WITHOUT_WINDOW, False),
+    ("delivery.sync-operation.json", BAD_OP_RESENT_WITHOUT_PROOF_NULL, False),
+    ("delivery.sync-operation.json", BAD_OP_RESENT_WITHOUT_PROOF_MISSING, False),
+    # Schema-valid on purpose: the quiet-window ordering is a cross-field timestamp
+    # comparison, refused by check_recovery_semantics rather than by the schema.
+    ("delivery.sync-operation.json", BAD_OP_RESENT_BEFORE_QUIET, True),
+    ("delivery.sync-operation.json", BAD_OP_UNCERTAIN_PURGEABLE, False),
+    ("delivery.sync-operation.json", BAD_OP_CONFIRMED_NO_RETENTION, False),
+    ("delivery.sync-operation.json", BAD_OP_UNCERTAIN_RETRYABLE, False),
+    ("delivery.sync-operation.json", BAD_OP_UNCERTAIN_NO_ERROR, False),
+    ("delivery.sync-operation.json", BAD_OP_UNCERTAIN_UNAVAILABLE_ERROR, False),
+    ("delivery.operation-coverage.json", GOOD_COVERAGE, True),
+    ("delivery.operation-coverage.json", BAD_COVERAGE_SHORT_RETENTION, False),
+    ("delivery.operation-coverage.json", BAD_COVERAGE_ZERO_BOUND, False),
+    ("delivery.operation-coverage.json", BAD_COVERAGE_NO_FLOOR, False),
+    ("delivery.error.json", ERR_OPERATION_NOT_FOUND, True),
+    ("delivery.error.json", ERR_LOOKUP_OUT_OF_COVERAGE, True),
+    ("delivery.error.json", ERR_LOOKUP_NO_PROVENANCE, True),
+    ("delivery.error.json", BAD_ERR_NOT_FOUND_NO_PROVENANCE, False),
+    ("delivery.error.json", BAD_ERR_NOT_FOUND_NOT_RETRYABLE, False),
+    ("delivery.error.json", BAD_ERR_OUT_OF_COVERAGE_RETRYABLE, False),
+    ("delivery.error.json", BAD_ERR_OUT_OF_COVERAGE_NO_REASON, False),
+    ("delivery.error.json", BAD_ERR_OUT_OF_COVERAGE_BAD_REASON, False),
     ("delivery.evidence.json", GOOD_EVIDENCE_CI_TASK, True),
     ("delivery.evidence.json", GOOD_EVIDENCE_LIVE, True),
     ("delivery.evidence.json", GOOD_EVIDENCE_WORKER_CLAIM_UNKNOWN, True),
@@ -499,6 +645,7 @@ def check_bindings() -> list[str]:
         delivery_evidence,
         delivery_issue,
         delivery_issue_page,
+        delivery_operation_coverage,
         delivery_producer_result,
         delivery_sync_operation,
         delivery_sync_request,
@@ -511,6 +658,7 @@ def check_bindings() -> list[str]:
         "delivery.workflow.json": delivery_workflow.DeliveryWorkflow,
         "delivery.sync-request.json": delivery_sync_request.DeliverySyncRequest,
         "delivery.sync-operation.json": delivery_sync_operation.DeliverySyncOperation,
+        "delivery.operation-coverage.json": delivery_operation_coverage.DeliveryOperationCoverage,
         "delivery.evidence.json": delivery_evidence.DeliveryEvidence,
         "delivery.decision.json": delivery_decision.DeliveryDecision,
         "delivery.producer-result.json": delivery_producer_result.DeliveryProducerResult,
@@ -526,6 +674,81 @@ def check_bindings() -> list[str]:
             assert again == obj
         except Exception as exc:  # noqa: BLE001
             failures.append(f"binding {name}: {exc}")
+    return failures
+
+
+def check_recovery_semantics() -> list[str]:
+    """The two recovery rules JSON Schema cannot express, as executable checks.
+
+    Both are comparisons over timestamps, which draft 2020-12 has no vocabulary for.
+    They are the rules that stop a caller repeating a possibly-completed write, so
+    leaving them as prose in a doc would mean nothing fails when they erode. The two
+    scenarios the demand names — a Factory restart after terminal retention expiry,
+    and a delayed vendor write — are each exercised below.
+    """
+    failures = []
+
+    def parse(ts: str) -> datetime:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+    def lookup_answer(reserved_at, covered_since) -> str:
+        """The only legal answer to a by-key miss (`docs/task-delivery.md` §Retention coverage)."""
+        if reserved_at is None or parse(reserved_at) < parse(covered_since):
+            return "operation_lookup_out_of_coverage"
+        return "operation_not_found"
+
+    def resend_authorized(doc) -> bool:
+        """A resend is justified only by recorded proof of non-execution."""
+        read_back = doc.get("readBack") or {}
+        if doc.get("attempts", 0) < 2 or read_back.get("effectPresent") is not False:
+            return False
+        proven, quiet = doc.get("absenceProvenAt"), read_back.get("absenceQuietUntil")
+        if not proven or not quiet:
+            return False
+        # Proof of absence must have reached the quiet deadline. Proving it earlier is
+        # proving it while a delayed original request could still take effect.
+        return parse(proven) >= parse(quiet)
+
+    floor = COVERAGE_BASE["coveredSince"]
+
+    # Scenario 1 — Factory restarts after the record's terminal retention expired.
+    # The purged record is simply gone, so the classification below is the ONLY thing
+    # between the restart and a duplicate write under a completed key.
+    if lookup_answer(KEY_RESERVED_FRESH, floor) != "operation_not_found":
+        failures.append("lookup: a key inside coverage must answer operation_not_found")
+    if lookup_answer(KEY_RESERVED_EXPIRED, floor) != "operation_lookup_out_of_coverage":
+        failures.append("lookup: a key older than the coverage floor must answer operation_lookup_out_of_coverage")
+    if lookup_answer(None, floor) != "operation_lookup_out_of_coverage":
+        failures.append("lookup: a miss with no reservedAt must answer operation_lookup_out_of_coverage")
+    if lookup_answer(ERR_OPERATION_NOT_FOUND["details"]["reservedAt"], floor) != "operation_not_found":
+        failures.append("lookup: ERR_OPERATION_NOT_FOUND's own provenance must be inside coverage")
+    if lookup_answer(ERR_LOOKUP_OUT_OF_COVERAGE["details"]["reservedAt"], floor) != "operation_lookup_out_of_coverage":
+        failures.append("lookup: ERR_LOOKUP_OUT_OF_COVERAGE's own provenance must be outside coverage")
+
+    # Only a conclusive miss may be retryable, and every miss must echo the floor it
+    # was judged against so the caller can audit (or contest) the classification.
+    for name, doc in [
+        ("ERR_OPERATION_NOT_FOUND", ERR_OPERATION_NOT_FOUND),
+        ("ERR_LOOKUP_OUT_OF_COVERAGE", ERR_LOOKUP_OUT_OF_COVERAGE),
+        ("ERR_LOOKUP_NO_PROVENANCE", ERR_LOOKUP_NO_PROVENANCE),
+    ]:
+        if doc["retryable"] is not (doc["code"] == "operation_not_found"):
+            failures.append(f"lookup: {name} has the wrong `retryable` for its code")
+        if "coveredSince" not in doc.get("details", {}):
+            failures.append(f"lookup: {name} must echo details.coveredSince")
+
+    # Scenario 2 — a delayed vendor write. Absence seen once, inside the quiet window,
+    # is not non-execution, so it must not authorise anything.
+    if resend_authorized(GOOD_OP_ABSENT_IN_WINDOW):
+        failures.append("recovery: absence inside the quiet window must not authorise a resend")
+    if not resend_authorized(GOOD_OP_RESENT_AFTER_QUIET):
+        failures.append("recovery: absence proven at the quiet deadline must authorise the one resend")
+    if resend_authorized(BAD_OP_RESENT_BEFORE_QUIET):
+        failures.append("recovery: a resend authorised before the quiet window closed must be refused")
+    if resend_authorized(BAD_OP_RESENT_WITHOUT_PROOF_MISSING):
+        failures.append("recovery: a resend with no recorded proof must be refused")
+    if resend_authorized({**GOOD_OP_RESENT_AFTER_QUIET, "readBack": {**GOOD_OP_ABSENT_IN_WINDOW["readBack"], "effectPresent": True}}):
+        failures.append("recovery: a resend after a read-back that saw the effect must be refused")
     return failures
 
 
@@ -592,6 +815,7 @@ def main() -> int:
         "/delivery/v1/projects/{project}/workflow",
         "/delivery/v1/issues",
         "/delivery/v1/issues/{vendorId}",
+        "/delivery/v1/operations/coverage",
         "/delivery/v1/operations/{operationKey}",
         "/delivery/v1/operations/{operationKey}/reconcile",
         "/delivery/v1/operations",
@@ -599,8 +823,20 @@ def main() -> int:
         if route not in api["paths"]:
             failures.append(f"openapi: missing route {route}")
 
+    # The coverage route must not be shadowed by the templated operation-key path.
+    if api["paths"]["/delivery/v1/operations/coverage"]["get"]["operationId"] != "getDeliveryOperationCoverage":
+        failures.append("openapi: coverage route lost its getDeliveryOperationCoverage operationId")
+    if api["paths"]["/delivery/v1/operations/{operationKey}"]["get"]["operationId"] != "getDeliveryOperation":
+        failures.append("openapi: operation lookup route lost its getDeliveryOperation operationId")
+    reserved_at = api["paths"]["/delivery/v1/operations/{operationKey}"]["get"].get("parameters", [])
+    if not any(p.get("name") == "reservedAt" for p in reserved_at):
+        failures.append("openapi: operation lookup has no reservedAt provenance parameter")
+    if "operation_lookup_out_of_coverage" not in API.read_text(encoding="utf-8"):
+        failures.append("openapi: the inconclusive-miss code is not documented on the surface")
+
     failures += check_ci_api(reg)
     failures += check_bindings()
+    failures += check_recovery_semantics()
 
     for f in failures:
         print("FAIL ", f)

@@ -1,10 +1,22 @@
-# D113 task delivery — contract reference (v0.34.0)
+# D113 task delivery — contract reference (v0.35.0)
 
 Published for demand `factory-20260927-task-delivery-contracts` (D113,
 `factory/docs/YOUTRACK_DELIVERY.md` chunk 2). **This is an interface release, not a
 running system.** No `/delivery/v1` route, no producer integration and no Planotell
 dev deployment exists because of it; each owning service must implement and verify
 its own side (see the handoff matrix).
+
+Amended in **v0.35.0** for demand `factory-20260927-sync-recovery-retention`: a
+lookup miss no longer authorises a resubmit on its own. The `youtrack` operation
+store now states a coverage floor (`delivery.operation-coverage`), a by-key miss is
+classified as conclusive (`operation_not_found`) or inconclusive
+(`operation_lookup_out_of_coverage`), and an observed absence must be windowed
+before it can justify a resend (`readBack.absentSince` / `absenceQuietUntil`,
+`absenceProvenAt`, `vendorInFlightBoundSeconds`). §Retention coverage and
+§Absence is not non-execution are the new rules; §Producers gained the four producer
+obligations they imply. The `agent-runner` and `ci-runner` rows are unchanged from
+v0.34.0, and nothing outside `schemas/delivery/` and the `youtrack` OpenAPI document
+changed.
 
 Amended in **v0.34.0** for demand `ci-runner-20260927-contracts-ci-headsha-lookup`:
 the `ci-runner` side of §Producers closed its gap. `ci.run` gained an optional
@@ -31,9 +43,10 @@ is unchanged from v0.31.0.
 | `schemas/delivery/delivery.issue.json` | JSON Schema | Issue snapshot: scope fingerprint, state, epic/subtasks, dependencies, delivery links |
 | `schemas/delivery/delivery.issue-page.json` | JSON Schema | Paginated listing with `complete` / `unavailableProjects` |
 | `schemas/delivery/delivery.workflow.json` | JSON Schema | Existing project workflow states (read-only) |
-| `schemas/delivery/delivery.sync-request.json` | JSON Schema | One issue write: `link` / `comment` / `transition` / `resolve` |
-| `schemas/delivery/delivery.sync-operation.json` | JSON Schema | Durable operation record + read-back |
-| `schemas/delivery/delivery.error.json` | JSON Schema | Error payload + code/status table |
+| `schemas/delivery/delivery.sync-request.json` | JSON Schema | One issue write: `link` / `comment` / `transition` / `resolve`; v0.35.0 adds optional `reservedAt` |
+| `schemas/delivery/delivery.sync-operation.json` | JSON Schema | Durable operation record + read-back; v0.35.0 adds the absence window (`absentSince`/`absenceQuietUntil`), `absenceProvenAt`, `vendorInFlightBoundSeconds` |
+| `schemas/delivery/delivery.operation-coverage.json` | JSON Schema | Lookup coverage floor + quiet-window bound; what a miss can and cannot prove (v0.35.0) |
+| `schemas/delivery/delivery.error.json` | JSON Schema | Error payload + code/status table; v0.35.0 adds `operation_lookup_out_of_coverage` and `tracker_outcome_unknown` |
 | `schemas/delivery/delivery.evidence.json` | JSON Schema | Stage-aware observation (successor to `factory.evidence-receipt` for new deliveries) |
 | `schemas/delivery/delivery.decision.json` | JSON Schema | Plan approval / policy authorization / owner acceptance / request changes / abandon |
 | `schemas/delivery/delivery.producer-result.json` | JSON Schema | Normalized runner / CI / app-deploy result |
@@ -44,7 +57,7 @@ is unchanged from v0.31.0.
 | `schemas/delivery-api/ci-runner-results.openapi.yaml` | OpenAPI 3.1 | `ci-runner` CI-result lookup routes under `/delivery/v1` (v0.34.0) |
 | `schemas/ci-runner/build-result.yaml` | JSON Schema | `ci-runner` → control-plane build result; v0.34.0 adds optional `headSha` |
 | `schemas/state-feed/state.event.json` | JSON Schema | `ci.run` payload; v0.34.0 adds optional `headSha` |
-| `tests/validate_delivery.py` | test | 63 positive/negative fixtures + OpenAPI route checks (youtrack + ci-runner) + ci-runner component fixtures + Python binding round-trip |
+| `tests/validate_delivery.py` | test | 88 positive/negative fixtures + OpenAPI route checks (youtrack + ci-runner) + ci-runner component fixtures + Python binding round-trip + `check_recovery_semantics` (the two cross-field timestamp rules JSON Schema cannot express) |
 | `tests/validate_runner.py` | test | Runner fixtures incl. the keyed/workspace/reservation cases + an executable `requestHash` conformance check |
 
 Bindings: Python `platform_contracts.delivery.*` (`gen/python`), TypeScript
@@ -112,18 +125,24 @@ the pattern Factory uses for its own dispatch, merge and deploy requests.
    the key's marker, or the state equal to the target.
 7. **Uncertain.** If the vendor call timed out, the connection dropped, or the vendor
    returned 5xx after the request was sent, and read-back cannot settle it, the status
-   is `uncertain`. **The service never resends automatically from `uncertain`.**
-   `POST .../reconcile` re-reads the issue. If the effect is present the record
-   becomes `confirmed`. If it is proven absent, the service may resend the same
-   stored request once (`attempts` +1) and read back again. If the read-back fails,
-   the record stays `uncertain`.
+   is `uncertain`. **The service never resends automatically from `uncertain`.** The
+   error code is `tracker_outcome_unknown` (`retryable: false`) — not
+   `tracker_unavailable`, which means the opposite fact (nothing was sent, retry is
+   safe). `POST .../reconcile` re-reads the issue. If the effect is present the record
+   becomes `confirmed`. Absence does **not** by itself authorise anything — see
+   §Absence is not non-execution below. If the read-back fails, the record stays
+   `uncertain`.
 8. **Restart.** On start the service moves every `submitted` record to `uncertain`
    and reconciles it. Factory lists
    `GET /delivery/v1/operations?status=reserved&status=submitted&status=uncertain`
-   and looks up its own reserved keys. `operation_not_found` means the request never
-   arrived, so Factory may submit that key.
+   and looks up its own reserved keys. A lookup **miss does not mean the request
+   never arrived** — after terminal retention expires a completed write misses too.
+   See §Retention coverage and safe missing-operation recovery.
 9. **Retention.** Terminal records are kept at least 90 days (`retainUntil`).
-   Open records (`reserved`/`submitted`/`uncertain`) are never purged.
+   Open records (`reserved`/`submitted`/`uncertain`) are never purged at any age, so
+   a lookup always answers while an outcome is still open. The schema enforces both
+   halves: `retainUntil` must be `null` for an open record and present for a terminal
+   one.
 10. **No stronger claim.** This gives at most one *confirmed* effect per key, as far
     as read-back can observe. It is **not** a transaction with YouTrack and **not**
     exactly-once delivery. A vendor-side duplicate that read-back cannot distinguish
@@ -131,6 +150,113 @@ the pattern Factory uses for its own dispatch, merge and deploy requests.
     reported rather than hidden.
 11. A sync failure blocks only that sync. It never re-runs implementation or
     deployment.
+
+## Retention coverage and safe missing-operation recovery
+
+**A lookup miss is not proof that a key was never used.** Terminal records are
+purgeable after 90 days, so a miss can mean either *never stored* or *stored,
+completed, and since purged*. Before v0.35.0 the second case was indistinguishable
+from the first, and the doc told Factory a miss meant "the request never arrived, so
+Factory may submit that key" — which, after a retention expiry, authorises a second
+write under a key whose first write already landed.
+
+The service now states what its store can answer, and classifies every miss.
+
+### The coverage floor
+
+`GET /delivery/v1/operations/coverage` returns `delivery.operation-coverage`:
+
+- `coveredSince` — the coverage floor. Every record the service ever stored whose
+  reservation time is at or after this instant is still retrievable; nothing at or
+  after it has been purged. In the normal case this is `now - terminalRetentionDays`.
+  The service must move it forward if it purges on any other schedule, and it never
+  moves backward.
+- `terminalRetentionDays` — the retention window (floor 90).
+- `vendorInFlightBoundSeconds` — the quiet window for reconciliation (below).
+
+### Classifying the miss
+
+Factory supplies its key provenance — the time it minted the key — as `reservedAt`,
+on the lookup (`GET /delivery/v1/operations/{operationKey}?reservedAt=...`) and in
+the write body (`delivery.sync-request.reservedAt`). Factory persists it with the
+reserved request, so it always has it. `reservedAt` is part of the hashed canonical
+body: a replay must repeat it byte-for-byte or it is `operation_key_conflict`.
+
+| Lookup result | Meaning | May Factory submit the key? |
+|---|---|---|
+| `200` + `delivery.sync-operation` | Found, any status | No — replaying the same body returns the record; never mint or resend around it |
+| `404 operation_not_found` | Conclusive: never stored. Only returned when `reservedAt >= coveredSince`, and it always echoes `details.reservedAt`/`details.coveredSince` | **Yes** — `retryable: true`. No vendor write was ever made under this key |
+| `404 operation_lookup_out_of_coverage` | **Inconclusive.** `reason: reserved_at_before_coverage` (key older than the floor: a terminal record for it may have been purged) or `reason: no_key_provenance` (no `reservedAt` supplied) | **No** — `retryable: false`. Resubmitting can duplicate a completed write |
+
+Two rules make this hold rather than depend on good behaviour:
+
+- The schema requires `details.reservedAt` and `details.coveredSince` on every
+  `operation_not_found`, and pins `retryable: true`. A bare 404 can no longer be
+  dressed up as conclusive — the service has to have had, and to show, the
+  provenance it judged.
+- Every `operation_lookup_out_of_coverage` must carry the floor and a `reason`, and
+  is pinned `retryable: false`.
+
+### Factory's behaviour on an inconclusive miss
+
+Do **not** resubmit, and do not mint a replacement key as a reflex: a replacement
+key is a new identity, and the old write may be on the issue under the old marker.
+Instead:
+
+1. Read the issue (`delivery.issue`) and look for this operation's marker — comment
+   or link carrying the key, or the state the transition targeted. A present effect
+   settles it: record it and stop.
+2. If the write is genuinely absent, mint a **new** key, note the superseded key in
+   the delivery record, and proceed. Do not reuse the old key: its provenance is
+   what the service could not resolve.
+3. Surface the inconclusive lookup in the waiting view (`ownerAction` is already on
+   the error) rather than retrying on a timer. A retry loop against an inconclusive
+   key is how a duplicate gets made.
+
+### The write path is gated too
+
+A lookup is not the only way to repeat a write — a re-`PUT` of the same key is
+another. If the body's `reservedAt` is earlier than `coveredSince`, the service must
+refuse with `operation_lookup_out_of_coverage` and write nothing, because it cannot
+prove that key is fresh. When `reservedAt` is absent the service accepts the key as
+a new reservation (the caller is asserting freshness) — which is exactly why Factory
+should always send it.
+
+## Absence is not non-execution
+
+A vendor request that was already sent may still take effect *after* a read-back
+shows it absent. One read-back observing no effect proves only that the effect was
+absent at that instant — so it cannot authorise a resend, and v0.35.0 no longer lets
+it look like it does:
+
+- An `effectPresent: false` read-back now **must** carry `absentSince` (the earliest
+  observation from which absence has been seen continuously) and
+  `absenceQuietUntil` (= `absentSince` + `vendorInFlightBoundSeconds`). An unwindowed
+  absence observation is not a valid record.
+- Non-execution is established only when absence has held **from `absentSince`
+  through `absenceQuietUntil`** (so a delayed original request can no longer land)
+  **and** the vendor exposes no record of the request where it has such a lookup.
+  When both hold the service sets `absenceProvenAt`.
+- Only `absenceProvenAt` authorises a resend. `attempts >= 2` with a null or missing
+  `absenceProvenAt` is invalid by schema, so every resend is auditable back to the
+  absence that justified it.
+- If presence is observed at any point in the window, or a read-back fails, the
+  window resets and the record stays `uncertain`. **Uncertainty is preserved rather
+  than resolved by assumption** — an `uncertain` record is never purged, so it stays
+  visible and reconciled indefinitely.
+
+The timestamps are the contract; the ordering between them (`absenceProvenAt >=
+absenceQuietUntil`, and the window running forward from `absentSince`) is arithmetic
+that JSON Schema cannot express, so it is enforced by `tests/validate_delivery.py`
+§`check_recovery_semantics` instead of by a keyword. A service implementing this
+without those checks can still emit a doc that validates and means the wrong thing.
+
+### `uncertain` is not retryable
+
+The error on an `uncertain` record must be `tracker_outcome_unknown` with
+`retryable: false`, and the schema enforces it. `tracker_unavailable` — pinned
+`retryable: true` — describes the opposite situation (the vendor was unreachable
+*before* any write was sent) and must not be used to report a post-send timeout.
 
 ## Resolve enforcement (the schema is necessary, not sufficient)
 
@@ -312,13 +438,37 @@ Factory correlates by (`repository`, `revision`, producer `operationId`, and
 `null` revision, or whose native record cannot be re-fetched is recorded as
 `unknown`, never `passed`.
 
+### Producer obligations added in v0.35.0 (`youtrack` service)
+
+This release adds no new producer and no new consumer, but it adds four things the
+`youtrack` service must do when it implements the operation store. All four are
+interface requirements, not implementation choices:
+
+1. **Serve `GET /delivery/v1/operations/coverage`** and keep `coveredSince` honest —
+   at or after the store's start, moved forward to cover anything actually purged on
+   a different schedule, never backward.
+2. **Classify every by-key miss.** `operation_not_found` only with a caller-supplied
+   `reservedAt` at or after `coveredSince`; otherwise
+   `operation_lookup_out_of_coverage`. Never return a bare conclusive-looking 404.
+3. **Gate the write path** on `delivery.sync-request.reservedAt` — refuse a PUT whose
+   `reservedAt` predates `coveredSince`, writing nothing.
+4. **Window every absence observation.** Populate `readBack.absentSince` and
+   `readBack.absenceQuietUntil`, refuse to resend before the window closes, set
+   `absenceProvenAt` only when non-execution is actually established, and never mark
+   an `uncertain` record's error `retryable`.
+
+Nothing is live because of this release: every `/delivery/v1` route remains
+unimplemented, and no service emits a `delivery.sync-operation` document yet.
+
 ## Handoff matrix
 
-| Interface | Producer | Consumer | Reference | Operation identity / recovery | Status at v0.31.0 |
+| Interface | Producer | Consumer | Reference | Operation identity / recovery | Status at v0.35.0 |
 |---|---|---|---|---|---|
 | Issue read / list | `youtrack` | `factory` | `delivery.issue`, `delivery.issue-page`; `GET /delivery/v1/issues[/{vendorId}]` | n/a (reads); `complete` + `unavailableProjects` | **Unimplemented** (demand to `youtrack`) |
 | Workflow metadata | `youtrack` | `factory` | `delivery.workflow`; `GET /delivery/v1/projects/{p}/workflow` | n/a | **Unimplemented** |
-| Link / comment / transition / resolve | `youtrack` | `factory` | `delivery.sync-request` → `delivery.sync-operation`; `PUT/GET /delivery/v1/operations/{key}`, `POST .../reconcile`, `GET /delivery/v1/operations` | `operationKey` + `requestHash`; read-back; reconcile | **Unimplemented** |
+| Link / comment / transition / resolve | `youtrack` | `factory` | `delivery.sync-request` → `delivery.sync-operation`; `PUT/GET /delivery/v1/operations/{key}`, `POST .../reconcile`, `GET /delivery/v1/operations` | `operationKey` + `requestHash`; read-back; reconcile over a quiet window | **Unimplemented** |
+| Operation lookup coverage | `youtrack` | `factory` | `delivery.operation-coverage`; `GET /delivery/v1/operations/coverage` | `coveredSince` + caller `reservedAt` classify a miss | Contract published in v0.35.0; **unimplemented** |
+| Operation lookup miss | `youtrack` | `factory` | `delivery.error` with `operation_not_found` (conclusive, retryable) or `operation_lookup_out_of_coverage` (inconclusive, never retryable) | `details.reservedAt`/`coveredSince`/`reason` | Contract published in v0.35.0; **unimplemented** |
 | Errors | `youtrack` | `factory` | `delivery.error` | `retryable`, `ownerAction` | **Unimplemented** |
 | Evidence records | `factory` | `factory` (store/UI), later `dashboard` | `delivery.evidence` | `id` + `hash`, `supersedes` | **Unimplemented** (Factory chunk 3/4) |
 | Decisions | `factory` | `factory`; `youtrack` (via `acceptance` ref) | `delivery.decision` | `id` + `hash` = `decisionId`/`decisionHash` | **Unimplemented** |
@@ -329,6 +479,48 @@ Factory correlates by (`repository`, `revision`, producer `operationId`, and
 | Routing/approval | `demand-coordinator` | `factory` | existing `demand` / `demand.fulfillment` | existing | Unchanged; not in this release |
 
 ## Upgrade / repin
+
+### v0.35.0 (operation retention coverage + safe missing-operation recovery)
+
+Additive, with one narrow conditional tightening (below). No consumer is obligated
+to move (D031); the only repo with a leg here is `youtrack`, whose routes are
+unimplemented, so this release's obligations land when that work is done. Nothing
+in `factory.*`, `agent_runner.*`, `ci_runner.*` or the planner shapes changed.
+
+- **Python (`factory`, `youtrack`):**
+  `platform-contracts @ git+https://github.com/elmoul/contracts.git@v0.35.0#subdirectory=gen/python`.
+  `platform_contracts.delivery` gains `delivery_operation_coverage`
+  (`DeliveryOperationCoverage`); `delivery_sync_operation` gains `absenceProvenAt`,
+  `vendorInFlightBoundSeconds` and the two `DeliveryReadBack` fields
+  (`absentSince`, `absenceQuietUntil`); `delivery_sync_request` gains `reservedAt`.
+- **TypeScript:** point the `file:` dependency at
+  `../contracts-worktrees/v0.35.0/gen/ts`. `index.ts` re-exports the new
+  `DeliveryOperationCoverage`. `DeliveryError` changed from an `interface` to a
+  `type` alias (it gained `allOf`), which is source-compatible for every use.
+- **Java:** no change — there is still no Java delivery binding, because no Java
+  producer or consumer exists. Request one if `plantpal`'s deploy receipt lands in
+  Java.
+- **Compatibility checks after repin:** run your existing contract tests, then
+  round-trip `GOOD_OP_ABSENT_IN_WINDOW`, `GOOD_OP_RESENT_AFTER_QUIET`,
+  `GOOD_COVERAGE`, `ERR_OPERATION_NOT_FOUND` and `ERR_LOOKUP_OUT_OF_COVERAGE` from
+  `tests/validate_delivery.py` through your binding. Confirm a v0.34.0-valid
+  `delivery.sync-operation` **without** the new fields still validates — that is the
+  criterion the additive claim rests on.
+- **The conditional tightening, stated plainly:** two shapes that used to validate
+  no longer do. (a) `attempts >= 2` now requires a non-null `absenceProvenAt`;
+  (b) `readBack.effectPresent: false` now requires `absentSince` and
+  `absenceQuietUntil`. Both are the shapes that let a caller repeat a
+  possibly-completed write, both are written as `if/then` conditionals rather than
+  as new entries in a `required` list (the same pattern `delivery.sync-request`'s
+  `expectedScope` already uses), and no producer or stored document uses either —
+  every `/delivery/v1` route is unimplemented and no delivery binding has ever been
+  adopted by a consumer. If your own store already holds documents in those shapes,
+  they need the fields added, not a migration of meaning.
+- **Also tightened, same class:** an `uncertain`/`reserved`/`submitted` record may no
+  longer carry a non-null `retainUntil`, a `confirmed`/`rejected`/`failed` record
+  must carry one, an `uncertain` record's `error.retryable` must be `false`, and
+  `tracker_unavailable` must be `retryable: true` (so a post-send timeout must be
+  reported as `tracker_outcome_unknown`, a new code in this release).
 
 ### v0.34.0 (CI headSha + CI-result lookup)
 

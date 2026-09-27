@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://platform/contracts/delivery/delivery.sync-operation",
   "title": "DeliverySyncOperation",
-  "description": "The `youtrack` service's durable record of one issue write, returned by `PUT /delivery/v1/operations/{operationKey}`, `GET /delivery/v1/operations/{operationKey}`, `POST /delivery/v1/operations/{operationKey}/reconcile` and listed by `GET /delivery/v1/operations`. The service persists it (status `reserved`) BEFORE calling the vendor. It claims at-most-one confirmed effect per key, established by read-back; it does NOT claim a transaction with YouTrack or exactly-once vendor delivery, which the vendor API cannot provide.",
+  "description": "The `youtrack` service's durable record of one issue write, returned by `PUT /delivery/v1/operations/{operationKey}`, `GET /delivery/v1/operations/{operationKey}`, `POST /delivery/v1/operations/{operationKey}/reconcile` and listed by `GET /delivery/v1/operations`. The service persists it (status `reserved`) BEFORE calling the vendor. It claims at-most-one confirmed effect per key, established by read-back; it does NOT claim a transaction with YouTrack or exactly-once vendor delivery, which the vendor API cannot provide. Absence is not non-execution (v0.35.0): a read-back that observes no effect is timestamped (`readBack.absentSince`) and carries the instant a resend could first be justified (`readBack.absenceQuietUntil`), because a vendor request that was already sent may still take effect after that observation. A resend is only ever justified by a recorded `absenceProvenAt`.",
   "type": "object",
   "required": ["operationKey", "requestHash", "kind", "issue", "correlation", "status", "attempts", "createdAt", "updatedAt", "readBack", "error", "retainUntil"],
   "additionalProperties": false,
@@ -19,33 +19,115 @@
     "status": {
       "type": "string",
       "enum": ["reserved", "submitted", "confirmed", "rejected", "failed", "uncertain"],
-      "description": "`reserved`: stored, no vendor call yet. `submitted`: vendor call in flight (seen only by a concurrent lookup or after a crash). `confirmed` (terminal): read-back observed the effect. `rejected` (terminal): a precondition failed before any vendor write (scope/state/mapping/permission/acceptance); nothing was written. `failed` (terminal): vendor refused and read-back confirms no effect. `uncertain`: a write was sent but its outcome is unknown (timeout, connection loss, 5xx) and read-back has not settled it; the service NEVER resends from this state until read-back proves absence. On restart the service moves every `submitted` record to `uncertain` and reconciles it."
+      "description": "`reserved`: stored, no vendor call yet. `submitted`: vendor call in flight (seen only by a concurrent lookup or after a crash). `confirmed` (terminal): read-back observed the effect. `rejected` (terminal): a precondition failed before any vendor write (scope/state/mapping/permission/acceptance); nothing was written. `failed` (terminal): the vendor definitively refused before executing, so non-execution is established by the vendor itself. `uncertain`: a write was sent but its outcome is unknown (timeout, connection loss, 5xx) and read-back has not settled it; the service NEVER resends from this state until absence has been observed for longer than `vendorInFlightBoundSeconds` and recorded in `absenceProvenAt`. On restart the service moves every `submitted` record to `uncertain` and reconciles it."
     },
     "attempts": {
       "type": "integer",
       "minimum": 0,
-      "description": "Vendor write submissions made for this key. Greater than 1 only when a reconcile read-back proved the earlier attempt left no effect."
+      "description": "Vendor write submissions made for this key. `>= 2` means a resend happened, which the schema permits only alongside a non-null `absenceProvenAt` — a resend is never legal on the strength of a single absent read-back."
     },
     "createdAt": { "type": "string", "format": "date-time" },
     "updatedAt": { "type": "string", "format": "date-time" },
     "readBack": {
       "oneOf": [{ "$ref": "#/$defs/readBack" }, { "type": "null" }],
-      "description": "`null` until a read-back has run. `confirmed` REQUIRES a read-back with `effectPresent: true`."
+      "description": "`null` until a read-back has run. `confirmed` REQUIRES a read-back with `effectPresent: true`. An `effectPresent: false` read-back is an observation of absence at an instant, and carries the window that has to elapse before it could justify a resend."
     },
     "error": {
       "oneOf": [{ "$ref": "delivery.error.json" }, { "type": "null" }],
-      "description": "Set for `rejected`, `failed` and `uncertain`; `null` otherwise."
+      "description": "Set for `rejected`, `failed` and `uncertain`; `null` otherwise. For `uncertain` it MUST NOT be retryable: `tracker_unavailable` (retryable) means no write was sent, which is a different fact from an unknown outcome."
     },
     "retainUntil": {
       "type": ["string", "null"],
       "format": "date-time",
-      "description": "Earliest time the service may purge this record. Terminal records are retained at least 90 days; `reserved`/`submitted`/`uncertain` records are never purged (`null`) until settled, so a key can always be looked up while its outcome is open."
+      "description": "Earliest time the service may purge this record. Always `null` for `reserved`/`submitted`/`uncertain` (never purged at any age, so a key whose outcome is still open can always be looked up) and always set for a terminal record (retained at least 90 days). This is what makes `delivery.operation-coverage.coveredSince` computable: a purged record's reservation time is always at least one retention window in the past."
+    },
+    "absenceProvenAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Sticky: the last instant at which the service established that an earlier submission left no effect, strongly enough to authorize a resend. Establishes non-execution, which needs both (a) read-back showing absence continuously from `readBack.absentSince` for at least `readBack.absenceQuietUntil`, so a delayed original request can no longer land, and (b) no vendor-side record of the request where the vendor exposes one. REQUIRED non-null whenever `attempts >= 2`, so a resend is always auditable back to the absence that justified it. `null` means no resend has been justified."
+    },
+    "vendorInFlightBoundSeconds": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "description": "The bound in force for this record: a vendor request already sent may still take effect for up to this long. Written from the service's configured value (see `delivery.operation-coverage.vendorInFlightBoundSeconds`) when the first submission is made; `null` only while `attempts` is 0. `readBack.absenceQuietUntil` is computed as `readBack.absentSince` plus this many seconds."
     }
   },
   "allOf": [
     {
       "if": { "properties": { "status": { "const": "confirmed" } }, "required": ["status"] },
       "then": { "properties": { "readBack": { "$ref": "#/$defs/readBack", "properties": { "effectPresent": { "const": true } } } } }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["reserved", "submitted", "uncertain"] } }, "required": ["status"] },
+      "then": { "properties": { "retainUntil": { "type": "null" } }, "description": "Open records are never purged at any age." }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["confirmed", "rejected", "failed"] } }, "required": ["status"] },
+      "then": { "properties": { "retainUntil": { "type": "string" } }, "description": "A terminal record always carries the deadline before which it may not be purged." }
+    },
+    {
+      "if": { "properties": { "attempts": { "minimum": 2 } }, "required": ["attempts"] },
+      "then": {
+        "required": ["absenceProvenAt"],
+        "properties": { "absenceProvenAt": { "type": "string" } },
+        "description": "A resend requires recorded proof that the earlier attempt left no effect."
+      }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["rejected", "failed", "uncertain"] } }, "required": ["status"] },
+      "then": {
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "$ref": "delivery.error.json",
+            "type": "object",
+            "properties": { "retryable": { "const": false } }
+          }
+        },
+        "description": "A non-`confirmed` outcome carries a reason, and it is never reported as safe to resubmit: an unknown outcome (`uncertain`) especially, since `retryable: true` is what a caller would blind-retry on."
+      }
+    },
+    {
+      "if": {
+        "properties": { "readBack": { "properties": { "effectPresent": { "const": false } }, "required": ["effectPresent"] } },
+        "required": ["readBack"]
+      },
+      "then": {
+        "properties": {
+          "readBack": {
+            "required": ["absentSince", "absenceQuietUntil"],
+            "properties": { "absentSince": { "type": "string" }, "absenceQuietUntil": { "type": "string" } }
+          }
+        },
+        "description": "Observed absence is always timestamped and always carries its quiet deadline; absence at one instant is not non-execution."
+      }
+    },
+    {
+      "if": {
+        "properties": { "readBack": { "properties": { "effectPresent": { "const": true } }, "required": ["effectPresent"] } },
+        "required": ["readBack"]
+      },
+      "then": {
+        "properties": {
+          "readBack": {
+            "properties": { "absentSince": { "type": "null" }, "absenceQuietUntil": { "type": "null" } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "readBack": { "properties": { "effectPresent": { "type": "null" } }, "required": ["effectPresent"] } },
+        "required": ["readBack"]
+      },
+      "then": {
+        "properties": {
+          "readBack": {
+            "properties": { "absentSince": { "type": "null" }, "absenceQuietUntil": { "type": "null" } }
+          }
+        },
+        "description": "A failed read-back settles nothing: it is neither absence nor presence, so it carries no quiet deadline."
+      }
     }
   ],
   "$defs": {
@@ -58,11 +140,21 @@
         "observedAt": { "type": "string", "format": "date-time" },
         "effectPresent": {
           "type": ["boolean", "null"],
-          "description": "`true`: the write's effect is on the issue (comment/link carrying this key, or the state equals the target). `false`: proven absent. `null`: read-back itself failed; outcome stays uncertain."
+          "description": "`true`: the write's effect is on the issue (comment/link carrying this key, or the state equals the target). `false`: absent at `observedAt` — which is NOT proof that a delayed original request cannot still take effect, so it is always paired with `absentSince`/`absenceQuietUntil`. `null`: read-back itself failed; outcome stays uncertain."
         },
         "vendorRef": { "type": ["string", "null"], "description": "Vendor id of the comment/link written, when applicable." },
         "observedState": { "type": ["string", "null"], "description": "Issue state name at read-back." },
-        "observedScope": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$", "description": "Scope fingerprint at read-back, so Factory sees drift that happened around the write." }
+        "observedScope": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$", "description": "Scope fingerprint at read-back, so Factory sees drift that happened around the write." },
+        "absentSince": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Non-null exactly when `effectPresent` is `false`: the earliest observation from which absence has been seen CONTINUOUSLY. It is cleared the moment any read-back shows presence or fails. Presence at any point after it resets the window, because a late-landing write would have been seen."
+        },
+        "absenceQuietUntil": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Non-null exactly when `effectPresent` is `false`: `absentSince` plus `vendorInFlightBoundSeconds`. A resend MUST NOT be sent before this instant, because until it passes a delayed original request could still take effect. Reaching it is necessary but not sufficient — `absenceProvenAt` is what records that non-execution was actually established."
+        }
       }
     }
   }

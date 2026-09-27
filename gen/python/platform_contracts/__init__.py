@@ -1,4 +1,4 @@
-# Generated Python bindings for platform-contracts v0.34.0
+# Generated Python bindings for platform-contracts v0.35.0
 # Do not edit by hand — regenerate from schemas/ using datamodel-code-generator.
 
 from platform_contracts.app import manifest, health, usage_event, dimension_event, telemetry
@@ -43,6 +43,7 @@ from platform_contracts.delivery import (
     delivery_workflow,
     delivery_sync_request,
     delivery_sync_operation,
+    delivery_operation_coverage,
     delivery_error,
     delivery_evidence,
     delivery_decision,
@@ -95,6 +96,7 @@ __all__ = [
     "delivery_workflow",
     "delivery_sync_request",
     "delivery_sync_operation",
+    "delivery_operation_coverage",
     "delivery_error",
     "delivery_evidence",
     "delivery_decision",

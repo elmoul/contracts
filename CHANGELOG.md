@@ -16,6 +16,66 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.35.0 — 2026-09-27
+
+**Additive, with two narrow conditional tightenings. TypeScript + Python**
+(tag `v0.35.0`). Fulfils demand `factory-20260927-sync-recovery-retention` (D113).
+No Java change: there is still no Java delivery binding.
+
+A lookup miss no longer authorises a resubmit on its own. Terminal operation
+records are purgeable after 90 days, so a miss can mean *never stored* **or**
+*stored, completed and since purged* — and the docs previously told Factory a miss
+meant "the request never arrived, so Factory may submit that key", which after a
+retention expiry authorises a second write under a key whose first write already
+landed. Separately, a single read-back showing no effect was treated as proof and
+could authorise a resend, although a vendor request already sent may still take
+effect after that observation.
+
+- **New** `schemas/delivery/delivery.operation-coverage.json` +
+  `GET /delivery/v1/operations/coverage`: `coveredSince` (the floor at/after which a
+  miss is conclusive), `terminalRetentionDays` (floor 90) and
+  `vendorInFlightBoundSeconds` (the reconciliation quiet window).
+- `schemas/delivery/delivery.error.json`: **new** `operation_lookup_out_of_coverage`
+  (404, `retryable: false`, requires `details.coveredSince` + `details.reason` —
+  `reserved_at_before_coverage` or `no_key_provenance`) for an inconclusive miss, and
+  **new** `tracker_outcome_unknown` (503, `retryable: false`) for a post-send timeout,
+  so `tracker_unavailable` (`retryable: true`) is no longer usable to report one.
+  `operation_not_found` is tightened to a *conclusive* statement: it now requires
+  `details.reservedAt` + `details.coveredSince` and pins `retryable: true`, so a bare
+  404 can no longer look conclusive.
+- `schemas/delivery/delivery.sync-operation.json`: `readBack` gains `absentSince` and
+  `absenceQuietUntil`; the record gains `absenceProvenAt` and
+  `vendorInFlightBoundSeconds`. `retainUntil` is now pinned `null` for open records
+  and required for terminal ones, which is what makes `coveredSince` computable.
+- `schemas/delivery/delivery.sync-request.json`: optional `reservedAt`, so the
+  coverage gate applies to the write path too (it is part of the hashed canonical
+  body, so a replay must repeat it verbatim).
+- `schemas/delivery-api/youtrack-delivery.openapi.yaml` (v0.35.0): the coverage
+  route, the `reservedAt` lookup parameter, and the classified-miss and
+  quiet-window semantics on the lookup, write and reconcile operations.
+- `docs/task-delivery.md`: new §Retention coverage and safe missing-operation
+  recovery (with Factory's required caller behaviour) and §Absence is not
+  non-execution, plus four producer obligations for the `youtrack` service.
+- `tests/validate_delivery.py`: 88 cases (was 63). New negatives: absence observed
+  without a window; `attempts >= 2` with no `absenceProvenAt` (null and missing);
+  a resend authorised before the quiet window closed; an `uncertain` record with a
+  non-null `retainUntil`; a terminal record with no retention deadline; an
+  `uncertain` record whose error is retryable; a conclusive miss with no provenance;
+  an inconclusive miss that is retryable or carries no `reason`; a retention window
+  under 90 days. New `check_recovery_semantics` enforces the two cross-field
+  timestamp rules JSON Schema cannot express, and covers both scenarios the demand
+  names — a Factory restart after terminal retention expiry, and a delayed vendor
+  write.
+
+**The two conditional tightenings** (both `if/then`, not new `required` entries, the
+pattern `delivery.sync-request`'s `expectedScope` already uses): `attempts >= 2` now
+requires a non-null `absenceProvenAt`, and `readBack.effectPresent: false` now
+requires `absentSince` + `absenceQuietUntil`. Both shapes are precisely the ones that
+let a caller repeat a possibly-completed write, no producer or stored document uses
+either, and every `/delivery/v1` route remains unimplemented — so no consumer's data
+is invalidated by this release. A record in either shape needs the fields added; its
+meaning does not change.
+
 ## v0.34.0 — 2026-09-27
 
 **Additive. TypeScript + Python + Java** (tag `v0.34.0`). Fulfils demand

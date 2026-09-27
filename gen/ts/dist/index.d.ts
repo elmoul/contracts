@@ -36,6 +36,7 @@ export type { DeliveryIssuePage, DeliveryIssueQuery, DeliveryUnavailableProject 
 export type { DeliveryWorkflow, DeliveryWorkflowState } from "./delivery-workflow";
 export type { DeliverySyncRequest, DeliveryCorrelation, DeliveryLinkPayload, DeliveryCommentPayload, DeliveryTransitionPayload, DeliveryResolvePayload, DeliveryAcceptanceRef } from "./delivery-sync-request";
 export type { DeliverySyncOperation, DeliveryReadBack } from "./delivery-sync-operation";
+export type { DeliveryOperationCoverage } from "./delivery-operation-coverage";
 export type { DeliveryError } from "./delivery-error";
 export type { DeliveryEvidence, DeliveryCriterionCoverage, DeliveryScopeBinding, DeliveryEvidenceSource, DeliveryEnvironment, DeliveryLegacyReceiptRef } from "./delivery-evidence";
 export type { DeliveryDecision, DeliveryPolicyRef } from "./delivery-decision";

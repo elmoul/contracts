@@ -1,12 +1,12 @@
 openapi: 3.1.0
 info:
   title: youtrack task-delivery surface (D113)
-  version: 0.31.0
+  version: 0.35.0
   description: >
     Credential-owning delivery surface served by the `youtrack` service for its only
     authorized consumer, `factory` (D113 clause 1). Payload shapes are the JSON Schemas
     in `schemas/delivery/`; recovery semantics are in `docs/task-delivery.md`.
-    Publishing this document does NOT mean any route is implemented: as of v0.31.0
+    Publishing this document does NOT mean any route is implemented: as of v0.35.0
     none is (see the handoff matrix in `docs/task-delivery.md`). The existing planner
     routes (`/projects`, `/models`, `/plans...`) are unchanged and are not part of this
     surface. Every response is `{"data": <payload>}` on success or
@@ -71,6 +71,26 @@ paths:
       responses:
         "200": { $ref: "#/components/responses/Issue" }
         default: { $ref: "#/components/responses/Error" }
+  /delivery/v1/operations/coverage:
+    get:
+      operationId: getDeliveryOperationCoverage
+      summary: What the operation store can still answer (lookup coverage floor + quiet-window bound).
+      description: >
+        Returns `delivery.operation-coverage`. Factory needs this to classify a lookup
+        MISS: a key reserved at or after `coveredSince` is conclusive (`operation_not_found`,
+        safe to submit), a key reserved before it is not (`operation_lookup_out_of_coverage`,
+        never safe to submit). A literal path segment that cannot collide with
+        `{operationKey}`, whose pattern requires at least 16 characters.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties: { data: { $ref: "../delivery/delivery.operation-coverage.json" } }
+        default: { $ref: "#/components/responses/Error" }
   /delivery/v1/operations/{operationKey}:
     parameters:
       - $ref: "#/components/parameters/operationKey"
@@ -84,6 +104,10 @@ paths:
         vendor write. 409 `operation_key_conflict` = same key, different body.
         A `rejected` precondition failure is returned as 201/200 with the record (so it
         is durable and lookup-able), not as an HTTP error.
+        Coverage gate: when the body's `reservedAt` is earlier than the service's
+        `coveredSince`, the service MUST refuse with 404 `operation_lookup_out_of_coverage`
+        and write nothing, because it cannot prove that key was never already used — a
+        terminal record for it may have been purged. Retrying such a key is never safe.
       requestBody:
         required: true
         content:
@@ -95,7 +119,31 @@ paths:
         default: { $ref: "#/components/responses/Error" }
     get:
       operationId: getDeliveryOperation
-      summary: Durable lookup after restart or an uncertain response. 404 `operation_not_found` means never stored.
+      summary: Durable lookup after restart or an uncertain response.
+      description: >
+        A miss is classified, never bare (v0.35.0). `reservedAt` is the caller's
+        provenance for the key — when Factory minted it; Factory persists it with the
+        reserved request and can always supply it.
+
+        - Key found -> 200 with `delivery.sync-operation`, whatever its status.
+        - Miss, `reservedAt` at/after `coveredSince` -> 404 `operation_not_found`
+          (conclusive: never stored; `retryable: true`, the caller MAY submit that key).
+        - Miss, `reservedAt` before `coveredSince`, or no `reservedAt` supplied ->
+          404 `operation_lookup_out_of_coverage` (`retryable: false`). This does NOT
+          mean the key was never used: it may name a write that completed and has since
+          been purged. Submitting it again can duplicate a completed write. Factory must
+          reconcile instead of resubmitting — see `docs/task-delivery.md` §Retention coverage.
+
+        A key whose write is still unresolved can never miss: open records are never
+        purged, so this lookup always answers while reconciliation is outstanding.
+      parameters:
+        - name: reservedAt
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: >
+            When the caller minted this key. Required for a conclusive
+            `operation_not_found`; without it every miss is `operation_lookup_out_of_coverage`.
       responses:
         "200": { $ref: "#/components/responses/Operation" }
         default: { $ref: "#/components/responses/Error" }
@@ -106,10 +154,22 @@ paths:
       operationId: reconcileDeliveryOperation
       summary: Force a read-back of an `uncertain`/`submitted` operation.
       description: >
-        Reads the issue and settles the record: effect present -> `confirmed`; proven
-        absent -> the service MAY resubmit the SAME stored request once (attempts+1)
-        and read back again; read-back failed -> stays `uncertain`. Terminal records
-        are returned unchanged. Never creates a new key.
+        Reads the issue and settles the record: effect present -> `confirmed`; read-back
+        failed -> stays `uncertain`. Terminal records are returned unchanged. Never
+        creates a new key.
+
+        A read-back that shows the effect ABSENT does not by itself settle anything
+        (v0.35.0): a vendor request that was already sent may still take effect later.
+        The response therefore carries `readBack.absentSince` and
+        `readBack.absenceQuietUntil` (= `absentSince` + `vendorInFlightBoundSeconds`).
+        The service MUST NOT resubmit before `absenceQuietUntil`, and MUST NOT resubmit
+        at all unless absence held continuously from `absentSince` through that instant
+        and no vendor-side record of the request exists where the vendor exposes one.
+        Only then may it set `absenceProvenAt`, resubmit the SAME stored request once
+        (`attempts` +1), and read back again. If the quiet window has not elapsed, or
+        any read-back in between showed presence or failed, the record stays `uncertain`
+        and is returned unchanged. `attempts >= 2` without `absenceProvenAt` is invalid
+        by schema, so every resend is auditable.
       responses:
         "200": { $ref: "#/components/responses/Operation" }
         default: { $ref: "#/components/responses/Error" }
@@ -117,6 +177,13 @@ paths:
     get:
       operationId: listDeliveryOperations
       summary: List operations for restart reconciliation.
+      description: >
+        Enumerates stored records, filterable by status. Unlike a by-key lookup this
+        needs no coverage floor: Factory uses it for the open statuses
+        (`reserved`/`submitted`/`uncertain`), which are never purged, so the listing is
+        complete for the reconciliation it serves. It cannot be used to prove a key was
+        never stored — an absent key may be a purged terminal record — so it is never a
+        substitute for the classified lookup above.
       parameters:
         - name: deliveryId
           in: query

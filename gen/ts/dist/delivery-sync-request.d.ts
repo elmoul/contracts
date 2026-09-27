@@ -4,13 +4,17 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 /**
- * Body of `PUT /delivery/v1/operations/{operationKey}`: Factory asks the `youtrack` service to perform ONE issue write (delivery link, comment, non-resolving transition, or owner-accepted resolve). The service is the only holder of the vendor credential and performs the write itself (D113 clause 1). Idempotency and recovery semantics are in `docs/task-delivery.md` §Recovery; in short: the same `operationKey` with the same canonical body replays the stored operation, the same key with a different body is `operation_key_conflict`, and an uncertain vendor outcome is settled by read-back, never by blind resend.
+ * Body of `PUT /delivery/v1/operations/{operationKey}`: Factory asks the `youtrack` service to perform ONE issue write (delivery link, comment, non-resolving transition, or owner-accepted resolve). The service is the only holder of the vendor credential and performs the write itself (D113 clause 1). Idempotency and recovery semantics are in `docs/task-delivery.md` §Recovery; in short: the same `operationKey` with the same canonical body replays the stored operation, the same key with a different body is `operation_key_conflict`, and an uncertain vendor outcome is settled by read-back over a quiet window, never by blind resend. Retention matters to recovery (v0.35.0): a lookup miss for a key older than the service's coverage floor does not prove the key was never used, so `reservedAt` is carried here to let the service refuse a write it cannot prove is fresh. See `docs/task-delivery.md` §Retention coverage.
  */
 export type DeliverySyncRequest = {
     /**
      * Minted by Factory and persisted in Factory's own store (reserved) BEFORE the first send, so a Factory restart can look the operation up instead of minting a new one. MUST equal the `{operationKey}` path segment. Recommended form: `<deliveryId>:<kind>:<stage-or-purpose>:<n>`.
      */
     operationKey: string;
+    /**
+     * When Factory minted this key. Optional, but Factory SHOULD send it on every request and MUST persist it verbatim with the rest of the body (it is part of the hashed canonical body, so a replay must repeat it exactly). It is the only way the service can apply the coverage gate on the WRITE path: if it is earlier than the service's `coveredSince` (see `delivery.operation-coverage`), the service MUST refuse with `operation_lookup_out_of_coverage` and write nothing, because it cannot prove this key was never already used — the record may have been stored, completed and purged. `null` or absent means the caller asserts the key is fresh; the service then accepts it as a new reservation but the lookup path is correspondingly weaker for it. See `docs/task-delivery.md` §Retention coverage.
+     */
+    reservedAt?: string | null;
     issue: DeliveryIssueRef;
     correlation: DeliveryCorrelation;
     /**

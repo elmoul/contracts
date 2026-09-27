@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/delivery/delivery.operation-coverage",
+  "title": "DeliveryOperationCoverage",
+  "description": "Returned by `GET /delivery/v1/operations/coverage`: the `youtrack` service's statement of what its operation store can and cannot answer. It exists so that a lookup MISS can be classified instead of guessed. Because terminal operation records are purgeable after their retention window, a 404 on its own never distinguishes 'this key was never stored' from 'this key was stored, completed, and has since been purged'; `coveredSince` is the boundary that separates the two. `reservedAt`-keyed semantics are in `docs/task-delivery.md` §Retention coverage. Nothing here authorizes a resend: this document only tells the caller whether a miss is conclusive.",
+  "type": "object",
+  "required": ["observedAt", "coveredSince", "terminalRetentionDays", "vendorInFlightBoundSeconds"],
+  "additionalProperties": false,
+  "properties": {
+    "observedAt": { "type": "string", "format": "date-time", "description": "When this statement was true. A caller must not cache it indefinitely: `coveredSince` only ever moves forward." },
+    "coveredSince": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The coverage floor. Every operation record the service ever stored whose reservation time is at or after this instant is still retrievable by key; nothing at or after it has been purged. A miss for such a key is therefore CONCLUSIVE (never stored) and is returned as `operation_not_found`. A miss for a key reserved before it is INCONCLUSIVE and is returned as `operation_lookup_out_of_coverage`. The service computes it conservatively: `coveredSince` is at least the store's start, and a service that purges on any schedule other than `terminalRetentionDays` after a record became terminal MUST move `coveredSince` forward to cover what it actually purged. It never moves backward."
+    },
+    "terminalRetentionDays": {
+      "type": "integer",
+      "minimum": 90,
+      "description": "How long a terminal (`confirmed`/`rejected`/`failed`) record is kept after it became terminal before it may be purged. The floor is 90; a service may keep records longer, which moves `coveredSince` forward (a larger window means an older key is still conclusive). Open records (`reserved`/`submitted`/`uncertain`) are never purged at any age, so they never fall out of coverage — a lookup for a key whose write is still unresolved cannot return either 404 code."
+    },
+    "vendorInFlightBoundSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The service's declared upper bound on how long a vendor request it has already SENT may still take effect. It is the quiet window a reconciliation must observe before absence in a read-back can be treated as non-execution: one read-back showing no effect proves only that the effect was absent at that instant, not that a delayed original request cannot still land. `delivery.sync-operation.readBack.absenceQuietUntil` is computed from it. A caller must treat a single absent read-back observed for less than this as still uncertain."
+    }
+  }
+}
