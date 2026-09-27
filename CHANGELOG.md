@@ -16,6 +16,66 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.34.0 — 2026-09-27
+
+**Additive. TypeScript + Python + Java** (tag `v0.34.0`). Fulfils demand
+`ci-runner-20260927-contracts-ci-headsha-lookup` (D113). Every existing fixture and
+every `BuildResult` / `ci.run` document that validated at v0.30.0 still validates
+byte-for-byte — the new fields are optional and no required list changed.
+
+- `schemas/state-feed/state.event.json` + `state-event-java.yaml`: `CiRunPayload`
+  (event `ci.run`) gains optional `headSha` (`^[0-9a-f]{40}$`) — the GitHub
+  `workflow_job.head_sha`. `ref` is a moving name and cannot tie a run to a revision;
+  `headSha` can. Both files are edited together, as `tests/check_state_event_sync.py`
+  enforces.
+- `schemas/ci-runner/build-result.yaml`: `BuildResult` gains the same optional
+  `headSha`, so the `ci-runner` → `control-plane` channel carries the revision too.
+- **New** `schemas/delivery-api/ci-runner-results.openapi.yaml` (OpenAPI 3.1): the
+  `ci-runner` CI-result lookup interface — `GET /delivery/v1/ci-results/{runId}/{jobId}`
+  and `GET /delivery/v1/ci-results?repository=&revision=`, both returning
+  `delivery.producer-result` with `producer: ci-runner` and
+  `nativeRef: ci-runner:ci.run/<runId>/<jobId>` (`operationId` = `<runId>/<jobId>`).
+  Fixes the not-found shape: `404` `ci_result_not_found` (a `delivery.error` with
+  fixed `code`/`retryable: false`), and `503` `producer_unavailable` for an
+  unreachable store. A job whose `headSha` was never observed returns
+  `revision: null` — never guessed from `ref` — so it cannot pass a revision gate;
+  an empty by-revision `items` is a `200` meaning "no job known", not a pass.
+- `schemas/delivery/delivery.error.json`: code table + `examples[]` gain
+  `ci_result_not_found` and `producer_unavailable`; the envelope description now names
+  both `/delivery/v1` services (youtrack and ci-runner). `code` remains an open
+  string, so this is documentation, not a constraint.
+- `docs/task-delivery.md`: new §CI result routes; §Producers `ci-runner` row and the
+  handoff matrix updated — the head-SHA gap is **closed at the interface level**, and
+  the implementation status stays explicitly with `ci-runner` (emitting `headSha` from
+  the webhook and serving both routes). New v0.34.0 repin section; the Bindings note
+  now records that these two shapes do have Java bindings, unlike `delivery.*`.
+- Bindings regenerated in all three languages: `gen/ts/state-event.ts` and
+  `gen/ts/build-result.ts` (`headSha?: string`), Python
+  `state_feed/state_event.py` + `ci_runner/build_result.py` (regenerated with the
+  same flags as their previous generation, so the only diff is the new field plus the
+  codegen timestamp), and Java `io.platform.contracts.events.CiRunPayload` via
+  openapi-generator 7.23.0 (`build-result.yaml` is jsonschema2pojo-generated into
+  `target/` at build time and is not committed). `gen/java/pom.xml` bumped from
+  0.30.0 — this release changes Java output, unlike v0.33.0.
+- `tests/validate_state_event.py`: three new `ci.run` cases — a 40-hex `headSha`
+  accepted, an abbreviated SHA and an uppercase SHA rejected (the pattern is strict
+  lowercase, matching every other revision field in the platform).
+- `tests/validate_delivery.py`: a `passed` producer-result fixture for
+  `ci-runner`, plus `check_ci_api` — asserts both lookup routes and the `404` response
+  exist, and validates `CiResultList` / `CiResultNotFoundError` against positive and
+  negative fixtures, including that the not-found `code` is `const` and `retryable` is
+  pinned `false`.
+- `gen/java/src/test/.../CiHeadShaTest.java`: 5 JUnit cases (44 in the module, all
+  green) — `ci.run` and `BuildResult` each deserialize with `headSha` absent (`null`)
+  and round-trip when present, and a `BuildResult` whose `ref` happens to be a 40-hex
+  string still leaves `headSha` null, pinning that `ref` is never promoted to a
+  revision.
+- `gen/ts/package.json`, `gen/python/pyproject.toml`,
+  `platform_contracts/__init__.py` header bumped to 0.34.0.
+
+D031 acceptance re-run for the languages whose packaging changed: TS `file:` install
+into a scratch project and a fresh-venv Python git-URL install, both from the tag.
+
 ## v0.33.0 — 2026-09-27
 
 **Additive. TypeScript + Python** (tag `v0.33.0`). Fulfils demand

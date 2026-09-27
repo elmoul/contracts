@@ -3,6 +3,9 @@ Schema-level validation for schemas/delivery/*.json (D113 task delivery, v0.31.0
 plus a parse check of schemas/delivery-api/youtrack-delivery.openapi.yaml and a
 round-trip through the generated Python binding.
 
+Extended (v0.34.0) with schemas/delivery-api/ci-runner-results.openapi.yaml: route
+presence plus validation of its component schemas (result list, not-found body).
+
 Mirrors validate_factory.py: validates the JSON Schemas directly against example
 documents, independent of any language binding.
 Run: python tests/validate_delivery.py
@@ -19,6 +22,7 @@ from referencing import Registry, Resource
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMAS = ROOT / "schemas" / "delivery"
 API = ROOT / "schemas" / "delivery-api" / "youtrack-delivery.openapi.yaml"
+CI_API = ROOT / "schemas" / "delivery-api" / "ci-runner-results.openapi.yaml"
 
 SHA_A = "a" * 64
 SHA_B = "b" * 64
@@ -382,6 +386,22 @@ GOOD_PRODUCER_CI_UNAVAILABLE = {
     "nativeRef": "ci-runner:ci.run/9001/42",
 }
 
+GOOD_PRODUCER_CI_PASSED = {
+    "producer": "ci-runner",
+    "operationId": "9001/42",
+    "correlation": {"deliveryId": None, "operationKey": None},
+    "repository": "plantpal",
+    "branch": "factory/pla-12",
+    "revision": REV_TASK,
+    "outcome": "passed",
+    "exitCode": None,
+    "observedAt": NOW,
+    "nativeRef": "ci-runner:ci.run/9001/42",
+    "artifactRef": None,
+    "environment": None,
+    "checks": [{"name": "Run tests", "criterionId": None, "outcome": "passed", "exitCode": None}],
+}
+
 BAD_PRODUCER_EXIT_DEFAULTED = {**GOOD_PRODUCER_RUNNER_UNKNOWN, "exitCode": "0"}
 BAD_PRODUCER_ACCEPTED = {**GOOD_PRODUCER_DEPLOY, "outcome": "accepted"}
 BAD_PRODUCER_OTHER = {**GOOD_PRODUCER_DEPLOY, "producer": "demand-coordinator"}
@@ -447,6 +467,7 @@ CASES = [
     ("delivery.producer-result.json", GOOD_PRODUCER_RUNNER_UNKNOWN, True),
     ("delivery.producer-result.json", GOOD_PRODUCER_DEPLOY, True),
     ("delivery.producer-result.json", GOOD_PRODUCER_CI_UNAVAILABLE, True),
+    ("delivery.producer-result.json", GOOD_PRODUCER_CI_PASSED, True),
     ("delivery.producer-result.json", BAD_PRODUCER_EXIT_DEFAULTED, False),
     ("delivery.producer-result.json", BAD_PRODUCER_ACCEPTED, False),
     ("delivery.producer-result.json", BAD_PRODUCER_OTHER, False),
@@ -508,6 +529,53 @@ def check_bindings() -> list[str]:
     return failures
 
 
+def _rewrite_refs(node):
+    """Point the OpenAPI document's `../delivery/<file>` refs at the registry's bare filenames."""
+    if isinstance(node, dict):
+        return {k: (v.removeprefix("../delivery/") if k == "$ref" and isinstance(v, str) else _rewrite_refs(v)) for k, v in node.items()}
+    if isinstance(node, list):
+        return [_rewrite_refs(v) for v in node]
+    return node
+
+
+def check_ci_api(reg: Registry) -> list[str]:
+    api = yaml.safe_load(CI_API.read_text(encoding="utf-8"))
+    failures = []
+    for route, op in [
+        ("/delivery/v1/ci-results/{runId}/{jobId}", "getCiJobResult"),
+        ("/delivery/v1/ci-results", "listCiJobResultsByRevision"),
+    ]:
+        if api["paths"].get(route, {}).get("get", {}).get("operationId") != op:
+            failures.append(f"ci openapi: missing GET {route} ({op})")
+    if "404" not in api["paths"]["/delivery/v1/ci-results/{runId}/{jobId}"]["get"]["responses"]:
+        failures.append("ci openapi: by-id lookup has no 404 response")
+
+    comps = api["components"]["schemas"]
+    listing = {
+        "repository": "plantpal",
+        "revision": REV_TASK,
+        "items": [GOOD_PRODUCER_CI_PASSED, {**GOOD_PRODUCER_CI_PASSED, "operationId": "9002/43", "nativeRef": "ci-runner:ci.run/9002/43", "outcome": "pending"}],
+    }
+    not_found = {"code": "ci_result_not_found", "message": "no record of job 9001/42", "retryable": False}
+    cases = [
+        ("CiResultList", listing, True),
+        ("CiResultList", {**listing, "items": []}, True),
+        ("CiResultList", {**listing, "revision": "abc1234"}, False),
+        ("CiResultList", {**listing, "items": [{**GOOD_PRODUCER_CI_PASSED, "revision": "2" * 39}]}, False),
+        ("CiResultNotFoundError", not_found, True),
+        ("CiResultNotFoundError", {**not_found, "code": "issue_not_found"}, False),
+        ("CiResultNotFoundError", {**not_found, "retryable": True}, False),
+    ]
+    for name, doc, ok in cases:
+        schema = {"$schema": "https://json-schema.org/draft/2020-12/schema", **_rewrite_refs(comps[name])}
+        errors = list(Draft202012Validator(schema, registry=reg, format_checker=FormatChecker()).iter_errors(doc))
+        if ok and errors:
+            failures.append(f"ci openapi {name}: expected valid, got {errors[0].message}")
+        if not ok and not errors:
+            failures.append(f"ci openapi {name}: expected INVALID fixture to be rejected")
+    return failures
+
+
 def main() -> int:
     reg = registry()
     failures = []
@@ -531,6 +599,7 @@ def main() -> int:
         if route not in api["paths"]:
             failures.append(f"openapi: missing route {route}")
 
+    failures += check_ci_api(reg)
     failures += check_bindings()
 
     for f in failures:

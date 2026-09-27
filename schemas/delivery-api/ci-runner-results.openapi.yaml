@@ -1,0 +1,143 @@
+openapi: 3.1.0
+info:
+  title: ci-runner CI-result lookup (D113)
+  version: 0.34.0
+  description: >
+    Read-only lookup served by `ci-runner` so `factory` can re-fetch a CI job result
+    after a restart, a lost event, or to check a revision gate. Every result is a
+    `delivery.producer-result` (`producer: ci-runner`); the mapping from the native
+    `ci.run` event is in `docs/task-delivery.md` §Producers. Publishing this document
+    does NOT mean any route is implemented (see the handoff matrix there).
+    Every response is `{"data": <payload>}` on success or `{"error": delivery.error}`
+    on failure. Host/port are the service's own (PLATFORM_STATE §3), loopback-only (D040).
+
+    Identity: one result per GitHub Actions job. `operationId` is `<runId>/<jobId>` and
+    `nativeRef` is `ci-runner:ci.run/<runId>/<jobId>`, where both ids are the GitHub
+    numeric ids carried on `ci.run` (`runId`, `jobId`). `revision` is the job's
+    `headSha`; a job whose head SHA ci-runner never observed is returned with
+    `revision: null` (never guessed from `ref`) and so cannot pass a revision gate.
+    `repository` is the platform repo name (the `name` part of GitHub `owner/name`),
+    matching `delivery.producer-result.repository`.
+
+    Lookups are stable: after a restart the same ids return the same result or a
+    later settled one (`pending` -> `passed`/`failed`/`unknown`), never a different job.
+    A result is machine observation only, never acceptance.
+servers:
+  - url: http://127.0.0.1:{port}
+    variables:
+      port:
+        default: "8083"
+        description: Assigned in PLATFORM_STATE; not ruled by this contract.
+security:
+  - factoryCaller: []
+paths:
+  /delivery/v1/ci-results/{runId}/{jobId}:
+    get:
+      operationId: getCiJobResult
+      summary: One job's result by GitHub run id + job id.
+      description: >
+        404 `ci_result_not_found` means ci-runner holds no record of that job (never
+        observed, or outside its retention). It is not a failure verdict; Factory
+        records the evidence as `unknown`.
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200": { $ref: "#/components/responses/Result" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        default: { $ref: "#/components/responses/Error" }
+  /delivery/v1/ci-results:
+    get:
+      operationId: listCiJobResultsByRevision
+      summary: Every known job result for an exact (repository, revision).
+      description: >
+        Exact match on `repository` and the full 40-hex `revision` (the jobs' `headSha`);
+        no prefix or branch matching. Jobs without an observed `headSha` are never
+        returned here. Several runs of the same revision (re-runs, multiple workflows)
+        each appear as their own item, ordered by `observedAt` ascending.
+        An empty `items` array is a normal 200 meaning "no job known for this
+        revision" and must be treated as missing evidence, never as passed.
+      parameters:
+        - name: repository
+          in: query
+          required: true
+          schema: { type: string, pattern: "^[a-z][a-z0-9-]{1,79}$" }
+        - name: revision
+          in: query
+          required: true
+          schema: { type: string, pattern: "^[0-9a-f]{40}$" }
+      responses:
+        "200": { $ref: "#/components/responses/ResultList" }
+        default: { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    factoryCaller:
+      type: http
+      scheme: bearer
+      description: >
+        Placeholder for the Factory-boundary service credential the ci-runner spec
+        chooses. It is NOT a GitHub token and grants nothing at GitHub.
+  schemas:
+    CiResultNotFoundError:
+      title: CiResultNotFoundError
+      description: The 404 body of `getCiJobResult`, a `delivery.error` with a fixed code.
+      allOf:
+        - $ref: "../delivery/delivery.error.json"
+        - type: object
+          required: [code, retryable]
+          properties:
+            code: { const: ci_result_not_found }
+            retryable: { const: false }
+    CiResultList:
+      title: CiResultList
+      type: object
+      required: [repository, revision, items]
+      additionalProperties: false
+      properties:
+        repository: { type: string, pattern: "^[a-z][a-z0-9-]{1,79}$" }
+        revision: { type: string, pattern: "^[0-9a-f]{40}$" }
+        items:
+          type: array
+          items: { $ref: "../delivery/delivery.producer-result.json" }
+  responses:
+    Result:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "../delivery/delivery.producer-result.json" } }
+    ResultList:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "#/components/schemas/CiResultList" } }
+    NotFound:
+      description: No record of this job (`ci_result_not_found`).
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties: { error: { $ref: "#/components/schemas/CiResultNotFoundError" } }
+    Error:
+      description: >
+        Error envelope. Codes: `invalid_request` 422 (bad id/pattern),
+        `caller_not_authorized` 403, `ci_result_not_found` 404,
+        `producer_unavailable` 503 (ci-runner's store unreachable; retryable).
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties: { error: { $ref: "../delivery/delivery.error.json" } }

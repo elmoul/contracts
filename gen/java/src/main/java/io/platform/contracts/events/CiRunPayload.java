@@ -44,9 +44,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   CiRunPayload.JSON_PROPERTY_COMPLETED_AT,
   CiRunPayload.JSON_PROPERTY_RUNNER_LABELS,
   CiRunPayload.JSON_PROPERTY_JOB_ID,
+  CiRunPayload.JSON_PROPERTY_HEAD_SHA,
   CiRunPayload.JSON_PROPERTY_STEPS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T05:34:20.367575+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T11:52:10.430802200+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class CiRunPayload {
   public static final String JSON_PROPERTY_RUN_ID = "runId";
   @jakarta.annotation.Nonnull
@@ -169,6 +170,10 @@ public class CiRunPayload {
   public static final String JSON_PROPERTY_JOB_ID = "jobId";
   @jakarta.annotation.Nullable
   private Long jobId;
+
+  public static final String JSON_PROPERTY_HEAD_SHA = "headSha";
+  @jakarta.annotation.Nullable
+  private String headSha;
 
   public static final String JSON_PROPERTY_STEPS = "steps";
   @jakarta.annotation.Nullable
@@ -460,6 +465,31 @@ public class CiRunPayload {
     this.jobId = jobId;
   }
 
+  public CiRunPayload headSha(@jakarta.annotation.Nullable String headSha) {
+    
+    this.headSha = headSha;
+    return this;
+  }
+
+  /**
+   * Full 40-hex commit SHA the job ran against (GitHub workflow_job.head_sha). Ties a run to an exact revision; &#x60;ref&#x60; alone cannot. Optional (additive, v0.34.0).
+   * @return headSha
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_HEAD_SHA, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getHeadSha() {
+    return headSha;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_HEAD_SHA, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setHeadSha(@jakarta.annotation.Nullable String headSha) {
+    this.headSha = headSha;
+  }
+
   public CiRunPayload steps(@jakarta.annotation.Nullable List<CiRunStep> steps) {
     
     this.steps = steps;
@@ -514,12 +544,13 @@ public class CiRunPayload {
         Objects.equals(this.completedAt, ciRunPayload.completedAt) &&
         Objects.equals(this.runnerLabels, ciRunPayload.runnerLabels) &&
         Objects.equals(this.jobId, ciRunPayload.jobId) &&
+        Objects.equals(this.headSha, ciRunPayload.headSha) &&
         Objects.equals(this.steps, ciRunPayload.steps);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(runId, repo, ref, workflow, jobName, phase, conclusion, startedAt, completedAt, runnerLabels, jobId, steps);
+    return Objects.hash(runId, repo, ref, workflow, jobName, phase, conclusion, startedAt, completedAt, runnerLabels, jobId, headSha, steps);
   }
 
   @Override
@@ -537,6 +568,7 @@ public class CiRunPayload {
     sb.append("    completedAt: ").append(toIndentedString(completedAt)).append("\n");
     sb.append("    runnerLabels: ").append(toIndentedString(runnerLabels)).append("\n");
     sb.append("    jobId: ").append(toIndentedString(jobId)).append("\n");
+    sb.append("    headSha: ").append(toIndentedString(headSha)).append("\n");
     sb.append("    steps: ").append(toIndentedString(steps)).append("\n");
     sb.append("}");
     return sb.toString();

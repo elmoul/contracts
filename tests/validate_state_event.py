@@ -622,6 +622,22 @@ BAD_CI_RUN_JOB_ID_NOT_INTEGER = {
 }
 
 
+GOOD_CI_RUN_WITH_HEAD_SHA = {
+    **GOOD_CI_RUN_WITH_STEPS,
+    "payload": {**GOOD_CI_RUN_WITH_STEPS["payload"], "headSha": "0123456789abcdef0123456789abcdef01234567"},
+}
+
+BAD_CI_RUN_HEAD_SHA_SHORT = {
+    **GOOD_CI_RUN_WITH_STEPS,
+    "payload": {**GOOD_CI_RUN_WITH_STEPS["payload"], "headSha": "0123456"},
+}
+
+BAD_CI_RUN_HEAD_SHA_UPPERCASE = {
+    **GOOD_CI_RUN_WITH_STEPS,
+    "payload": {**GOOD_CI_RUN_WITH_STEPS["payload"], "headSha": "0123456789ABCDEF0123456789ABCDEF01234567"},
+}
+
+
 def load_state_event_schema() -> dict:
     return json.loads(STATE_EVENT_SPEC.read_text(encoding="utf-8"))
 
@@ -695,6 +711,9 @@ def main() -> int:
     expect_invalid(schema, BAD_CI_RUN_STEP_MISSING_NAME, "ci.run: step missing name (known-bad)")
     expect_invalid(schema, BAD_CI_RUN_STEP_UNKNOWN_PROPERTY, "ci.run: step unknown extra property (known-bad)")
     expect_invalid(schema, BAD_CI_RUN_JOB_ID_NOT_INTEGER, "ci.run: jobId as string (known-bad)")
+    expect_valid(schema, GOOD_CI_RUN_WITH_HEAD_SHA, "ci.run: known-good event with 40-hex headSha (additive, v0.34.0)")
+    expect_invalid(schema, BAD_CI_RUN_HEAD_SHA_SHORT, "ci.run: abbreviated headSha (known-bad)")
+    expect_invalid(schema, BAD_CI_RUN_HEAD_SHA_UPPERCASE, "ci.run: uppercase headSha (known-bad)")
     return 0
 
 

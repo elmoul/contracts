@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   ActivityCountPayload.JSON_PROPERTY_ACTIVITY,
   ActivityCountPayload.JSON_PROPERTY_COUNT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T05:34:20.367575+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T11:52:10.430802200+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class ActivityCountPayload {
   public static final String JSON_PROPERTY_COMPONENT_ID = "componentId";
   @jakarta.annotation.Nonnull

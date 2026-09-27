@@ -1,10 +1,19 @@
-# D113 task delivery — contract reference (v0.33.0)
+# D113 task delivery — contract reference (v0.34.0)
 
 Published for demand `factory-20260927-task-delivery-contracts` (D113,
 `factory/docs/YOUTRACK_DELIVERY.md` chunk 2). **This is an interface release, not a
 running system.** No `/delivery/v1` route, no producer integration and no Planotell
 dev deployment exists because of it; each owning service must implement and verify
 its own side (see the handoff matrix).
+
+Amended in **v0.34.0** for demand `ci-runner-20260927-contracts-ci-headsha-lookup`:
+the `ci-runner` side of §Producers closed its gap. `ci.run` gained an optional
+`headSha`, `BuildResult` gained the same, and the `ci-runner` CI-result lookup
+interface — one job by run id + job id, and every job for an exact
+`(repository, revision)` — is published under `schemas/delivery-api/`, so a CI result
+can finally be tied to an exact revision and re-fetched after a lost event. §CI result
+routes and §Producers below state its shapes and status codes. The `agent-runner` rows
+are unchanged from v0.33.0 and `delivery.*` is unchanged from v0.31.0.
 
 Amended in **v0.33.0** for demand `agent-runner-20260927-contracts-runner-keyed-dispatch`:
 the runner side of §Producers closed its gap. `schemas/agent-runner/*` gained an
@@ -32,12 +41,20 @@ is unchanged from v0.31.0.
 | `schemas/agent-runner/runner.dispatch-request.json` | JSON Schema | `POST /dispatch` body; v0.33.0 adds optional `dispatchKey` |
 | `schemas/agent-runner/runner.run-record.json` | JSON Schema | Run record; v0.33.0 adds optional `dispatchKey` and observed `workspace` |
 | `schemas/agent-runner/runner.dispatch-reservation.json` | JSON Schema | `GET /dispatches/{dispatchKey}` body + the `requestHash` canonicalization |
-| `tests/validate_delivery.py` | test | 62 positive/negative fixtures + OpenAPI route check + Python binding round-trip |
+| `schemas/delivery-api/ci-runner-results.openapi.yaml` | OpenAPI 3.1 | `ci-runner` CI-result lookup routes under `/delivery/v1` (v0.34.0) |
+| `schemas/ci-runner/build-result.yaml` | JSON Schema | `ci-runner` → control-plane build result; v0.34.0 adds optional `headSha` |
+| `schemas/state-feed/state.event.json` | JSON Schema | `ci.run` payload; v0.34.0 adds optional `headSha` |
+| `tests/validate_delivery.py` | test | 63 positive/negative fixtures + OpenAPI route checks (youtrack + ci-runner) + ci-runner component fixtures + Python binding round-trip |
 | `tests/validate_runner.py` | test | Runner fixtures incl. the keyed/workspace/reservation cases + an executable `requestHash` conformance check |
 
 Bindings: Python `platform_contracts.delivery.*` (`gen/python`), TypeScript
-`delivery-*.ts` re-exported from `gen/ts/index.ts`. No Java binding: no Java service
-produces or consumes these shapes today (see §Producers for `plantpal`).
+`delivery-*.ts` re-exported from `gen/ts/index.ts`. No Java binding for the
+`delivery.*` shapes: no Java service produces or consumes them today (see §Producers
+for `plantpal`). The `ci.run` / `BuildResult` shapes added in v0.34.0 **do** have
+bindings in all three languages — `CiRunPayload` (Java `io.platform.contracts.events`,
+`gen/ts/state-event.ts`, `gen/python`), and `BuildResult` (Java at build time,
+`gen/ts/build-result.ts`, `gen/python`) — because `ci-runner` and `control-plane` are
+Java services.
 
 ## Boundary
 
@@ -244,12 +261,50 @@ exactly, including the prompt-first-line token scan for correlation. That scan i
 strictly weaker than a keyed lookup; it is the fallback for callers that cannot mint a
 key, not a substitute for one.
 
+## CI result routes: revision-tied lookup
+
+Added in v0.34.0 (demand `ci-runner-20260927-contracts-ci-headsha-lookup`).
+Published as OpenAPI 3.1 in `schemas/delivery-api/ci-runner-results.openapi.yaml`,
+because unlike the runner routes these return `delivery.*` JSON Schema shapes that
+`factory` (Python) and `control-plane` (Java) both read; the document fixes the
+shapes, the codes and the not-found body. `ci-runner` implements them.
+
+| Route | Request / response body | Codes |
+|---|---|---|
+| `GET /delivery/v1/ci-results/{runId}/{jobId}` | → `delivery.producer-result` | `200` · `404` `ci_result_not_found` (no record of that job) · `422` bad id · `503` `producer_unavailable` (store unreachable, retryable) |
+| `GET /delivery/v1/ci-results?repository={p}&revision={sha40}` | → `{repository, revision, items[]}` of `delivery.producer-result` | `200` (possibly empty `items`) · `422` bad pattern · `503` `producer_unavailable` |
+
+**Identity.** `operationId` is `<runId>/<jobId>` and `nativeRef` is
+`ci-runner:ci.run/<runId>/<jobId>`, using the GitHub numeric ids already carried on
+`ci.run`. That makes the lookup a direct read of the same identity the event
+announces, so a result lost to a restart is recoverable from the ids Factory already
+recorded — no prompt scan, no re-run.
+
+**`revision` is `headSha`, never `ref`.** `ref` is a moving name; only the 40-hex
+`headSha` names a revision. A job whose `headSha` `ci-runner` never observed is
+returned with `revision: null` — absent, never guessed from `ref`, never defaulted.
+A `null` revision cannot pass a revision gate, which is the point: the lookup must not
+manufacture the correlation the event failed to carry. `BuildResult` (the
+`ci-runner` → `control-plane` channel) carries the same optional `headSha` for the
+same reason.
+
+**Empty is not passed.** The by-revision listing matches `repository` + the full
+40-hex `revision` exactly — no prefix, no branch matching. An empty `items` array is a
+normal `200` meaning *no job is known for this revision*, and Factory must record that
+as missing evidence (`unknown`), never as `passed`. Likewise `404
+ci_result_not_found` on the by-id lookup is a statement about `ci-runner`'s record,
+not a verdict about the build: the job may have run and failed, or never have run.
+
+**Additive.** `headSha` is optional on both `CiRunPayload` and `BuildResult`, so every
+`ci.run` fixture and every `BuildResult` that validated at v0.30.0 still validates
+byte-for-byte.
+
 ## Producers
 
 | Producer | Native record today | Maps to `delivery.producer-result` | Gap (addition needed by the owner, not made here) |
 |---|---|---|---|
 | `agent-runner` (TS) | `runner.run-record` (`GET /runs/{id}`): `state`, nullable `exitCode`, `transcriptPath`, optional `dispatchKey`, optional observed `workspace` | `operationId`=run id, `nativeRef`=`agent-runner:runs/<id>`, `repository`=run `repo`, `branch`/`revision` from `workspace` (`revision` only when `dirty` is `false`, else `null`), `correlation.operationKey`=`dispatchKey` or `null`, `exitCode` as-is, `finished`+0 → passed, `failed` → failed, `stopped`/null exit → unknown, `launched` → pending. Served at `GET /runs/{id}/producer-result` and `GET /dispatches/{dispatchKey}/producer-result` | **Closed in v0.33.0** — the record now carries the observed revision + branch and the dispatch key, and keys are reserved with a lookup, so a lost `POST /dispatch` response resolves without a prompt scan. Still the owner's work: implementing reservation/replay/conflict and the lookups on top of the shipped observation. A transcript's claims remain `worker-claim` only. |
-| `ci-runner` | `ci.run` state event (`runId`, `jobId`, `ref`, `conclusion`, `steps[]`), `BuildResult` | `operationId`=`<runId>/<jobId>`, `nativeRef`=`ci-runner:ci.run/<runId>/<jobId>`, `conclusion` success → passed, failure/timed_out → failed, cancelled/absent → unknown; `checks[]` from `steps[]` (step exit codes are not reported, so `null`) | No head SHA (only `ref`), so a run cannot be tied to an exact revision. Needs: `headSha` on `CiRunPayload`/`BuildResult` (additive), plus a lookup by run/job id. |
+| `ci-runner` | `ci.run` state event (`runId`, `jobId`, `ref`, `conclusion`, `steps[]`, `headSha`), `BuildResult` | `operationId`=`<runId>/<jobId>`, `nativeRef`=`ci-runner:ci.run/<runId>/<jobId>`, `repository`=platform repo name, `revision`=`headSha` (or `null` when never observed — never guessed from `ref`), `branch`=`ref`, `conclusion` success → passed, failure/timed_out → failed, cancelled/absent → unknown; `checks[]` from `steps[]` (step exit codes are not reported, so `null`). Served at `GET /delivery/v1/ci-results/{runId}/{jobId}` and `GET /delivery/v1/ci-results?repository=&revision=`. | **Closed in v0.34.0** at the interface level — `headSha` is on `CiRunPayload` and `BuildResult` (both optional/additive) and the lookup routes are published in `schemas/delivery-api/ci-runner-results.openapi.yaml`, so a run can be tied to an exact revision and re-fetched. Still the owner's work: emitting `headSha` from the GitHub webhook *and* implementing both lookup routes. Until `ci-runner` populates `headSha`, every result maps to `revision: null` and cannot pass a revision gate. |
 | `app-deploy` (`plantpal`; routing by `runtime`/`gateway`, name proxy by `launcher`) | none. `app.health` has no revision or deployment id | `producer: app-deploy`, `environment` from the running app, `checks[]` = criterion smoke checks | Needs: a dev deployment receipt (deployment id, merged revision, image digest, result) with lookup, and a running-app identity/revision endpoint so `appIdentity`/`deployedRevision` are observed, not configured. Language is the owner's choice. A Java binding will be generated on request. |
 
 Factory correlates by (`repository`, `revision`, producer `operationId`, and
@@ -269,11 +324,37 @@ Factory correlates by (`repository`, `revision`, producer `operationId`, and
 | Decisions | `factory` | `factory`; `youtrack` (via `acceptance` ref) | `delivery.decision` | `id` + `hash` = `decisionId`/`decisionHash` | **Unimplemented** |
 | Runner result | `agent-runner` | `factory` | `delivery.producer-result` ← `runner.run-record`; `GET /runs/{id}/producer-result`, `GET /dispatches/{dispatchKey}/producer-result` | run id; `dispatchKey` + observed `workspace` now on the record (v0.33.0) | Contract published; **lookup routes and mapping unimplemented** (agent-runner) |
 | Runner dispatch + keyed lookup | `agent-runner` | `factory` | `runner.dispatch-request` (optional `dispatchKey`) → `runner.run-record`; `GET /dispatches/{dispatchKey}` → `runner.dispatch-reservation` | `dispatchKey` + `requestHash`; reserve-before-spawn; replay `200` / conflict `409`; no relaunch | Contract published in v0.33.0; **unimplemented** (agent-runner) |
-| CI result | `ci-runner` | `factory` | `delivery.producer-result` ← `ci.run` | `runId/jobId`; **gap:** head SHA | Native event live; **mapping and gap additions unimplemented** |
+| CI result | `ci-runner` | `factory` | `delivery.producer-result` ← `ci.run`; `GET /delivery/v1/ci-results/{runId}/{jobId}`, `GET /delivery/v1/ci-results?repository=&revision=` | `runId/jobId`; `revision` = `headSha` (on the event and on the lookup response, v0.34.0) | Contract published in v0.34.0; **emitting `headSha` and both lookup routes unimplemented** (ci-runner) |
 | Dev deploy result | `plantpal` (+ `runtime`/`gateway`/`launcher`) | `factory` | `delivery.producer-result` (`environment`) | deployment id; **gap:** no receipt exists | **Unimplemented**; Planotell dev URL not verified |
 | Routing/approval | `demand-coordinator` | `factory` | existing `demand` / `demand.fulfillment` | existing | Unchanged; not in this release |
 
 ## Upgrade / repin
+
+### v0.34.0 (CI headSha + CI-result lookup)
+
+Additive: no existing required list changed and no consumer is obligated to move
+(D031). Only `ci-runner` needs to, and only `ci-runner`'s leg is open.
+
+- **TypeScript (`ci-runner`, if it reads the shapes from TS):** point the `file:`
+  dependency at `../contracts-worktrees/v0.34.0/gen/ts`. `BuildResult` (in
+  `build-result.ts`) and `CiRunPayload` (in `state-event.ts`) each gain an optional
+  `headSha?: string`. The generated `CiRunStep` / `CiRunPayload` types are otherwise
+  unchanged.
+- **Java (`ci-runner`, `control-plane`):** `io.platform:contracts:0.34.0` from a
+  local `mvn install` at the tag. `CiRunPayload` gains a nullable `headSha` with the
+  usual `JSON_PROPERTY_HEAD_SHA` constant; `BuildResult` is generated at build time
+  from `schemas/ci-runner/build-result.yaml` and gains the same.
+- **Python (`factory`):**
+  `platform-contracts @ git+https://github.com/elmoul/contracts.git@v0.34.0#subdirectory=gen/python`.
+  `state_feed.state_event` and `ci_runner.build_result` gain the optional field.
+- **New file to read:** `schemas/delivery-api/ci-runner-results.openapi.yaml` — the
+  two lookup routes and their not-found body. This is what `ci-runner` implements
+  against; nothing in it is live until `ci-runner` ships it.
+- **Compatibility checks after repin:** `tests/validate_delivery.py`'s
+  `GOOD_PRODUCER_CI_PASSED` and `tests/validate_state_event.py`'s
+  `GOOD_CI_RUN_WITH_HEAD_SHA` are the positive fixtures to round-trip through your
+  binding. Re-check that a `ci.run` payload **without** `headSha` still validates
+  unchanged — that is the criterion the additive claim rests on.
 
 ### v0.33.0 (runner keyed dispatch + observed workspace)
 

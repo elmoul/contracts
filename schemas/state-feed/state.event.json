@@ -208,6 +208,11 @@
           "format": "int64",
           "description": "GitHub Actions workflow_job ID. Stable key per job; runId is shared by every job in a workflow run. Optional (additive, v0.30.0)."
         },
+        "headSha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Full 40-hex commit SHA the job ran against (GitHub workflow_job.head_sha). Ties a run to an exact revision; `ref` alone cannot. Optional (additive, v0.34.0)."
+        },
         "steps": {
           "type": "array",
           "items": { "$ref": "#/definitions/CiRunStep" },

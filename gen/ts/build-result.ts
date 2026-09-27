@@ -23,6 +23,11 @@ export interface BuildResult {
    */
   ref: string;
   /**
+   * Full 40-hex commit SHA that was built (GitHub workflow_run/workflow_job head_sha). Ties the result to an exact revision; `ref` alone cannot. Optional (additive, v0.34.0).
+   *
+   */
+  headSha?: string;
+  /**
    * GitHub Actions workflow run ID.
    */
   runId: number;

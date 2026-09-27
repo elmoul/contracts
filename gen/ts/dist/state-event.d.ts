@@ -142,6 +142,10 @@ export interface CiRunPayload {
      */
     jobId?: number;
     /**
+     * Full 40-hex commit SHA the job ran against (GitHub workflow_job.head_sha). Ties a run to an exact revision; `ref` alone cannot. Optional (additive, v0.34.0).
+     */
+    headSha?: string;
+    /**
      * Ordered per-step progress of the job, mirroring GitHub's workflow_job.steps[]. Optional (additive, v0.30.0); absent when the producer has no step detail.
      */
     steps?: CiRunStep[];

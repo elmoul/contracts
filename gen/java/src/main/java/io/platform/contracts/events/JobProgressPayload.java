@@ -37,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   JobProgressPayload.JSON_PROPERTY_PROGRESS_PCT,
   JobProgressPayload.JSON_PROPERTY_VRAM_FREE_MB
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T05:34:20.367575+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T11:52:10.430802200+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class JobProgressPayload {
   public static final String JSON_PROPERTY_JOB_ID = "jobId";
   @jakarta.annotation.Nonnull

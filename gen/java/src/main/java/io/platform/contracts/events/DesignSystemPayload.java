@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   DesignSystemPayload.JSON_PROPERTY_SOURCE_MISSION_ID,
   DesignSystemPayload.JSON_PROPERTY_CHANGE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T05:34:20.367575+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T11:52:10.430802200+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class DesignSystemPayload {
   public static final String JSON_PROPERTY_DESIGN_SYSTEM_ID = "designSystemId";
   @jakarta.annotation.Nonnull

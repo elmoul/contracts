@@ -18,6 +18,13 @@ properties:
   ref:
     type: string
     description: Git ref that was built.
+  headSha:
+    type: string
+    pattern: "^[0-9a-f]{40}$"
+    description: >
+      Full 40-hex commit SHA that was built (GitHub workflow_run/workflow_job
+      head_sha). Ties the result to an exact revision; `ref` alone cannot.
+      Optional (additive, v0.34.0).
   runId:
     type: integer
     format: int64
