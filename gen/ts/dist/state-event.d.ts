@@ -11,6 +11,14 @@ export type StateEvent = ComponentHealthEvent | LoadEvent | CostTickEvent | CiRu
  * Which wall the event was produced on (D011). Optional — absent means host, preserving compatibility with producers that predate this field.
  */
 export type Origin = "host" | "hub";
+/**
+ * Lifecycle status of a CI step.
+ */
+export type CiRunStepStatus = "queued" | "in_progress" | "completed";
+/**
+ * Terminal outcome of a CI step; present only when status=completed.
+ */
+export type CiRunStepConclusion = "success" | "failure" | "cancelled" | "skipped";
 export interface ComponentHealthEvent {
     type: "component.health";
     /**
@@ -129,6 +137,31 @@ export interface CiRunPayload {
      * Labels on the runner that executed the job.
      */
     runnerLabels: string[];
+    /**
+     * GitHub Actions workflow_job ID. Stable key per job; runId is shared by every job in a workflow run. Optional (additive, v0.30.0).
+     */
+    jobId?: number;
+    /**
+     * Ordered per-step progress of the job, mirroring GitHub's workflow_job.steps[]. Optional (additive, v0.30.0); absent when the producer has no step detail.
+     */
+    steps?: CiRunStep[];
+}
+/**
+ * One step of a CI job, mirroring an entry of GitHub's workflow_job.steps[].
+ */
+export interface CiRunStep {
+    /**
+     * Step number as reported by GitHub (execution order).
+     */
+    number: number;
+    /**
+     * Step name as reported by GitHub.
+     */
+    name: string;
+    status: CiRunStepStatus;
+    conclusion?: CiRunStepConclusion;
+    startedAt?: string;
+    completedAt?: string;
 }
 export interface AppStatusEvent {
     type: "app.status";

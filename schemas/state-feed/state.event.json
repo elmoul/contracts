@@ -202,8 +202,57 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "Labels on the runner that executed the job."
+        },
+        "jobId": {
+          "type": "integer",
+          "format": "int64",
+          "description": "GitHub Actions workflow_job ID. Stable key per job; runId is shared by every job in a workflow run. Optional (additive, v0.30.0)."
+        },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/CiRunStep" },
+          "description": "Ordered per-step progress of the job, mirroring GitHub's workflow_job.steps[]. Optional (additive, v0.30.0); absent when the producer has no step detail."
         }
       }
+    },
+    "CiRunStep": {
+      "title": "CiRunStep",
+      "description": "One step of a CI job, mirroring an entry of GitHub's workflow_job.steps[].",
+      "type": "object",
+      "required": ["number", "name", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "number": {
+          "type": "integer",
+          "description": "Step number as reported by GitHub (execution order)."
+        },
+        "name": {
+          "type": "string",
+          "description": "Step name as reported by GitHub."
+        },
+        "status": { "$ref": "#/definitions/CiRunStepStatus" },
+        "conclusion": { "$ref": "#/definitions/CiRunStepConclusion" },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CiRunStepStatus": {
+      "title": "CiRunStepStatus",
+      "description": "Lifecycle status of a CI step.",
+      "type": "string",
+      "enum": ["queued", "in_progress", "completed"]
+    },
+    "CiRunStepConclusion": {
+      "title": "CiRunStepConclusion",
+      "description": "Terminal outcome of a CI step; present only when status=completed.",
+      "type": "string",
+      "enum": ["success", "failure", "cancelled", "skipped"]
     },
     "AppStatusEvent": {
       "title": "AppStatusEvent",

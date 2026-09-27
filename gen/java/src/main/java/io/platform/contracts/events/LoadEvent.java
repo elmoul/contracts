@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   LoadEvent.JSON_PROPERTY_PAYLOAD,
   LoadEvent.JSON_PROPERTY_ORIGIN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-08-04T08:47:38.874829900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T05:34:20.367575+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class LoadEvent {
   /**
    * Discriminator value — always \&quot;load\&quot;

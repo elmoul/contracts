@@ -17,6 +17,9 @@ matching the density of the existing activity.count coverage.
 Extended again (design-studio S-B1) to cover DesignSystemEvent — the DesignSystem
 registry's own lifecycle emissions, replacing a hand-shaped stopgap dict.
 
+Extended (v0.30.0) to cover CiRunEvent's optional jobId + steps[] (CI stage view):
+an existing ci.run without them must still validate (purely additive).
+
 Run: python tests/validate_state_event.py
 """
 import json
@@ -498,6 +501,126 @@ BAD_APP_MISSION_THEMED_APP_NAME = {
     },
 }
 
+GOOD_CI_RUN_WITHOUT_STEPS = {
+    "type": "ci.run",
+    "timestamp": "2026-09-27T09:00:00Z",
+    "payload": {
+        "runId": 9876543210,
+        "repo": "owner/contracts",
+        "ref": "main",
+        "workflow": "ci",
+        "jobName": "sonar-gate",
+        "phase": "in_progress",
+        "startedAt": "2026-09-27T08:59:00Z",
+        "runnerLabels": ["self-hosted", "linux"],
+    },
+}
+
+GOOD_CI_RUN_WITH_STEPS = {
+    "type": "ci.run",
+    "timestamp": "2026-09-27T09:05:00Z",
+    "payload": {
+        "runId": 9876543210,
+        "jobId": 31234567890,
+        "repo": "owner/contracts",
+        "ref": "main",
+        "workflow": "ci",
+        "jobName": "sonar-gate",
+        "phase": "in_progress",
+        "startedAt": "2026-09-27T08:59:00Z",
+        "runnerLabels": ["self-hosted", "linux"],
+        "steps": [
+            {
+                "number": 1,
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "startedAt": "2026-09-27T08:59:00Z",
+                "completedAt": "2026-09-27T08:59:05Z",
+            },
+            {"number": 2, "name": "Sonar scan", "status": "in_progress", "startedAt": "2026-09-27T08:59:05Z"},
+            {"number": 3, "name": "Quality gate", "status": "queued"},
+        ],
+    },
+    "origin": "host",
+}
+
+BAD_CI_RUN_STEP_UNKNOWN_STATUS = {
+    "type": "ci.run",
+    "timestamp": "2026-09-27T09:05:00Z",
+    "payload": {
+        "runId": 9876543210,
+        "repo": "owner/contracts",
+        "ref": "main",
+        "workflow": "ci",
+        "jobName": "sonar-gate",
+        "phase": "in_progress",
+        "runnerLabels": [],
+        "steps": [{"number": 1, "name": "Set up job", "status": "running"}],
+    },
+}
+
+BAD_CI_RUN_STEP_TIMED_OUT_CONCLUSION = {
+    "type": "ci.run",
+    "timestamp": "2026-09-27T09:05:00Z",
+    "payload": {
+        "runId": 9876543210,
+        "repo": "owner/contracts",
+        "ref": "main",
+        "workflow": "ci",
+        "jobName": "sonar-gate",
+        "phase": "completed",
+        "conclusion": "timed_out",
+        "runnerLabels": [],
+        "steps": [{"number": 1, "name": "Sonar scan", "status": "completed", "conclusion": "timed_out"}],
+    },
+}
+
+BAD_CI_RUN_STEP_MISSING_NAME = {
+    "type": "ci.run",
+    "timestamp": "2026-09-27T09:05:00Z",
+    "payload": {
+        "runId": 9876543210,
+        "repo": "owner/contracts",
+        "ref": "main",
+        "workflow": "ci",
+        "jobName": "sonar-gate",
+        "phase": "in_progress",
+        "runnerLabels": [],
+        "steps": [{"number": 1, "status": "queued"}],
+    },
+}
+
+BAD_CI_RUN_STEP_UNKNOWN_PROPERTY = {
+    "type": "ci.run",
+    "timestamp": "2026-09-27T09:05:00Z",
+    "payload": {
+        "runId": 9876543210,
+        "repo": "owner/contracts",
+        "ref": "main",
+        "workflow": "ci",
+        "jobName": "sonar-gate",
+        "phase": "in_progress",
+        "runnerLabels": [],
+        "steps": [{"number": 1, "name": "Set up job", "status": "queued", "log": "..."}],
+    },
+}
+
+BAD_CI_RUN_JOB_ID_NOT_INTEGER = {
+    "type": "ci.run",
+    "timestamp": "2026-09-27T09:05:00Z",
+    "payload": {
+        "runId": 9876543210,
+        "jobId": "31234567890",
+        "repo": "owner/contracts",
+        "ref": "main",
+        "workflow": "ci",
+        "jobName": "sonar-gate",
+        "phase": "queued",
+        "runnerLabels": [],
+    },
+}
+
 
 def load_state_event_schema() -> dict:
     return json.loads(STATE_EVENT_SPEC.read_text(encoding="utf-8"))
@@ -564,6 +687,14 @@ def main() -> int:
     expect_invalid(schema, BAD_APP_MISSION_SEND_BACK_OUTCOME, "app.mission: send-back as a gate outcome (known-bad)")
     expect_invalid(schema, BAD_APP_MISSION_MISSING_CURRENT_WAVE, "app.mission: missing currentWave (known-bad)")
     expect_invalid(schema, BAD_APP_MISSION_THEMED_APP_NAME, "app.mission: appName not a functional name (known-bad)")
+
+    expect_valid(schema, GOOD_CI_RUN_WITHOUT_STEPS, "ci.run: known-good event without jobId/steps (additive — pre-v0.30.0 shape still valid)")
+    expect_valid(schema, GOOD_CI_RUN_WITH_STEPS, "ci.run: known-good event with jobId + steps[] (completed/in_progress/queued)")
+    expect_invalid(schema, BAD_CI_RUN_STEP_UNKNOWN_STATUS, "ci.run: step status not in queued|in_progress|completed (known-bad)")
+    expect_invalid(schema, BAD_CI_RUN_STEP_TIMED_OUT_CONCLUSION, "ci.run: step conclusion timed_out not in step vocabulary (known-bad)")
+    expect_invalid(schema, BAD_CI_RUN_STEP_MISSING_NAME, "ci.run: step missing name (known-bad)")
+    expect_invalid(schema, BAD_CI_RUN_STEP_UNKNOWN_PROPERTY, "ci.run: step unknown extra property (known-bad)")
+    expect_invalid(schema, BAD_CI_RUN_JOB_ID_NOT_INTEGER, "ci.run: jobId as string (known-bad)")
     return 0
 
 

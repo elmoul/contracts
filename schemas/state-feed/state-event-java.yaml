@@ -202,7 +202,52 @@ components:
           items:
             type: string
           description: Labels on the runner that executed the job.
+        jobId:
+          type: integer
+          format: int64
+          description: GitHub Actions workflow_job ID. Stable key per job; runId is shared by every job in a workflow run. Optional (additive, v0.30.0).
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/CiRunStep"
+          description: Ordered per-step progress of the job, mirroring GitHub's workflow_job.steps[]. Optional (additive, v0.30.0); absent when the producer has no step detail.
       additionalProperties: false
+
+    CiRunStep:
+      type: object
+      description: One step of a CI job, mirroring an entry of GitHub's workflow_job.steps[].
+      required:
+        - number
+        - name
+        - status
+      properties:
+        number:
+          type: integer
+          description: Step number as reported by GitHub (execution order).
+        name:
+          type: string
+          description: Step name as reported by GitHub.
+        status:
+          $ref: "#/components/schemas/CiRunStepStatus"
+        conclusion:
+          $ref: "#/components/schemas/CiRunStepConclusion"
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+
+    CiRunStepStatus:
+      type: string
+      description: Lifecycle status of a CI step.
+      enum: ["queued", "in_progress", "completed"]
+
+    CiRunStepConclusion:
+      type: string
+      description: Terminal outcome of a CI step; present only when status=completed.
+      enum: ["success", "failure", "cancelled", "skipped"]
 
     AppStatusEvent:
       type: object

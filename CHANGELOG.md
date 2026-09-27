@@ -16,6 +16,52 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.30.0 — 2026-09-27
+
+**Additive, Java + TypeScript + Python bindings** (tag `v0.30.0`). Fulfils
+demand `plantpal-20260927-contracts-ci-run-steps` (CI stage view, layer 2;
+unblocks `plantpal-20260927-ci-runner-ci-run-steps` and
+`plantpal-20260927-dashboard-ci-stage-view`).
+
+- `schemas/state-feed/state.event.json` `CiRunPayload`: new optional `jobId`
+  (int64 — GitHub's `workflow_job.id`, a stable key per job since `runId` is
+  shared by every job in a workflow run) and optional `steps` (ordered array
+  of `CiRunStep`, mirroring `workflow_job.steps[]`). Neither is in
+  `required`; a pre-v0.30.0 `ci.run` still validates.
+- New definitions: `CiRunStep` (`number`, `name`, `status` required;
+  `conclusion`, `startedAt`, `completedAt` optional; `additionalProperties:
+  false`), `CiRunStepStatus` (`queued|in_progress|completed`),
+  `CiRunStepConclusion` (`success|failure|cancelled|skipped` — no
+  `timed_out`, which is a job-level outcome only). The two enums are named
+  `$ref` definitions rather than inline so datamodel-codegen does not
+  renumber the existing auto-named Python enums (`Status1`..`Status3` would
+  otherwise have shifted to `Status2`..`Status4` — a silent rename for any
+  importer).
+- `schemas/state-feed/state-event-java.yaml` mirrors all of the above;
+  `tests/check_state_event_sync.py` now also syncs nested non-payload
+  definitions (`NESTED_DEFS`: properties, `required`, enums, `$ref` targets).
+
+**Rollout note (read before emitting `steps`):** the change is additive for
+the *schema* (old events validate under the new one), but every generated
+payload is closed (`additionalProperties: false` / pydantic `extra='forbid'`),
+so a consumer still pinned to ≤ v0.29.0 that strictly validates will reject a
+`ci.run` that *carries* `jobId`/`steps`. Producers (`ci-runner`) should only
+start sending them once the strict consumers on the `ci.run` path (state-feed,
+dashboard) have re-pinned.
+
+Regenerated `gen/ts/state-event.ts` (+ `dist/`, `index.ts` exports
+`CiRunStep`, `CiRunStepStatus`, `CiRunStepConclusion`),
+`gen/python/platform_contracts/state_feed/state_event.py`, and the Java
+`io.platform.contracts.events` models (`CiRunStep`, `CiRunStepStatus`,
+`CiRunStepConclusion` new; other state-event classes: `@Generated` timestamp
+only). Java `pom.xml` jumps 0.27.0 → 0.30.0 to realign with the repo-wide
+version. Tests: 7 new schema cases in `tests/validate_state_event.py`,
+`StateEventCiRunStepsTest` (5) on the Java binding. Also fixed
+`DemandDispatchOrderContractsTest` to read its fixture from
+`demands/archive/` (Java twin of `ca2025f`; it was failing on `main`).
+
+---
+
 ## v0.29.0 — 2026-09-26
 
 **Additive, TypeScript + Python bindings only** (tag `v0.29.0`). Fulfils

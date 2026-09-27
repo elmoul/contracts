@@ -34,7 +34,7 @@ class DemandDispatchOrderContractsTest {
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private static final Path DEMAND_FILE =
-            Path.of("..", "..", "demands", "2026-09-14-factory-repin-interface-extraction.md");
+            Path.of("..", "..", "demands", "archive", "2026-09-14-factory-repin-interface-extraction.md");
 
     private static final String PRE_AFTER_DEMAND_JSON =
             "{\"id\":\"contracts-20260914-factory-repin-interface-extraction\","

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.platform.contracts.events.CiRunStep;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,9 +42,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   CiRunPayload.JSON_PROPERTY_CONCLUSION,
   CiRunPayload.JSON_PROPERTY_STARTED_AT,
   CiRunPayload.JSON_PROPERTY_COMPLETED_AT,
-  CiRunPayload.JSON_PROPERTY_RUNNER_LABELS
+  CiRunPayload.JSON_PROPERTY_RUNNER_LABELS,
+  CiRunPayload.JSON_PROPERTY_JOB_ID,
+  CiRunPayload.JSON_PROPERTY_STEPS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-08-04T08:47:38.874829900+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-27T05:34:20.367575+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class CiRunPayload {
   public static final String JSON_PROPERTY_RUN_ID = "runId";
   @jakarta.annotation.Nonnull
@@ -162,6 +165,14 @@ public class CiRunPayload {
   public static final String JSON_PROPERTY_RUNNER_LABELS = "runnerLabels";
   @jakarta.annotation.Nonnull
   private List<String> runnerLabels = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_JOB_ID = "jobId";
+  @jakarta.annotation.Nullable
+  private Long jobId;
+
+  public static final String JSON_PROPERTY_STEPS = "steps";
+  @jakarta.annotation.Nullable
+  private List<CiRunStep> steps = new ArrayList<>();
 
   public CiRunPayload() {
   }
@@ -424,6 +435,64 @@ public class CiRunPayload {
     this.runnerLabels = runnerLabels;
   }
 
+  public CiRunPayload jobId(@jakarta.annotation.Nullable Long jobId) {
+    
+    this.jobId = jobId;
+    return this;
+  }
+
+  /**
+   * GitHub Actions workflow_job ID. Stable key per job; runId is shared by every job in a workflow run. Optional (additive, v0.30.0).
+   * @return jobId
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_JOB_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Long getJobId() {
+    return jobId;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_JOB_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setJobId(@jakarta.annotation.Nullable Long jobId) {
+    this.jobId = jobId;
+  }
+
+  public CiRunPayload steps(@jakarta.annotation.Nullable List<CiRunStep> steps) {
+    
+    this.steps = steps;
+    return this;
+  }
+
+  public CiRunPayload addStepsItem(CiRunStep stepsItem) {
+    if (this.steps == null) {
+      this.steps = new ArrayList<>();
+    }
+    this.steps.add(stepsItem);
+    return this;
+  }
+
+  /**
+   * Ordered per-step progress of the job, mirroring GitHub&#39;s workflow_job.steps[]. Optional (additive, v0.30.0); absent when the producer has no step detail.
+   * @return steps
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_STEPS, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<CiRunStep> getSteps() {
+    return steps;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_STEPS, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSteps(@jakarta.annotation.Nullable List<CiRunStep> steps) {
+    this.steps = steps;
+  }
+
 
   @Override
   public boolean equals(Object o) {
@@ -443,12 +512,14 @@ public class CiRunPayload {
         Objects.equals(this.conclusion, ciRunPayload.conclusion) &&
         Objects.equals(this.startedAt, ciRunPayload.startedAt) &&
         Objects.equals(this.completedAt, ciRunPayload.completedAt) &&
-        Objects.equals(this.runnerLabels, ciRunPayload.runnerLabels);
+        Objects.equals(this.runnerLabels, ciRunPayload.runnerLabels) &&
+        Objects.equals(this.jobId, ciRunPayload.jobId) &&
+        Objects.equals(this.steps, ciRunPayload.steps);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(runId, repo, ref, workflow, jobName, phase, conclusion, startedAt, completedAt, runnerLabels);
+    return Objects.hash(runId, repo, ref, workflow, jobName, phase, conclusion, startedAt, completedAt, runnerLabels, jobId, steps);
   }
 
   @Override
@@ -465,6 +536,8 @@ public class CiRunPayload {
     sb.append("    startedAt: ").append(toIndentedString(startedAt)).append("\n");
     sb.append("    completedAt: ").append(toIndentedString(completedAt)).append("\n");
     sb.append("    runnerLabels: ").append(toIndentedString(runnerLabels)).append("\n");
+    sb.append("    jobId: ").append(toIndentedString(jobId)).append("\n");
+    sb.append("    steps: ").append(toIndentedString(steps)).append("\n");
     sb.append("}");
     return sb.toString();
   }

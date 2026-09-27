@@ -17,7 +17,7 @@ export type {
   ComponentHealthEvent, ComponentHealthPayload,
   LoadEvent, LoadPayload,
   CostTickEvent, CostTickPayload,
-  CiRunEvent, CiRunPayload,
+  CiRunEvent, CiRunPayload, CiRunStep, CiRunStepStatus, CiRunStepConclusion,
   AppStatusEvent, AppStatusPayload,
   ActivityCountEvent, ActivityCountPayload,
   JobProgressEvent, JobProgressPayload,

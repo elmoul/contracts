@@ -74,6 +74,54 @@ def payload_def(defs_or_schemas: dict, ref_name: str) -> dict:
     return defs_or_schemas[ref_name]
 
 
+# Non-payload object definitions nested under a payload (not reachable from the
+# oneOf walk above). Same property/required sync, plus enum equality, since a
+# nested object's vocabulary is exactly what a producer and a consumer agree on.
+NESTED_DEFS = ["CiRunStep", "CiRunStepStatus", "CiRunStepConclusion"]
+
+
+def check_nested_defs(json_defs: dict, java_schemas: dict) -> list:
+    errors = []
+    for name in NESTED_DEFS:
+        json_def = json_defs.get(name)
+        java_def = java_schemas.get(name)
+        if json_def is None or java_def is None:
+            errors.append(
+                f"{name}: nested definition missing — state.event.json={'present' if json_def else 'MISSING'}, "
+                f"state-event-java.yaml={'present' if java_def else 'MISSING'}"
+            )
+            continue
+        if json_def.get("enum") != java_def.get("enum"):
+            errors.append(
+                f"{name}: enum differs — state.event.json={json_def.get('enum')}, "
+                f"state-event-java.yaml={java_def.get('enum')}"
+            )
+        json_props = json_def.get("properties", {})
+        java_props = java_def.get("properties", {})
+        if set(json_props) != set(java_props):
+            errors.append(
+                f"{name}: property names differ — state.event.json={sorted(json_props)}, "
+                f"state-event-java.yaml={sorted(java_props)}"
+            )
+        if set(json_def.get("required", [])) != set(java_def.get("required", [])):
+            errors.append(
+                f"{name}: 'required' differs — state.event.json={sorted(json_def.get('required', []))}, "
+                f"state-event-java.yaml={sorted(java_def.get('required', []))}"
+            )
+        for prop in sorted(set(json_props) & set(java_props)):
+            if json_props[prop].get("$ref", "").rsplit("/", 1)[-1] != java_props[prop].get("$ref", "").rsplit("/", 1)[-1]:
+                errors.append(
+                    f"{name}.{prop}: $ref target differs — state.event.json={json_props[prop].get('$ref')}, "
+                    f"state-event-java.yaml={java_props[prop].get('$ref')}"
+                )
+            if json_props[prop].get("enum") != java_props[prop].get("enum"):
+                errors.append(
+                    f"{name}.{prop}: enum differs — state.event.json={json_props[prop].get('enum')}, "
+                    f"state-event-java.yaml={java_props[prop].get('enum')}"
+                )
+    return errors
+
+
 def check_app_mission_enums(json_defs: dict, java_schemas: dict) -> list:
     """AppMissionPayload's stage/gate/outcome vocabularies must equal app.mission.json's."""
     errors = []
@@ -172,6 +220,7 @@ def main() -> int:
             )
 
     errors.extend(check_app_mission_enums(json_defs, java_schemas))
+    errors.extend(check_nested_defs(json_defs, java_schemas))
 
     if errors:
         for e in errors:
