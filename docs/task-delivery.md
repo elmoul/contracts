@@ -1,10 +1,18 @@
-# D113 task delivery — contract reference (v0.31.0)
+# D113 task delivery — contract reference (v0.33.0)
 
 Published for demand `factory-20260927-task-delivery-contracts` (D113,
 `factory/docs/YOUTRACK_DELIVERY.md` chunk 2). **This is an interface release, not a
 running system.** No `/delivery/v1` route, no producer integration and no Planotell
 dev deployment exists because of it; each owning service must implement and verify
 its own side (see the handoff matrix).
+
+Amended in **v0.33.0** for demand `agent-runner-20260927-contracts-runner-keyed-dispatch`:
+the runner side of §Producers closed its gap. `schemas/agent-runner/*` gained an
+optional `dispatchKey` on the request and the run record, an optional observed
+`workspace` on the run record, and the new `runner.dispatch-reservation`; §Runner
+routes and §Producers below now state its routes and status codes. Everything else
+in this document — `delivery.*`, the `/delivery/v1` routes, the enforcement rules —
+is unchanged from v0.31.0.
 
 ## Files
 
@@ -21,7 +29,11 @@ its own side (see the handoff matrix).
 | `schemas/delivery/delivery.decision.json` | JSON Schema | Plan approval / policy authorization / owner acceptance / request changes / abandon |
 | `schemas/delivery/delivery.producer-result.json` | JSON Schema | Normalized runner / CI / app-deploy result |
 | `schemas/delivery-api/youtrack-delivery.openapi.yaml` | OpenAPI 3.1 | `youtrack` service routes under `/delivery/v1` |
+| `schemas/agent-runner/runner.dispatch-request.json` | JSON Schema | `POST /dispatch` body; v0.33.0 adds optional `dispatchKey` |
+| `schemas/agent-runner/runner.run-record.json` | JSON Schema | Run record; v0.33.0 adds optional `dispatchKey` and observed `workspace` |
+| `schemas/agent-runner/runner.dispatch-reservation.json` | JSON Schema | `GET /dispatches/{dispatchKey}` body + the `requestHash` canonicalization |
 | `tests/validate_delivery.py` | test | 62 positive/negative fixtures + OpenAPI route check + Python binding round-trip |
+| `tests/validate_runner.py` | test | Runner fixtures incl. the keyed/workspace/reservation cases + an executable `requestHash` conformance check |
 
 Bindings: Python `platform_contracts.delivery.*` (`gen/python`), TypeScript
 `delivery-*.ts` re-exported from `gen/ts/index.ts`. No Java binding: no Java service
@@ -36,7 +48,9 @@ produces or consumes these shapes today (see §Producers for `plantpal`).
   The mechanism is the `youtrack` spec's choice. A free-text caller header is not
   authentication.
 - Existing planner routes and `schemas/youtrack/planner.*` are unchanged.
-  `schemas/factory/*` and `schemas/agent-runner/*` are unchanged.
+  `schemas/factory/*` is unchanged. `schemas/agent-runner/*` gained only optional
+  fields and one new schema in v0.33.0 — no existing required list changed, so every
+  request and record that validated at v0.31.0 still validates byte-for-byte.
 
 ## Reads
 
@@ -166,11 +180,75 @@ owner, so:
   `approvals[]` stays the legacy record, and new decisions go to `delivery.decision`.
 - The cancelled PlantPal pilot and its legacy records are not migrated.
 
+## Runner routes: keyed dispatch, dispatch lookup, producer result
+
+Added in v0.33.0 (demand `agent-runner-20260927-contracts-runner-keyed-dispatch`).
+`agent-runner` implements these; the schemas fix the shapes and the status codes.
+Language is `agent-runner`'s choice — these are HTTP routes, not an OpenAPI document.
+
+| Route | Request / response body | Codes |
+|---|---|---|
+| `POST /dispatch` | `runner.dispatch-request` → `runner.run-record` | `202` new run started · `200` **replay** (key already reserved, identical `requestHash`; the existing run record, no second process) · `409` **conflicting reuse** (key reserved, different `requestHash`; nothing started, stored reservation never overwritten) · `409` repo locked · `429` concurrency cap |
+| `GET /dispatches/{dispatchKey}` | → `runner.dispatch-reservation` | `200` reservation + the run it is bound to · `404` this runner never committed a reservation for the key |
+| `GET /runs/{id}/producer-result` | → `delivery.producer-result` | `200` · `404` no such run |
+| `GET /dispatches/{dispatchKey}/producer-result` | → `delivery.producer-result` | `200` · `404` no reservation for the key |
+
+**Reserve before spawn.** The runner writes the reservation — key, `requestHash`, minted
+`runId` — durably **before** any process starts. That ordering is the whole mechanism:
+it is what makes `GET /dispatches/{key}` meaningful, and it is why an identical retry
+can be answered from the ledger instead of guessed at.
+
+**`requestHash`.** SHA-256 over a canonical JSON of the execution-defining request
+fields `repo`, `prompt`, `demandId`, `model`, `effort`, `runtime` — absent fields
+omitted, never nulled; `dispatchKey` itself excluded. `runner.dispatch-reservation.json`
+fixes the exact canonicalization and carries a worked example;
+`tests/validate_runner.py` recomputes that example, so the prose cannot drift from a
+form a caller can actually reproduce. A caller and the runner that disagree on this
+hash will see every replay as a conflict.
+
+**Conflict is not a retry.** `409` on a keyed dispatch means *this key is already
+bound to a different execution*. Mint a new key for a new execution; do not "fix" the
+body and resend under the same key.
+
+**`404` on the lookup is safe to resend against.** It means no reservation was ever
+committed for that key, so the request never arrived or was rejected before reserving.
+It is **not** proof that no run happened under some other key, and never proof that
+nothing was written to the repo.
+
+**Lock and cap come first.** The repo lock and the concurrency cap are applied as
+today, *before* the reservation is written. A `409 repo locked` or a `429` cap
+rejection therefore reserves nothing, so the same key remains usable for the same
+intended execution later. Neither is a conflicting reuse.
+
+**Uncertain dispatch — the no-relaunch rule.** The runner may restart after committing
+a reservation but before a settled outcome. The key then stays bound to that run: the
+orphan reconciler settles it `failed` with `exitCode: null`, which maps to a producer
+`outcome: unknown` — not `failed`, because `exitCode: null` means *not reported*, never
+0 (D113 §Evidence and decisions). **The runner never relaunches it automatically**,
+because it cannot prove the first process did not already do the work. A caller that
+decides a retry is warranted mints a **new** key; reusing the old one replays or
+conflicts, it never re-runs.
+
+**Producer-result lookups.** `GET /runs/{id}/producer-result` and
+`GET /dispatches/{dispatchKey}/producer-result` are `agent-runner`'s delivery.producer-result
+lookups. Both return the same shape; `correlation.operationKey` is the run's
+`dispatchKey` when it has one and `null` otherwise. `repository`, `branch` and
+`revision` come from the run record's observed `workspace`, never from the agent's
+report — and `revision` is the post-exit `HEAD` **only when `dirty` is `false`**, so a
+dirty (or unobservable) tree yields a `null` revision, which can never pass a revision
+gate. `outcome` is `pending` while `state` is `launched`, `passed` for `finished`+exit
+0, `failed` for `failed`, and `unknown` for `stopped` or a null exit code.
+
+**Unkeyed dispatch is unchanged.** Omitting `dispatchKey` keeps today's behaviour
+exactly, including the prompt-first-line token scan for correlation. That scan is
+strictly weaker than a keyed lookup; it is the fallback for callers that cannot mint a
+key, not a substitute for one.
+
 ## Producers
 
 | Producer | Native record today | Maps to `delivery.producer-result` | Gap (addition needed by the owner, not made here) |
 |---|---|---|---|
-| `agent-runner` (TS) | `runner.run-record` (`GET /runs/{id}`): `state`, nullable `exitCode`, `transcriptPath` | `operationId`=run id, `nativeRef`=`agent-runner:runs/<id>`, `exitCode` as-is, `finished`+0 → passed, `failed` → failed, `stopped`/null exit → unknown, `launched` → pending | No revision (commit SHA) the run produced, no branch, and no echo of a Factory operation key or idempotent dispatch key, so a lost `POST /dispatch` response cannot be looked up. Needs: head revision + branch on the run record, and a client-supplied dispatch key with lookup. A transcript's claims are `worker-claim` only. |
+| `agent-runner` (TS) | `runner.run-record` (`GET /runs/{id}`): `state`, nullable `exitCode`, `transcriptPath`, optional `dispatchKey`, optional observed `workspace` | `operationId`=run id, `nativeRef`=`agent-runner:runs/<id>`, `repository`=run `repo`, `branch`/`revision` from `workspace` (`revision` only when `dirty` is `false`, else `null`), `correlation.operationKey`=`dispatchKey` or `null`, `exitCode` as-is, `finished`+0 → passed, `failed` → failed, `stopped`/null exit → unknown, `launched` → pending. Served at `GET /runs/{id}/producer-result` and `GET /dispatches/{dispatchKey}/producer-result` | **Closed in v0.33.0** — the record now carries the observed revision + branch and the dispatch key, and keys are reserved with a lookup, so a lost `POST /dispatch` response resolves without a prompt scan. Still the owner's work: implementing reservation/replay/conflict and the lookups on top of the shipped observation. A transcript's claims remain `worker-claim` only. |
 | `ci-runner` | `ci.run` state event (`runId`, `jobId`, `ref`, `conclusion`, `steps[]`), `BuildResult` | `operationId`=`<runId>/<jobId>`, `nativeRef`=`ci-runner:ci.run/<runId>/<jobId>`, `conclusion` success → passed, failure/timed_out → failed, cancelled/absent → unknown; `checks[]` from `steps[]` (step exit codes are not reported, so `null`) | No head SHA (only `ref`), so a run cannot be tied to an exact revision. Needs: `headSha` on `CiRunPayload`/`BuildResult` (additive), plus a lookup by run/job id. |
 | `app-deploy` (`plantpal`; routing by `runtime`/`gateway`, name proxy by `launcher`) | none. `app.health` has no revision or deployment id | `producer: app-deploy`, `environment` from the running app, `checks[]` = criterion smoke checks | Needs: a dev deployment receipt (deployment id, merged revision, image digest, result) with lookup, and a running-app identity/revision endpoint so `appIdentity`/`deployedRevision` are observed, not configured. Language is the owner's choice. A Java binding will be generated on request. |
 
@@ -189,12 +267,38 @@ Factory correlates by (`repository`, `revision`, producer `operationId`, and
 | Errors | `youtrack` | `factory` | `delivery.error` | `retryable`, `ownerAction` | **Unimplemented** |
 | Evidence records | `factory` | `factory` (store/UI), later `dashboard` | `delivery.evidence` | `id` + `hash`, `supersedes` | **Unimplemented** (Factory chunk 3/4) |
 | Decisions | `factory` | `factory`; `youtrack` (via `acceptance` ref) | `delivery.decision` | `id` + `hash` = `decisionId`/`decisionHash` | **Unimplemented** |
-| Runner result | `agent-runner` | `factory` | `delivery.producer-result` ← `runner.run-record` | run id; **gap:** dispatch key + revision | Native record live; **mapping and gap additions unimplemented** |
+| Runner result | `agent-runner` | `factory` | `delivery.producer-result` ← `runner.run-record`; `GET /runs/{id}/producer-result`, `GET /dispatches/{dispatchKey}/producer-result` | run id; `dispatchKey` + observed `workspace` now on the record (v0.33.0) | Contract published; **lookup routes and mapping unimplemented** (agent-runner) |
+| Runner dispatch + keyed lookup | `agent-runner` | `factory` | `runner.dispatch-request` (optional `dispatchKey`) → `runner.run-record`; `GET /dispatches/{dispatchKey}` → `runner.dispatch-reservation` | `dispatchKey` + `requestHash`; reserve-before-spawn; replay `200` / conflict `409`; no relaunch | Contract published in v0.33.0; **unimplemented** (agent-runner) |
 | CI result | `ci-runner` | `factory` | `delivery.producer-result` ← `ci.run` | `runId/jobId`; **gap:** head SHA | Native event live; **mapping and gap additions unimplemented** |
 | Dev deploy result | `plantpal` (+ `runtime`/`gateway`/`launcher`) | `factory` | `delivery.producer-result` (`environment`) | deployment id; **gap:** no receipt exists | **Unimplemented**; Planotell dev URL not verified |
 | Routing/approval | `demand-coordinator` | `factory` | existing `demand` / `demand.fulfillment` | existing | Unchanged; not in this release |
 
 ## Upgrade / repin
+
+### v0.33.0 (runner keyed dispatch + observed workspace)
+
+Additive: no existing required list changed and no consumer is obligated to move
+(D031). Only `agent-runner` needs to.
+
+- **TypeScript (agent-runner):** point the `file:` dependency at
+  `../contracts-worktrees/v0.33.0/gen/ts` and import `RunnerDispatchRequest`,
+  `RunnerRunRecord`, `RunnerDispatchReservation` (plus `RunnerRunWorkspace`) from
+  `@platform/contracts`. **The runner schemas had no TS binding before v0.33.0** —
+  they were published as JSON Schema only, so `gen/ts` gains
+  `runner-dispatch-request.ts`, `runner-run-record.ts` and
+  `runner-dispatch-reservation.ts` in this release. That was the blocker on repinning
+  to `gen/ts` at all, and it is why this release is not Python-only.
+- **Python:** `platform-contracts @ git+https://github.com/elmoul/contracts.git@v0.33.0#subdirectory=gen/python`
+  if you validate runner shapes from Python (Factory does, to reconcile). The
+  `agent_runner.*` models gain the new optional fields; everything else is unchanged.
+- **Compatibility checks after repin:** run your existing contract tests, then
+  round-trip the new fixtures (`GOOD_DISPATCH_REQUEST_KEYED`,
+  `GOOD_RUN_RECORD_WITH_WORKSPACE`, `GOOD_DISPATCH_RESERVATION` in
+  `tests/validate_runner.py`) through your binding. Re-check that an unkeyed
+  `POST /dispatch` body still validates unchanged — that is the criterion the
+  additive claim rests on.
+
+### v0.31.0 (delivery interfaces)
 
 Additive release: no existing schema, class or type changed, and no consumer is
 obligated to move (D031).

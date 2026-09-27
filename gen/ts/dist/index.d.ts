@@ -40,3 +40,6 @@ export type { DeliveryError } from "./delivery-error";
 export type { DeliveryEvidence, DeliveryCriterionCoverage, DeliveryScopeBinding, DeliveryEvidenceSource, DeliveryEnvironment, DeliveryLegacyReceiptRef } from "./delivery-evidence";
 export type { DeliveryDecision, DeliveryPolicyRef } from "./delivery-decision";
 export type { DeliveryProducerResult, DeliveryProducerCorrelation, DeliveryProducerCheck } from "./delivery-producer-result";
+export type { RunnerDispatchRequest } from "./runner-dispatch-request";
+export type { RunnerRunRecord, RunnerRunWorkspace } from "./runner-run-record";
+export type { RunnerDispatchReservation } from "./runner-dispatch-reservation";

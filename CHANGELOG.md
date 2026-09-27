@@ -16,6 +16,60 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.33.0 — 2026-09-27
+
+**Additive. TypeScript + Python** (tag `v0.33.0`). Fulfils demand
+`agent-runner-20260927-contracts-runner-keyed-dispatch`, which serves the factory
+demand `factory-20260927-agent-runner-delivery-results` (D113). Java is untouched
+(no Java producer or consumer of these shapes exists; `gen/java/pom.xml` stays at
+0.30.0).
+
+- `schemas/agent-runner/runner.dispatch-request.json`: optional `dispatchKey`
+  (`^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$`, caller-minted). The required list is
+  unchanged, so an unkeyed request validates exactly as before.
+- `schemas/agent-runner/runner.run-record.json`: optional `dispatchKey` (echoed,
+  ABSENT not null when unkeyed) and an optional nullable `workspace` object
+  (`baseBranch`, `baseRevision`, `branch`, `revision`, `dirty`, `observedAt`) — the
+  runner's own pre-launch + post-exit git observation, with 40-hex revision patterns
+  and `null` meaning *not observed*, never a default. Existing required fields
+  unchanged.
+- **New** `schemas/agent-runner/runner.dispatch-reservation.json`: the
+  `GET /dispatches/{dispatchKey}` body (`dispatchKey`, `requestHash`, `runId`,
+  `reservedAt`, `run` = the full `runner.run-record`), plus the exact canonicalization
+  `requestHash` is computed over and a worked example of it.
+- `docs/task-delivery.md`: new §Runner routes (the `POST /dispatch` code table
+  including the `409` conflicting reuse and the no-relaunch rule, `GET
+  /dispatches/{dispatchKey}`, and the `GET /runs/{id}/producer-result` /
+  `GET /dispatches/{dispatchKey}/producer-result` lookups); §Producers and the
+  handoff matrix updated — the runner gap is closed, the implementation is not.
+- **`gen/ts` gains the runner schemas as bindings for the first time**:
+  `runner-dispatch-request.ts`, `runner-run-record.ts`,
+  `runner-dispatch-reservation.ts`, re-exported from `index.ts` and built into
+  `dist/`. Before this release the runner schemas were published as JSON Schema only,
+  which is what made `agent-runner`'s `file:` repin to `gen/ts` impossible — so this
+  release is not Python-only.
+- Python: `platform_contracts.agent_runner.runner_dispatch_reservation` added;
+  `runner_dispatch_request` / `runner_run_record` regenerated with the new fields.
+  The module **imports** `runner_run_record` for the reservation's `run` rather than
+  duplicating it. `platform_contracts/__init__.py`'s header, three releases stale, is
+  corrected to v0.33.0.
+- `tests/validate_runner.py`: 25 new cases (keyed/unkeyed requests, workspace
+  observed/null/orphan, short + uppercase SHAs, extra fields, reservation bodies) and
+  an **executable conformance check** that recomputes the `requestHash` worked example
+  documented in the reservation schema, so that prose cannot drift from a form a
+  caller can reproduce. Guard assertions pin the two additive claims directly: the
+  request's `required` list is unchanged, and the keyed fixture differs from the
+  unkeyed one by `dispatchKey` alone.
+- **Known caveat (same class as v0.31.0):** `json-schema-to-typescript` resolves the
+  reservation's `$ref` to `runner.run-record.json` by INLINING a second copy of
+  `RunnerRunRecord`/`RunnerRunWorkspace` into `runner-dispatch-reservation.ts` (the
+  duplication `delivery-producer-result.ts` already has for `DeliveryEnvironment`).
+  Only the canonical module's copies are re-exported from `index.ts`, so there is no
+  export collision, and both are generated from one file in one run. The Python
+  binding imports the real class; only TS inlines.
+
+---
+
 ## v0.32.0 — 2026-09-27
 
 **Additive, Python binding only** (tag `v0.32.0`). Fulfils demand

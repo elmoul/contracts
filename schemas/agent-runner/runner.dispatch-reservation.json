@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/runner.dispatch-reservation",
+  "title": "RunnerDispatchReservation",
+  "description": "The body `agent-runner` returns from `GET /dispatches/{dispatchKey}`: the durable reservation it committed for a caller-minted `dispatchKey`, plus the run that key is bound to. This is the keyed recovery path — it replaces the unkeyed prompt-first-line token scan (see `runner.run-record.json`) for any caller that mints a key. Fulfils demand `agent-runner-20260927-contracts-runner-keyed-dispatch`.\n\n**Reserve, then run.** The runner writes this record — key, `requestHash` and the minted `runId` — durably into its ledger BEFORE it spawns any process. The key is bound to exactly one `runId` for its lifetime. That ordering is what makes the lookup meaningful: a reservation that exists is proof the runner committed to that execution, and a 404 is proof it did not.\n\n**The four `POST /dispatch` outcomes for a keyed request.**\n\n| Situation | Response | Process started? |\n|---|---|---|\n| Key not reserved | `202` with the new `runner.run-record` (today's dispatch behaviour) | yes |\n| Key reserved, `requestHash` identical | `200` with the SAME existing run record — a **replay** | no, never a second one |\n| Key reserved, `requestHash` different | `409` — a **conflict**; the stored reservation is never overwritten and nothing is started | no |\n| Concurrency: two first uses of one key at once | exactly one `202`; the loser gets the `200` replay or the `409` conflict above | exactly one |\n\n**Lock and cap come first.** The repo lock and the concurrency cap are applied as they are today, BEFORE the reservation is written. A `409 repo locked` or a `429` cap rejection therefore reserves nothing, so the same key can still be used later for the same intended execution. It is not a conflicting reuse.\n\n**Uncertain dispatch, and the no-relaunch rule.** The runner can restart after committing a reservation but before a settled outcome. The key stays bound to that run: the orphan reconciler settles it `failed` with `exitCode: null`, which maps to a `delivery.producer-result` of `outcome: unknown` — NOT `failed`, because `exitCode: null` means 'not reported', never 0 (D113). **The runner never relaunches such a run automatically**, because it cannot prove the first process did not already do the work. A caller that decides a retry is warranted mints a NEW key; reusing the old one replays or conflicts, it never re-runs.\n\n**404 is safe to resend against.** `404` means this runner never committed a reservation for the key — the request either never arrived or was rejected before reserving. Resending the same key with the same body is safe. `404` is NOT proof that no run happened for some *other* key, and never proof that nothing was written to the repo; it is only 'no reservation under this key'.\n\n**Reading `run`.** `run` is the full `runner.run-record`, so everything that record says about receipts, `workspace` observation and producer-result lookups applies unchanged. When the run is still `launched`, `run.state` is `launched` and the caller polls; it is never a lost dispatch.\n\n**`requestHash` — the exact canonicalization.** SHA-256, lowercase hex (64 characters), over the UTF-8 bytes of the canonical JSON serialization of the request's execution-defining fields:\n\n1. Take exactly these six fields from the `POST /dispatch` request, and only those that are PRESENT: `repo`, `prompt`, `demandId`, `model`, `effort`, `runtime`. `dispatchKey` is NOT included — it is the key this hash is stored under, not part of the execution's identity. No other field is included.\n2. A field PRESENT with an empty string IS included, because `\"model\": \"\"` means 'no `--model` argument' and differs from an absent `model` ('use the configured default') — see `runner.dispatch-request.json`. An ABSENT field is omitted entirely, never written as `null`.\n3. Serialize those members as a JSON object with: members sorted by key in Unicode code point order; no insignificant whitespace (item separator `,`, key separator `:`); strings escaped per RFC 8259 with non-ASCII characters emitted as UTF-8 rather than `\\uXXXX` escapes; and no trailing newline. All six fields are strings, so there is no number or boolean formatting for two implementations to disagree about — the canonical form is byte-identical across languages.\n4. In Python that is exactly `json.dumps(obj, sort_keys=True, separators=(\",\", \":\"), ensure_ascii=False).encode(\"utf-8\")`; use the same options in whatever stable-key serializer your language has. Then `requestHash` = lowercase hex SHA-256 of those bytes.\n\n**Worked example.** The request `{\"repo\": \"plantpal\", \"prompt\": \"do the thing\", \"model\": \"claude-sonnet-5\"}` canonicalizes to the 69-byte string `{\"model\":\"claude-sonnet-5\",\"prompt\":\"do the thing\",\"repo\":\"plantpal\"}`, whose SHA-256 is `ebaba25539396d2af99d3ff6e410f8f295d8e956380bf1818a18d65a8a98a671`. A caller and the runner that disagree on this hash will see every replay as a conflict.",
+  "type": "object",
+  "required": ["dispatchKey", "requestHash", "runId", "reservedAt", "run"],
+  "additionalProperties": false,
+  "properties": {
+    "dispatchKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$",
+      "description": "The caller-minted key this reservation is stored under — the one from the request path. Same pattern as `runner.dispatch-request.dispatchKey`."
+    },
+    "requestHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase hex SHA-256 of the canonical request JSON (see this schema's top-level description for the exact canonicalization). The replay/conflict decision is made by comparing this value, never by comparing raw request bodies: an identical execution re-serialized differently by a caller still replays correctly, and any change to a field that defines the execution conflicts."
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The id of the run this key was bound to, minted by the runner AT RESERVATION TIME — before any process was spawned. Equal to `run.id`. Always the same value for this key for the reservation's whole lifetime, including after the run settles."
+    },
+    "reservedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the reservation was durably committed — necessarily at or before `run.startedAt`, and before the process was spawned. A `reservedAt` later than `run.startedAt` is inconsistent: do not trust such a record."
+    },
+    "run": {
+      "$ref": "runner.run-record.json",
+      "description": "The reserved run, in full — the same record `GET /runs/{id}` serves. `run.id` equals `runId` and `run.dispatchKey` equals `dispatchKey`."
+    }
+  }
+}

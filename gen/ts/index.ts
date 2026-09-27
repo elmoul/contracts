@@ -56,3 +56,14 @@ export type { DeliveryError } from "./delivery-error";
 export type { DeliveryEvidence, DeliveryCriterionCoverage, DeliveryScopeBinding, DeliveryEvidenceSource, DeliveryEnvironment, DeliveryLegacyReceiptRef } from "./delivery-evidence";
 export type { DeliveryDecision, DeliveryPolicyRef } from "./delivery-decision";
 export type { DeliveryProducerResult, DeliveryProducerCorrelation, DeliveryProducerCheck } from "./delivery-producer-result";
+export type { RunnerDispatchRequest } from "./runner-dispatch-request";
+export type { RunnerRunRecord, RunnerRunWorkspace } from "./runner-run-record";
+// Only the reservation itself is re-exported here. Its `run` property `$ref`s
+// runner.run-record.json, which json-schema-to-typescript resolves by INLINING a
+// second copy of RunnerRunRecord/RunnerRunWorkspace into this module (the same
+// duplication delivery-producer-result.ts has for DeliveryEnvironment, whose
+// canonical export is likewise the module that owns the schema). Re-exporting them
+// from both modules would collide; RunnerRunRecord and RunnerRunWorkspace above are
+// the canonical ones. Both copies are generated from the same file in the same run,
+// so they cannot drift.
+export type { RunnerDispatchReservation } from "./runner-dispatch-reservation";
