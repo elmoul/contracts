@@ -985,3 +985,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-27_1136_fulfill-demand-agent-runner-20260927-con
+
+## Session 73 (2026-09-27)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-27_1050_fulfill-demand-ci-runner-20260927-contra.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand ci-runner-20260927-contracts-ci-headsha-lookup (headSha on ci.run/BuildResult + ci-runner result lookup interface, release v0.34.0) -- status: done.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-27_1050_fulfill-demand-ci-runner-20260927-contra
