@@ -929,3 +929,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-27_0808_fulfill-demand-factory-20260927-task-del
+
+## Session 69 (2026-09-27)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-27_1035_fulfill-demand-factory-20260927-demand-a.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand factory-20260927-demand-after-binding (capability: Restore Python Demand support for the published after dependency field, from: factory, target: contracts). Acceptance criteria: - Publish a new tagged Python Demand binding that accepts and preserves the after field already present in... -- status: done.
+- Next step: factory closes consuming leg (re-pin v0.32.0); optional: Python binding for demand.queue-entry if someone demands it
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-27_1035_fulfill-demand-factory-20260927-demand-a
