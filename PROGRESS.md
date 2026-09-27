@@ -942,3 +942,18 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-27_1035_fulfill-demand-factory-20260927-demand-a
+
+## Session 70 (2026-09-27)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-27_1130_fulfill-demand-ci-runner-20260927-contra.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+agent-runner's dispatch supervisor from an auto-drafted, unconfirmed close --
+not a second hand-written account, and not yet reviewed by a human or the
+worker agent itself).
+
+- State: Fulfill demand ci-runner-20260927-contracts-ci-headsha-lookup (capability: contracts publishes headSha on CiRunPayload and BuildResult, and a ci-runner CI-result lookup interface (by run/job id and by repository+revision) returning delivery.producer-result, in a tagged release with TS bindings., fro... -- status: failed (close: auto-drafted, unconfirmed).
+- Next step: Review this session's auto-drafted close (`.brain/sessions/2026-09-27_1130_fulfill-demand-ci-runner-20260927-contra.md`) and confirm or correct it.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-27_1130_fulfill-demand-ci-runner-20260927-contra
