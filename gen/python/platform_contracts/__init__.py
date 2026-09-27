@@ -1,7 +1,14 @@
-# Generated Python bindings for platform-contracts v0.35.0
+# Generated Python bindings for platform-contracts v0.36.0
 # Do not edit by hand — regenerate from schemas/ using datamodel-code-generator.
 
-from platform_contracts.app import manifest, health, usage_event, dimension_event, telemetry
+from platform_contracts.app import (
+    manifest,
+    health,
+    usage_event,
+    dimension_event,
+    telemetry,
+    deployment_identity,
+)
 from platform_contracts.ai_gateway import request, preflight, model_manifest, job, research
 from platform_contracts.state_feed import state_event
 from platform_contracts.ci_runner import build_command, build_result
@@ -48,6 +55,7 @@ from platform_contracts.delivery import (
     delivery_evidence,
     delivery_decision,
     delivery_producer_result,
+    delivery_deployment_receipt,
 )
 
 __all__ = [
@@ -56,6 +64,7 @@ __all__ = [
     "usage_event",
     "dimension_event",
     "telemetry",
+    "deployment_identity",
     "request",
     "preflight",
     "model_manifest",
@@ -101,4 +110,5 @@ __all__ = [
     "delivery_evidence",
     "delivery_decision",
     "delivery_producer_result",
+    "delivery_deployment_receipt",
 ]

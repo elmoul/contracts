@@ -13,19 +13,7 @@
       "minLength": 1,
       "description": "The producer's own stable id for the operation (runner run id, `<runId>/<jobId>`, deployment id). Lookup by this id after a restart must return the same result or a later settled one."
     },
-    "correlation": {
-      "title": "DeliveryProducerCorrelation",
-      "type": "object",
-      "required": ["deliveryId", "operationKey"],
-      "additionalProperties": false,
-      "properties": {
-        "deliveryId": { "type": ["string", "null"], "format": "uuid" },
-        "operationKey": {
-          "type": ["string", "null"],
-          "description": "Factory's reserved key for the request that started this operation (e.g. the runner dispatch). `null` when the producer cannot echo it; Factory then correlates by repository+revision+operationId only and must not assume a match it cannot verify."
-        }
-      }
-    },
+    "correlation": { "$ref": "#/$defs/correlation" },
     "repository": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,79}$" },
     "branch": { "type": ["string", "null"] },
     "revision": {
@@ -40,7 +28,7 @@
     },
     "exitCode": { "type": ["integer", "null"], "description": "Actual exit status; `null` when not reported (never defaulted to 0)." },
     "observedAt": { "type": "string", "format": "date-time" },
-    "nativeRef": { "type": "string", "minLength": 1, "description": "Re-fetchable native record reference, e.g. `agent-runner:runs/<id>`." },
+    "nativeRef": { "type": "string", "minLength": 1, "description": "Re-fetchable native record reference, e.g. `agent-runner:runs/<id>`. For `app-deploy` it is `<repository>:deployments/<deploymentId>` and resolves to a `delivery.deployment-receipt` (v0.36.0), which carries the rollback identity; see `docs/task-delivery.md` §App-deploy." },
     "artifactRef": { "type": ["string", "null"] },
     "environment": {
       "oneOf": [{ "$ref": "delivery.evidence.json#/$defs/environment" }, { "type": "null" }],
@@ -48,19 +36,35 @@
     },
     "checks": {
       "type": "array",
-      "items": {
-        "title": "DeliveryProducerCheck",
-        "type": "object",
-        "required": ["name", "outcome", "exitCode"],
-        "additionalProperties": false,
-        "properties": {
-          "name": { "type": "string" },
-          "criterionId": { "type": ["string", "null"] },
-          "outcome": { "type": "string", "enum": ["passed", "failed", "unknown", "unavailable", "skipped"] },
-          "exitCode": { "type": ["integer", "null"] }
-        }
-      },
+      "items": { "$ref": "#/$defs/check" },
       "description": "Individual commands/jobs/smoke checks inside the operation."
+    }
+  },
+  "$defs": {
+    "correlation": {
+      "title": "DeliveryProducerCorrelation",
+      "type": "object",
+      "required": ["deliveryId", "operationKey"],
+      "additionalProperties": false,
+      "properties": {
+        "deliveryId": { "type": ["string", "null"], "format": "uuid" },
+        "operationKey": {
+          "type": ["string", "null"],
+          "description": "Factory's reserved key for the request that started this operation (e.g. the runner dispatch). `null` when the producer cannot echo it; Factory then correlates by repository+revision+operationId only and must not assume a match it cannot verify."
+        }
+      }
+    },
+    "check": {
+      "title": "DeliveryProducerCheck",
+      "type": "object",
+      "required": ["name", "outcome", "exitCode"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "criterionId": { "type": ["string", "null"] },
+        "outcome": { "type": "string", "enum": ["passed", "failed", "unknown", "unavailable", "skipped"] },
+        "exitCode": { "type": ["integer", "null"] }
+      }
     }
   }
 }

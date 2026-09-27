@@ -57,6 +57,11 @@ export type { DeliveryError } from "./delivery-error";
 export type { DeliveryEvidence, DeliveryCriterionCoverage, DeliveryScopeBinding, DeliveryEvidenceSource, DeliveryEnvironment, DeliveryLegacyReceiptRef } from "./delivery-evidence";
 export type { DeliveryDecision, DeliveryPolicyRef } from "./delivery-decision";
 export type { DeliveryProducerResult, DeliveryProducerCorrelation, DeliveryProducerCheck } from "./delivery-producer-result";
+// delivery-deployment-receipt.ts also inlines copies of AppDeploymentIdentity,
+// DeliveryProducerCheck and DeliveryProducerCorrelation (cross-file $refs, same
+// duplication as noted below). The canonical exports are the owning modules.
+export type { DeliveryDeploymentReceipt, DeliveryImageDigests, DeliveryDeploymentEnvironment, DeliveryRollbackIdentity } from "./delivery-deployment-receipt";
+export type { AppDeploymentIdentity } from "./deployment-identity";
 export type { RunnerDispatchRequest } from "./runner-dispatch-request";
 export type { RunnerRunRecord, RunnerRunWorkspace } from "./runner-run-record";
 // Only the reservation itself is re-exported here. Its `run` property `$ref`s

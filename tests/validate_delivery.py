@@ -6,6 +6,10 @@ round-trip through the generated Python binding.
 Extended (v0.34.0) with schemas/delivery-api/ci-runner-results.openapi.yaml: route
 presence plus validation of its component schemas (result list, not-found body).
 
+Extended (v0.36.0) with delivery.deployment-receipt + app/deployment-identity, the
+cross-field deployment rules (check_deployment_semantics) and an executable
+reference of the receipt -> producer-result mapping (receipt_to_producer_result).
+
 Mirrors validate_factory.py: validates the JSON Schemas directly against example
 documents, independent of any language binding.
 Run: python tests/validate_delivery.py
@@ -24,6 +28,8 @@ ROOT = Path(__file__).resolve().parent.parent
 SCHEMAS = ROOT / "schemas" / "delivery"
 API = ROOT / "schemas" / "delivery-api" / "youtrack-delivery.openapi.yaml"
 CI_API = ROOT / "schemas" / "delivery-api" / "ci-runner-results.openapi.yaml"
+APP_SCHEMAS = ROOT / "schemas" / "app"
+IDENTITY = "../app/deployment-identity.json"  # resolved relative to SCHEMAS
 
 SHA_A = "a" * 64
 SHA_B = "b" * 64
@@ -525,6 +531,140 @@ BAD_PRODUCER_EXIT_DEFAULTED = {**GOOD_PRODUCER_RUNNER_UNKNOWN, "exitCode": "0"}
 BAD_PRODUCER_ACCEPTED = {**GOOD_PRODUCER_DEPLOY, "outcome": "accepted"}
 BAD_PRODUCER_OTHER = {**GOOD_PRODUCER_DEPLOY, "producer": "demand-coordinator"}
 
+# --- v0.36.0: app-deploy receipt + running-app identity -----------------------------
+
+DEPLOY_ID = "pla-dev-20260927120000-222222222222"
+DEPLOY_PREV = "pla-dev-20260926090000-111111111111"
+DIGEST_BE = "sha256:" + "e" * 64
+DIGEST_FE = "sha256:" + "f" * 64
+
+GOOD_IDENTITY = {"appIdentity": "plantpal", "revision": REV_MERGED, "deploymentId": DEPLOY_ID, "environment": "dev"}
+# A developer's local run: nothing reported but the name. Valid, and verifies nothing.
+GOOD_IDENTITY_UNREPORTED = {"appIdentity": "plantpal", "revision": None, "deploymentId": None, "environment": None}
+BAD_IDENTITY_SHORT_SHA = {**GOOD_IDENTITY, "revision": "2222222"}
+BAD_IDENTITY_NO_APP = {**GOOD_IDENTITY, "appIdentity": None}
+BAD_IDENTITY_OMITS_REVISION = {k: v for k, v in GOOD_IDENTITY.items() if k != "revision"}  # absent != null
+BAD_IDENTITY_EXTRA = {**GOOD_IDENTITY, "buildTime": NOW}
+
+GOOD_RECEIPT_PASSED = {
+    "deploymentId": DEPLOY_ID,
+    "kind": "deploy",
+    "repository": "plantpal",
+    "branch": "dev",
+    "mergedRevision": REV_MERGED,
+    "imageDigests": {"backend": DIGEST_BE, "frontend": DIGEST_FE},
+    "digestKind": "local-image-id",
+    "result": "passed",
+    "exitCode": 0,
+    "startedAt": "2026-09-27T12:00:00Z",
+    "finishedAt": "2026-09-27T12:04:00Z",
+    "observedAt": "2026-09-27T12:03:30Z",
+    "environment": {"name": "dev", "url": "http://planotell.platform.localhost"},
+    "observed": GOOD_IDENTITY,
+    "checks": [
+        {"name": "ci:Backend CI", "criterionId": None, "outcome": "passed", "exitCode": None},
+        {"name": "identity:revision", "criterionId": None, "outcome": "passed", "exitCode": None},
+        {"name": "smoke:backend-health", "criterionId": None, "outcome": "passed", "exitCode": None},
+        {"name": "criterion:AC-1", "criterionId": "AC-1", "outcome": "passed", "exitCode": None},
+    ],
+    "correlation": {"deliveryId": DELIVERY, "operationKey": f"{DELIVERY}:deploy:1"},
+    "rollback": {"deploymentId": DEPLOY_PREV, "revision": REV_TASK, "imageDigests": {"backend": "sha256:" + "0" * 64, "frontend": "sha256:" + "9" * 64}},
+    "rollbackOf": None,
+    "restores": None,
+    "nativeRef": f"plantpal:deployments/{DEPLOY_ID}",
+}
+
+# Reserved, not yet settled: first deployment ever, so no rollback identity exists.
+GOOD_RECEIPT_PENDING_FIRST = {
+    **GOOD_RECEIPT_PASSED,
+    "imageDigests": {"backend": None, "frontend": None},
+    "result": "pending",
+    "exitCode": None,
+    "finishedAt": None,
+    "observedAt": None,
+    "environment": {"name": "dev", "url": "http://127.0.0.1:8184"},
+    "observed": None,
+    "checks": [],
+    "correlation": {"deliveryId": None, "operationKey": None},
+    "rollback": None,
+}
+
+# The app answered but did not report its revision: settled as unknown, never passed.
+GOOD_RECEIPT_UNKNOWN_UNREPORTED = {
+    **GOOD_RECEIPT_PASSED,
+    "result": "unknown",
+    "environment": {"name": "dev", "url": "http://127.0.0.1:8184"},
+    "observed": {**GOOD_IDENTITY, "revision": None},
+    "checks": [{"name": "identity:revision", "criterionId": None, "outcome": "unknown", "exitCode": None}],
+}
+
+# Timed-out deploy: exit status not reported, endpoint never answered.
+GOOD_RECEIPT_TIMEOUT = {**GOOD_RECEIPT_UNKNOWN_UNREPORTED, "exitCode": None, "observed": None}
+
+GOOD_RECEIPT_ROLLBACK = {
+    **GOOD_RECEIPT_PASSED,
+    "deploymentId": "pla-dev-20260927130000-111111111111",
+    "kind": "rollback",
+    "mergedRevision": REV_TASK,
+    "imageDigests": GOOD_RECEIPT_PASSED["rollback"]["imageDigests"],
+    "observed": {**GOOD_IDENTITY, "revision": REV_TASK, "deploymentId": "pla-dev-20260927130000-111111111111"},
+    "rollback": {"deploymentId": DEPLOY_ID, "revision": REV_MERGED, "imageDigests": GOOD_RECEIPT_PASSED["imageDigests"]},
+    "rollbackOf": DEPLOY_ID,
+    "restores": DEPLOY_PREV,
+    "nativeRef": "plantpal:deployments/pla-dev-20260927130000-111111111111",
+}
+
+BAD_RECEIPT_PROD = {**GOOD_RECEIPT_PASSED, "environment": {"name": "prod", "url": "https://planotell.example"}}
+BAD_RECEIPT_NULL_REVISION = {**GOOD_RECEIPT_PASSED, "mergedRevision": None}
+BAD_RECEIPT_SHORT_REVISION = {**GOOD_RECEIPT_PASSED, "mergedRevision": "2222222"}
+BAD_RECEIPT_ACCEPTED = {**GOOD_RECEIPT_PASSED, "result": "accepted"}
+BAD_RECEIPT_PASSED_EXIT_UNREPORTED = {**GOOD_RECEIPT_PASSED, "exitCode": None}
+BAD_RECEIPT_PASSED_NOT_OBSERVED = {**GOOD_RECEIPT_PASSED, "observed": None}
+BAD_RECEIPT_PASSED_DIGEST_MISSING = {**GOOD_RECEIPT_PASSED, "imageDigests": {"backend": DIGEST_BE, "frontend": None}}
+BAD_RECEIPT_SETTLED_UNTIMED = {**GOOD_RECEIPT_UNKNOWN_UNREPORTED, "observedAt": None}
+BAD_RECEIPT_NO_COMPONENTS = {**GOOD_RECEIPT_PASSED, "imageDigests": {}}
+BAD_RECEIPT_TAG_AS_DIGEST = {**GOOD_RECEIPT_PASSED, "imageDigests": {"backend": "plantpal-backend:latest", "frontend": DIGEST_FE}}
+BAD_RECEIPT_ROLLBACK_WITHOUT_REVISION = {**GOOD_RECEIPT_PASSED, "rollback": {**GOOD_RECEIPT_PASSED["rollback"], "revision": None}}
+BAD_RECEIPT_ROLLBACK_KIND_UNLINKED = {**GOOD_RECEIPT_ROLLBACK, "restores": None}
+BAD_RECEIPT_DEPLOY_WITH_RESTORES = {**GOOD_RECEIPT_PASSED, "restores": DEPLOY_PREV}
+BAD_RECEIPT_NATIVE_FIELDS = {**GOOD_RECEIPT_PASSED, "schema": "plantpal.dev-deployment-receipt/1"}  # closed shape
+BAD_RECEIPT_NATIVEREF_OTHER = {**GOOD_RECEIPT_PASSED, "nativeRef": f"agent-runner:runs/{DEPLOY_ID}"}
+
+
+def receipt_to_producer_result(receipt: dict, primary_component: str = "backend") -> dict:
+    """The app-deploy mapping in `docs/task-delivery.md` §App-deploy, as executable reference.
+
+    `environment` is built ONLY from what the running app reported (`observed`), never
+    from the receipt's own `deploymentId`/`mergedRevision`: a producer that fills it
+    from its intentions would report a deployment verified that nobody observed.
+    """
+    observed = receipt["observed"]
+    environment = None
+    if observed is not None and observed["revision"] is not None and observed["deploymentId"] is not None:
+        environment = {
+            "name": receipt["environment"]["name"],
+            "appIdentity": observed["appIdentity"],
+            "deploymentId": observed["deploymentId"],
+            "deployedRevision": observed["revision"],
+            "url": receipt["environment"]["url"],
+        }
+    return {
+        "producer": "app-deploy",
+        "operationId": receipt["deploymentId"],
+        "correlation": receipt["correlation"],
+        "repository": receipt["repository"],
+        "branch": receipt["branch"],
+        "revision": receipt["mergedRevision"],
+        "outcome": receipt["result"],
+        "exitCode": receipt["exitCode"],
+        "observedAt": receipt["observedAt"] or receipt["startedAt"],
+        "nativeRef": receipt["nativeRef"],
+        "artifactRef": receipt["imageDigests"].get(primary_component),
+        "environment": environment,
+        "checks": receipt["checks"],
+    }
+
+
 GOOD_ERROR = {"code": "operation_key_conflict", "message": "same key, different body", "retryable": False}
 BAD_ERROR_NO_RETRYABLE = {"code": "scope_changed", "message": "changed"}
 
@@ -617,6 +757,32 @@ CASES = [
     ("delivery.producer-result.json", BAD_PRODUCER_EXIT_DEFAULTED, False),
     ("delivery.producer-result.json", BAD_PRODUCER_ACCEPTED, False),
     ("delivery.producer-result.json", BAD_PRODUCER_OTHER, False),
+    (IDENTITY, GOOD_IDENTITY, True),
+    (IDENTITY, GOOD_IDENTITY_UNREPORTED, True),
+    (IDENTITY, BAD_IDENTITY_SHORT_SHA, False),
+    (IDENTITY, BAD_IDENTITY_NO_APP, False),
+    (IDENTITY, BAD_IDENTITY_OMITS_REVISION, False),
+    (IDENTITY, BAD_IDENTITY_EXTRA, False),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_PASSED, True),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_PENDING_FIRST, True),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_UNKNOWN_UNREPORTED, True),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_TIMEOUT, True),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_ROLLBACK, True),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_PROD, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_NULL_REVISION, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_SHORT_REVISION, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_ACCEPTED, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_PASSED_EXIT_UNREPORTED, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_PASSED_NOT_OBSERVED, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_PASSED_DIGEST_MISSING, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_SETTLED_UNTIMED, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_NO_COMPONENTS, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_TAG_AS_DIGEST, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_ROLLBACK_WITHOUT_REVISION, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_ROLLBACK_KIND_UNLINKED, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_DEPLOY_WITH_RESTORES, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_NATIVE_FIELDS, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_NATIVEREF_OTHER, False),
     ("delivery.error.json", GOOD_ERROR, True),
     ("delivery.error.json", BAD_ERROR_NO_RETRYABLE, False),
 ]
@@ -630,6 +796,10 @@ def registry() -> Registry:
         reg = reg.with_resource(resource.contents["$id"], resource)
         reg = reg.with_resource(path.name, resource)
         reg = reg.with_resource("https://platform/contracts/delivery/" + path.name, resource)
+    # The receipt's `observed` $refs ../app/deployment-identity.json (v0.36.0).
+    identity = Resource.from_contents(json.loads((APP_SCHEMAS / "deployment-identity.json").read_text(encoding="utf-8")))
+    reg = reg.with_resource(identity.contents["$id"], identity)
+    reg = reg.with_resource("https://platform/contracts/app/deployment-identity.json", identity)
     return reg
 
 
@@ -640,8 +810,10 @@ def schema_for(name: str) -> dict:
 def check_bindings() -> list[str]:
     """Round-trip the positive fixtures through the generated Python models."""
     sys.path.insert(0, str(ROOT / "gen" / "python"))
+    from platform_contracts.app import deployment_identity
     from platform_contracts.delivery import (
         delivery_decision,
+        delivery_deployment_receipt,
         delivery_evidence,
         delivery_issue,
         delivery_issue_page,
@@ -662,6 +834,8 @@ def check_bindings() -> list[str]:
         "delivery.evidence.json": delivery_evidence.DeliveryEvidence,
         "delivery.decision.json": delivery_decision.DeliveryDecision,
         "delivery.producer-result.json": delivery_producer_result.DeliveryProducerResult,
+        "delivery.deployment-receipt.json": delivery_deployment_receipt.DeliveryDeploymentReceipt,
+        IDENTITY: deployment_identity.AppDeploymentIdentity,
     }
     failures = []
     for name, doc, ok in CASES:
@@ -752,6 +926,77 @@ def check_recovery_semantics() -> list[str]:
     return failures
 
 
+def check_deployment_semantics(reg: Registry) -> list[str]:
+    """The app-deploy rules JSON Schema cannot express, plus the receipt -> producer-result mapping.
+
+    Equality between two fields of one document (the revision the app reports vs the
+    one that was deployed) has no draft 2020-12 keyword, and it is exactly the claim a
+    deployment receipt exists to prove, so it is checked here rather than left as prose.
+    """
+    failures = []
+
+    def violations(r: dict) -> list[str]:
+        out = []
+        if r["nativeRef"] != f"{r['repository']}:deployments/{r['deploymentId']}":
+            out.append("nativeRef must be <repository>:deployments/<deploymentId>")
+        if r["rollback"] is not None and r["rollback"]["deploymentId"] == r["deploymentId"]:
+            out.append("rollback identity must name an EARLIER deployment")
+        if r["kind"] == "rollback" and r["deploymentId"] in (r["restores"], r["rollbackOf"]):
+            out.append("a rollback is a new deployment, never the one it restores or replaces")
+        if r["result"] == "passed":
+            obs = r["observed"] or {}
+            if obs.get("revision") != r["mergedRevision"]:
+                out.append("passed requires the running app to report mergedRevision")
+            if obs.get("deploymentId") != r["deploymentId"]:
+                out.append("passed requires the running app to report this deploymentId")
+            if r["environment"]["name"] != obs.get("environment"):
+                out.append("passed requires the running app to report the receipt's environment")
+        return out
+
+    for name, doc in [
+        ("GOOD_RECEIPT_PASSED", GOOD_RECEIPT_PASSED),
+        ("GOOD_RECEIPT_PENDING_FIRST", GOOD_RECEIPT_PENDING_FIRST),
+        ("GOOD_RECEIPT_UNKNOWN_UNREPORTED", GOOD_RECEIPT_UNKNOWN_UNREPORTED),
+        ("GOOD_RECEIPT_TIMEOUT", GOOD_RECEIPT_TIMEOUT),
+        ("GOOD_RECEIPT_ROLLBACK", GOOD_RECEIPT_ROLLBACK),
+    ]:
+        failures += [f"deployment: {name}: {v}" for v in violations(doc)]
+
+    # Schema-valid, semantically wrong: each must be caught here.
+    for name, doc in [
+        ("passed serving the previous revision", {**GOOD_RECEIPT_PASSED, "observed": {**GOOD_IDENTITY, "revision": REV_TASK}}),
+        ("passed serving another deployment", {**GOOD_RECEIPT_PASSED, "observed": {**GOOD_IDENTITY, "deploymentId": DEPLOY_PREV}}),
+        ("passed with unreported revision", {**GOOD_RECEIPT_PASSED, "observed": {**GOOD_IDENTITY, "revision": None}}),
+        ("rollback identity names itself", {**GOOD_RECEIPT_PASSED, "rollback": {**GOOD_RECEIPT_PASSED["rollback"], "deploymentId": DEPLOY_ID}}),
+        ("nativeRef names another deployment", {**GOOD_RECEIPT_PASSED, "nativeRef": f"plantpal:deployments/{DEPLOY_PREV}"}),
+    ]:
+        if not violations(doc):
+            failures.append(f"deployment: '{name}' was not caught")
+
+    # The written mapping must yield a schema-valid producer-result for every receipt,
+    # and must never report an environment the app did not report.
+    validator = Draft202012Validator(schema_for("delivery.producer-result.json"), registry=reg, format_checker=FormatChecker())
+    for name, doc in [
+        ("GOOD_RECEIPT_PASSED", GOOD_RECEIPT_PASSED),
+        ("GOOD_RECEIPT_PENDING_FIRST", GOOD_RECEIPT_PENDING_FIRST),
+        ("GOOD_RECEIPT_UNKNOWN_UNREPORTED", GOOD_RECEIPT_UNKNOWN_UNREPORTED),
+        ("GOOD_RECEIPT_TIMEOUT", GOOD_RECEIPT_TIMEOUT),
+        ("GOOD_RECEIPT_ROLLBACK", GOOD_RECEIPT_ROLLBACK),
+    ]:
+        mapped = receipt_to_producer_result(doc)
+        errors = list(validator.iter_errors(mapped))
+        if errors:
+            failures.append(f"mapping: {name} -> producer-result invalid: {errors[0].message}")
+        if (mapped["environment"] is None) != (doc["observed"] is None or doc["observed"]["revision"] is None):
+            failures.append(f"mapping: {name} environment must be present exactly when the app reported a revision")
+    mapped = receipt_to_producer_result(GOOD_RECEIPT_PASSED)
+    if mapped["environment"]["deployedRevision"] != GOOD_RECEIPT_PASSED["observed"]["revision"]:
+        failures.append("mapping: deployedRevision must come from observed.revision")
+    if mapped["artifactRef"] != DIGEST_BE:
+        failures.append("mapping: artifactRef must be the primary component's digest")
+    return failures
+
+
 def _rewrite_refs(node):
     """Point the OpenAPI document's `../delivery/<file>` refs at the registry's bare filenames."""
     if isinstance(node, dict):
@@ -837,6 +1082,7 @@ def main() -> int:
     failures += check_ci_api(reg)
     failures += check_bindings()
     failures += check_recovery_semantics()
+    failures += check_deployment_semantics(reg)
 
     for f in failures:
         print("FAIL ", f)

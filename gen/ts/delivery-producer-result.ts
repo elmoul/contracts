@@ -31,7 +31,7 @@ export interface DeliveryProducerResult {
   exitCode: number | null;
   observedAt: string;
   /**
-   * Re-fetchable native record reference, e.g. `agent-runner:runs/<id>`.
+   * Re-fetchable native record reference, e.g. `agent-runner:runs/<id>`. For `app-deploy` it is `<repository>:deployments/<deploymentId>` and resolves to a `delivery.deployment-receipt` (v0.36.0), which carries the rollback identity; see `docs/task-delivery.md` §App-deploy.
    */
   nativeRef: string;
   artifactRef: string | null;

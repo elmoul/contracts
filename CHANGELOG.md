@@ -16,6 +16,62 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.36.0 — 2026-09-28
+
+**Additive. TypeScript + Python** (tag `v0.36.0`). Fulfils demand
+`plantpal-20260927-contracts-app-deploy-receipt-and-identity` (D113). No Java
+change: no Java service produces or consumes these shapes through contracts.
+
+The `app-deploy` producer had no tagged native record. `delivery.producer-result`
+carried one artifact slot and no rollback identity, and `app.health` has no
+revision, so Factory and `runtime` could only read plantpal's native JSON to learn
+which revision a dev deployment serves or what a rollback would restore.
+
+- **New `schemas/delivery/delivery.deployment-receipt.json`**
+  (`DeliveryDeploymentReceipt`): `deploymentId`, `kind` (`deploy`|`rollback`),
+  `repository`, `branch`, `mergedRevision` (40-hex, never null), per-component
+  `imageDigests` + `digestKind`, `result` (`passed`|`failed`|`unknown`|`unavailable`|`pending`),
+  nullable `exitCode`, `startedAt`/`finishedAt`/`observedAt`, `environment`
+  (`name` const `dev`, `url`), `observed` (the running app's identity), `checks`,
+  `correlation`, and the rollback identity `rollback` (`deploymentId` + `revision`
+  + `imageDigests`, `null` when none exists) with `rollbackOf`/`restores` for
+  rollback deployments. Closed shape.
+- **New `schemas/app/deployment-identity.json`** (`AppDeploymentIdentity`):
+  `appIdentity` plus nullable `revision`, `deploymentId`, `environment`. `null`
+  means not reported, never a default. It is separate from the `app/identity.json`
+  attribution stub.
+- **`delivery.producer-result`:** the inline `correlation` and `checks[]` item
+  objects moved into `$defs` (`#/$defs/correlation`, `#/$defs/check`) so the
+  receipt reuses them. It validates exactly the same documents, and the generated
+  names (`Correlation`/`Check`, `DeliveryProducerCorrelation`/`DeliveryProducerCheck`)
+  did not change. No rollback field was added: rollback identity is read from the
+  receipt through `nativeRef`.
+- **`docs/task-delivery.md`:** new §App-deploy covering the receipt, the running-app
+  identity (plantpal: `GET /actuator/info` → `deployment`), the **lookup transport**
+  for `plantpal:deployments/<id>` (CLI `dev_delivery.py lookup|receipt <id>`, JSON
+  on stdout; a miss is exit `4` and counts as `unavailable`, never `failed`), and
+  the full receipt → producer-result mapping. The §Producers `app-deploy` row, the
+  handoff matrix, §Binding caveat and §Upgrade / repin are updated to match.
+- **Conditionals (`if/then`, inert in the bindings; see §Binding caveat):** a settled
+  receipt requires `finishedAt` + `observedAt`; `passed` requires `exitCode: 0`, a
+  non-null `observed` and every digest non-null; `kind: rollback` requires
+  `rollbackOf` + `restores`, and `kind: deploy` requires both to be `null`. The
+  equality rules (`observed.revision == mergedRevision`,
+  `observed.deploymentId == deploymentId` for `passed`) cannot be expressed in JSON
+  Schema and live in `check_deployment_semantics`.
+- **`tests/validate_delivery.py`:** 114 cases (was 88), with 26 new receipt and
+  identity cases, `check_deployment_semantics`, and `receipt_to_producer_result`, the
+  executable mapping, validated against `delivery.producer-result`.
+- **Bindings:** Python `platform_contracts.delivery.delivery_deployment_receipt`,
+  `platform_contracts.app.deployment_identity`; TypeScript
+  `delivery-deployment-receipt.ts`, `deployment-identity.ts`, re-exported from
+  `index.ts`. The Python modules were generated in one batch run over
+  `schemas/delivery` + `schemas/app/deployment-identity.json`, so the receipt
+  imports `..app.deployment_identity` and `.delivery_producer_result` instead of
+  inlining copies.
+
+---
+
 ## v0.35.0 — 2026-09-27
 
 **Additive, with two narrow conditional tightenings. TypeScript + Python**

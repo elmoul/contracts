@@ -1,10 +1,21 @@
-# D113 task delivery — contract reference (v0.35.0)
+# D113 task delivery — contract reference (v0.36.0)
 
 Published for demand `factory-20260927-task-delivery-contracts` (D113,
 `factory/docs/YOUTRACK_DELIVERY.md` chunk 2). **This is an interface release, not a
 running system.** No `/delivery/v1` route, no producer integration and no Planotell
 dev deployment exists because of it; each owning service must implement and verify
 its own side (see the handoff matrix).
+
+Amended in **v0.36.0** for demand
+`plantpal-20260927-contracts-app-deploy-receipt-and-identity`: the `app-deploy` row of
+§Producers closed its gap at the interface level. It adds `delivery.deployment-receipt`
+(the dev deployment receipt, with rollback identity and per-component image digests)
+and `app/deployment-identity` (what a running app reports about its own revision and
+deployment). §App-deploy below names the lookup transport and writes down the
+receipt → `delivery.producer-result` mapping. `delivery.producer-result` accepts and
+rejects exactly what it did before. Its inline `correlation` and `checks[]` item
+objects moved into `$defs` so the receipt can reuse them, and the generated class and
+type names did not change.
 
 Amended in **v0.35.0** for demand `factory-20260927-sync-recovery-retention`: a
 lookup miss no longer authorises a resubmit on its own. The `youtrack` operation
@@ -49,7 +60,9 @@ is unchanged from v0.31.0.
 | `schemas/delivery/delivery.error.json` | JSON Schema | Error payload + code/status table; v0.35.0 adds `operation_lookup_out_of_coverage` and `tracker_outcome_unknown` |
 | `schemas/delivery/delivery.evidence.json` | JSON Schema | Stage-aware observation (successor to `factory.evidence-receipt` for new deliveries) |
 | `schemas/delivery/delivery.decision.json` | JSON Schema | Plan approval / policy authorization / owner acceptance / request changes / abandon |
-| `schemas/delivery/delivery.producer-result.json` | JSON Schema | Normalized runner / CI / app-deploy result |
+| `schemas/delivery/delivery.producer-result.json` | JSON Schema | Normalized runner / CI / app-deploy result; v0.36.0 moves `correlation`/`check` into `$defs` (no validation change) |
+| `schemas/delivery/delivery.deployment-receipt.json` | JSON Schema | `app-deploy` native record: dev deployment receipt with image digests, observed identity, checks and rollback identity (v0.36.0) |
+| `schemas/app/deployment-identity.json` | JSON Schema | What a running app reports: `appIdentity` + nullable `revision`/`deploymentId`/`environment` (v0.36.0) |
 | `schemas/delivery-api/youtrack-delivery.openapi.yaml` | OpenAPI 3.1 | `youtrack` service routes under `/delivery/v1` |
 | `schemas/agent-runner/runner.dispatch-request.json` | JSON Schema | `POST /dispatch` body; v0.33.0 adds optional `dispatchKey` |
 | `schemas/agent-runner/runner.run-record.json` | JSON Schema | Run record; v0.33.0 adds optional `dispatchKey` and observed `workspace` |
@@ -57,13 +70,16 @@ is unchanged from v0.31.0.
 | `schemas/delivery-api/ci-runner-results.openapi.yaml` | OpenAPI 3.1 | `ci-runner` CI-result lookup routes under `/delivery/v1` (v0.34.0) |
 | `schemas/ci-runner/build-result.yaml` | JSON Schema | `ci-runner` → control-plane build result; v0.34.0 adds optional `headSha` |
 | `schemas/state-feed/state.event.json` | JSON Schema | `ci.run` payload; v0.34.0 adds optional `headSha` |
-| `tests/validate_delivery.py` | test | 88 positive/negative fixtures + OpenAPI route checks (youtrack + ci-runner) + ci-runner component fixtures + Python binding round-trip + `check_recovery_semantics` (the two cross-field timestamp rules JSON Schema cannot express) |
+| `tests/validate_delivery.py` | test | 114 positive/negative fixtures (v0.36.0 adds the receipt + identity cases, `check_deployment_semantics` and the executable `receipt_to_producer_result` mapping) + OpenAPI route checks (youtrack + ci-runner) + ci-runner component fixtures + Python binding round-trip + `check_recovery_semantics` (the two cross-field timestamp rules JSON Schema cannot express) |
 | `tests/validate_runner.py` | test | Runner fixtures incl. the keyed/workspace/reservation cases + an executable `requestHash` conformance check |
 
 Bindings: Python `platform_contracts.delivery.*` (`gen/python`), TypeScript
-`delivery-*.ts` re-exported from `gen/ts/index.ts`. No Java binding for the
-`delivery.*` shapes: no Java service produces or consumes them today (see §Producers
-for `plantpal`). The `ci.run` / `BuildResult` shapes added in v0.34.0 **do** have
+`delivery-*.ts` re-exported from `gen/ts/index.ts`. v0.36.0 adds
+`platform_contracts.app.deployment_identity` / `deployment-identity.ts`. There is no
+Java binding for the `delivery.*` shapes or for `AppDeploymentIdentity`, because no
+Java service produces or consumes them through contracts today. plantpal's deploy tool
+is Python, and its Spring backend emits the identity block without depending on
+contracts (see §App-deploy). The `ci.run` / `BuildResult` shapes added in v0.34.0 **do** have
 bindings in all three languages — `CiRunPayload` (Java `io.platform.contracts.events`,
 `gen/ts/state-event.ts`, `gen/python`), and `BuildResult` (Java at build time,
 `gen/ts/build-result.ts`, `gen/python`) — because `ci-runner` and `control-plane` are
@@ -92,6 +108,10 @@ So, for any code that decides whether to resend:
 | `operation_not_found` carries `reservedAt` + `coveredSince`, `retryable: true` | yes | **no** |
 | `operation_lookup_out_of_coverage` carries `coveredSince` + `reason`, `retryable: false` | yes | **no** |
 | `absenceProvenAt >= absenceQuietUntil` (cross-field arithmetic) | **no** — see below | no |
+| receipt: settled (`result` ≠ `pending`) requires `finishedAt` + `observedAt` (v0.36.0) | yes | **no** |
+| receipt: `passed` requires `exitCode: 0`, non-null `observed`, every digest non-null (v0.36.0) | yes | **no** |
+| receipt: `kind: rollback` ⇔ non-null `rollbackOf` + `restores` (v0.36.0) | yes | **no** |
+| receipt: `passed` requires `observed.revision == mergedRevision` and `observed.deploymentId == deploymentId` (cross-field equality, v0.36.0) | **no** — `check_deployment_semantics` | no |
 
 Two consequences a producer or consumer must act on:
 
@@ -475,12 +495,112 @@ byte-for-byte.
 |---|---|---|---|
 | `agent-runner` (TS) | `runner.run-record` (`GET /runs/{id}`): `state`, nullable `exitCode`, `transcriptPath`, optional `dispatchKey`, optional observed `workspace` | `operationId`=run id, `nativeRef`=`agent-runner:runs/<id>`, `repository`=run `repo`, `branch`/`revision` from `workspace` (`revision` only when `dirty` is `false`, else `null`), `correlation.operationKey`=`dispatchKey` or `null`, `exitCode` as-is, `finished`+0 → passed, `failed` → failed, `stopped`/null exit → unknown, `launched` → pending. Served at `GET /runs/{id}/producer-result` and `GET /dispatches/{dispatchKey}/producer-result` | **Closed in v0.33.0** — the record now carries the observed revision + branch and the dispatch key, and keys are reserved with a lookup, so a lost `POST /dispatch` response resolves without a prompt scan. Still the owner's work: implementing reservation/replay/conflict and the lookups on top of the shipped observation. A transcript's claims remain `worker-claim` only. |
 | `ci-runner` | `ci.run` state event (`runId`, `jobId`, `ref`, `conclusion`, `steps[]`, `headSha`), `BuildResult` | `operationId`=`<runId>/<jobId>`, `nativeRef`=`ci-runner:ci.run/<runId>/<jobId>`, `repository`=platform repo name, `revision`=`headSha` (or `null` when never observed — never guessed from `ref`), `branch`=`ref`, `conclusion` success → passed, failure/timed_out → failed, cancelled/absent → unknown; `checks[]` from `steps[]` (step exit codes are not reported, so `null`). Served at `GET /delivery/v1/ci-results/{runId}/{jobId}` and `GET /delivery/v1/ci-results?repository=&revision=`. | **Closed in v0.34.0** at the interface level — `headSha` is on `CiRunPayload` and `BuildResult` (both optional/additive) and the lookup routes are published in `schemas/delivery-api/ci-runner-results.openapi.yaml`, so a run can be tied to an exact revision and re-fetched. Still the owner's work: emitting `headSha` from the GitHub webhook *and* implementing both lookup routes. Until `ci-runner` populates `headSha`, every result maps to `revision: null` and cannot pass a revision gate. |
-| `app-deploy` (`plantpal`; routing by `runtime`/`gateway`, name proxy by `launcher`) | none. `app.health` has no revision or deployment id | `producer: app-deploy`, `environment` from the running app, `checks[]` = criterion smoke checks | Needs: a dev deployment receipt (deployment id, merged revision, image digest, result) with lookup, and a running-app identity/revision endpoint so `appIdentity`/`deployedRevision` are observed, not configured. Language is the owner's choice. A Java binding will be generated on request. |
+| `app-deploy` (`plantpal`; routing by `runtime`/`gateway`, name proxy by `launcher`) | `delivery.deployment-receipt` (v0.36.0), re-fetched through `nativeRef` `plantpal:deployments/<id>` over the CLI transport in §App-deploy; the running app reports `app/deployment-identity` | `operationId`=`deploymentId`, `revision`=`mergedRevision`, `outcome`=`result`, `environment` built **only** from `observed` (else `null`), `artifactRef`=primary component digest, `checks[]` as-is. Full table in §App-deploy. **Rollback identity is not in `delivery.producer-result`**; it is read from the receipt through `nativeRef` | **Closed in v0.36.0** at the interface level. Still plantpal's work: emitting the tagged receipt from `receipt <id>` (it prints its native `plantpal.dev-deployment-receipt/1` today) and moving `lookup` to the v0.36.0 binding. Managed hosting and the Planotell name route remain `runtime`'s (Factory demand `factory-20260927-dev-delivery-routing`). A Java binding will be generated on request. |
 
 Factory correlates by (`repository`, `revision`, producer `operationId`, and
 `correlation.operationKey` when echoed). A result that cannot be correlated, has a
 `null` revision, or whose native record cannot be re-fetched is recorded as
 `unknown`, never `passed`.
+
+## App-deploy: receipt, running-app identity and lookup (v0.36.0)
+
+### The receipt
+
+`delivery.deployment-receipt` is the `app-deploy` producer's native record, one per
+deployment. It is written when the deployment is **reserved** (`result: pending`) and
+settled in place, so a crash leaves a findable `pending` receipt rather than nothing.
+A settled receipt's result is never rewritten. Only `reconcile` settles a `pending`
+one, and only by re-observing, so its result is `unknown` or `failed`, never `passed`.
+
+- `mergedRevision` is the full SHA of the merged revision. It is known at
+  reservation, so it is never `null`. It says what was **deployed**. What the URL
+  **serves** is `observed.revision`, and a `passed` receipt requires the two to be
+  equal. That rule is enforced by `check_deployment_semantics`, not by the schema
+  (see §Binding caveat).
+- `imageDigests` has one entry per component (plantpal: `backend`, `frontend`), and
+  `digestKind` says what the digests are. plantpal's are `local-image-id`: the local
+  engine's image id, meaningful only on the deploying host and never pushed.
+- `observed` is the running app's `app/deployment-identity`, copied as reported,
+  mismatches included. `null` means the endpoint could not be read at all.
+- `environment.name` is `const: dev` (D113). `environment.url` is the URL actually
+  observed. A configured hostname appears there only if the identity observed
+  through it matched this deployment.
+- **Rollback identity:** `rollback` is the most recent `passed` deployment before
+  this one (`deploymentId`, `revision`, `imageDigests`). It is fixed at reservation
+  and is `null` when no such deployment exists. A rollback is itself a new receipt
+  with `kind: rollback`, `rollbackOf` (the deployment it replaced) and `restores`
+  (the deployment whose images were restarted), and it has its own observation and
+  checks.
+
+### The running-app identity
+
+`app/deployment-identity` is what a running app reports about itself: `appIdentity`
+(always present), plus `revision`, `deploymentId` and `environment`, each nullable.
+**`null` means not reported, never a default.** An app that does not know its
+revision emits `null`, not a configured value or a branch name. A consumer treats
+`null` as unverified: it never matches an expected value. Always read the identity
+**through the URL under test**, because its purpose is to prove which revision that
+URL serves.
+
+The app chooses the route. plantpal serves it at `GET /actuator/info`, as the value
+of the top-level key `deployment`. The route is public and proxied by the dev nginx:
+
+```json
+{"deployment": {"appIdentity": "plantpal", "revision": "<40-hex|null>",
+                "deploymentId": "<id|null>", "environment": "dev|null"}}
+```
+
+`runtime` reads it to verify that `http://planotell.platform.localhost` serves the
+merged revision. Factory reads it through the receipt's `observed` and may also
+re-read it live. It is a different shape from `app/identity.json` (the tenant
+attribution stub sent with AI calls) and from `app.health`, which has no revision.
+
+### Lookup transport for `plantpal:deployments/<id>`
+
+**CLI, JSON on stdout.** The deploy tool stores receipts on the host that deployed,
+so the lookup runs **in the plantpal checkout on that host**, from the repository
+root, with the tool's own venv:
+
+| Command | stdout on success (exit 0) | Shape |
+|---|---|---|
+| `python tools/dev-delivery/dev_delivery.py lookup <id>` | one JSON document | `delivery.producer-result` (mapping below) |
+| `python tools/dev-delivery/dev_delivery.py receipt <id>` | one JSON document | `delivery.deployment-receipt`. Until plantpal repins it prints its native `plantpal.dev-deployment-receipt/1`, and consumers bind only to the tagged shape |
+
+- **Miss:** exit code `4`, stderr `deployment_not_found: <id>`, nothing on stdout.
+  A miss means there is no receipt for that id in this host's store. It does **not**
+  prove the deployment never happened (it may be on another host, or the store may
+  have been deleted). Factory records a miss as `unavailable`, never as `failed`, and
+  never treats it as grounds to redeploy under the same operation key.
+- **Any other non-zero exit**, or stdout that does not parse, is `unavailable` for
+  that lookup, not a result.
+- Validate stdout against the **JSON Schema** of the tag you pin, not only the
+  binding (§Binding caveat).
+- No HTTP route exists. If Factory needs to re-fetch from another host, plantpal
+  must offer a new transport and contracts must publish it. The CLI is the transport
+  this release names.
+
+### Receipt → `delivery.producer-result` (producer `app-deploy`)
+
+Rollback identity stays in the receipt. `delivery.producer-result` gains **no**
+rollback field: Factory reads `rollback` from the receipt it re-fetches through
+`nativeRef`. `receipt_to_producer_result` in `tests/validate_delivery.py` is the
+executable form of this table.
+
+| `delivery.producer-result` | From the receipt |
+|---|---|
+| `producer` | `app-deploy` |
+| `operationId` | `deploymentId` |
+| `correlation` | `correlation` |
+| `repository`, `branch` | `repository`, `branch` |
+| `revision` | `mergedRevision` |
+| `outcome` | `result` |
+| `exitCode` | `exitCode` (`null` stays `null`) |
+| `observedAt` | `observedAt`, or `startedAt` while `pending` |
+| `nativeRef` | `nativeRef` (`<repository>:deployments/<deploymentId>`) |
+| `artifactRef` | the digest of the component that serves the identity endpoint (plantpal: `imageDigests.backend`); the full set stays in the receipt |
+| `environment` | `{name: environment.name, appIdentity: observed.appIdentity, deploymentId: observed.deploymentId, deployedRevision: observed.revision, url: environment.url}`, **only when** `observed` is non-null with non-null `revision` and `deploymentId`; otherwise `null`. Never filled from the receipt's own `deploymentId`/`mergedRevision` |
+| `checks` | `checks` unchanged |
+| *(rollback identity)* | not mapped; read `rollback` from the receipt |
 
 ### Producer obligations added in v0.35.0 (`youtrack` service)
 
@@ -524,10 +644,50 @@ through `DeliverySyncOperation` and never validates them against
 | Runner result | `agent-runner` | `factory` | `delivery.producer-result` ← `runner.run-record`; `GET /runs/{id}/producer-result`, `GET /dispatches/{dispatchKey}/producer-result` | run id; `dispatchKey` + observed `workspace` now on the record (v0.33.0) | Contract published; **lookup routes and mapping unimplemented** (agent-runner) |
 | Runner dispatch + keyed lookup | `agent-runner` | `factory` | `runner.dispatch-request` (optional `dispatchKey`) → `runner.run-record`; `GET /dispatches/{dispatchKey}` → `runner.dispatch-reservation` | `dispatchKey` + `requestHash`; reserve-before-spawn; replay `200` / conflict `409`; no relaunch | Contract published in v0.33.0; **unimplemented** (agent-runner) |
 | CI result | `ci-runner` | `factory` | `delivery.producer-result` ← `ci.run`; `GET /delivery/v1/ci-results/{runId}/{jobId}`, `GET /delivery/v1/ci-results?repository=&revision=` | `runId/jobId`; `revision` = `headSha` (on the event and on the lookup response, v0.34.0) | Contract published in v0.34.0; **emitting `headSha` and both lookup routes unimplemented** (ci-runner) |
-| Dev deploy result | `plantpal` (+ `runtime`/`gateway`/`launcher`) | `factory` | `delivery.producer-result` (`environment`) | deployment id; **gap:** no receipt exists | **Unimplemented**; Planotell dev URL not verified |
+| Dev deploy result | `plantpal` (+ `runtime`/`gateway`/`launcher`) | `factory` | `delivery.producer-result` ← `delivery.deployment-receipt`; CLI `dev_delivery.py lookup <id>` / `receipt <id>` | `deploymentId`; reserve-first `pending` receipt; `reconcile` re-observes only; rollback identity in the receipt | Contract published in v0.36.0. plantpal emits producer-result (v0.31.0 binding) and a **native** receipt today; repin pending |
+| Running-app identity | `plantpal` (any app) | `runtime`, `factory` | `app/deployment-identity`; plantpal `GET /actuator/info` → `deployment` | `revision` + `deploymentId` as reported; `null` = not reported | Contract published in v0.36.0; plantpal already serves this shape natively |
 | Routing/approval | `demand-coordinator` | `factory` | existing `demand` / `demand.fulfillment` | existing | Unchanged; not in this release |
 
 ## Upgrade / repin
+
+### v0.36.0 (app-deploy receipt + running-app identity)
+
+Additive: two new schemas, and `delivery.producer-result` accepts and rejects exactly
+what it did at v0.35.0. No consumer is obligated to move (D031). The open leg is
+`plantpal`'s, as the demand's origin.
+
+- **Python (`plantpal` dev-delivery tool, `factory`):**
+  `platform-contracts @ git+https://github.com/elmoul/contracts.git@v0.36.0#subdirectory=gen/python`.
+  New `platform_contracts.delivery.delivery_deployment_receipt`
+  (`DeliveryDeploymentReceipt`, `RollbackIdentity`, `ImageDigests`, `Environment`)
+  and `platform_contracts.app.deployment_identity` (`AppDeploymentIdentity`).
+  `delivery_producer_result` keeps `DeliveryProducerResult`, `Correlation` and
+  `Check`. The only change there is that the `correlation` field lost its redundant
+  `title=` metadata.
+- **TypeScript (`runtime` / `factory`, if they read TS):** point the `file:`
+  dependency at `../contracts-worktrees/v0.36.0/gen/ts`. `index.ts` re-exports
+  `DeliveryDeploymentReceipt`, `DeliveryImageDigests`,
+  `DeliveryDeploymentEnvironment`, `DeliveryRollbackIdentity` and
+  `AppDeploymentIdentity`.
+- **Java:** none generated. plantpal's Spring backend emits the identity block
+  without a contracts dependency. Ask if a Java consumer appears.
+- **plantpal, mapping from its native receipt** (`plantpal.dev-deployment-receipt/1`):
+  - `revision` → `mergedRevision`.
+  - `testUrl` → `environment.url`, and `environment` becomes `{name: "dev", url}`.
+  - `digestKind` → `local-image-id`.
+  - `observed`, `checks`, `correlation`, `rollback`, `rollbackOf` and `restores`
+    carry over as-is. `rollbackOf` and `restores` are explicitly `null` for
+    `kind: deploy`.
+  - `nativeRef` = `plantpal:deployments/<deploymentId>`.
+  - Drop `schema`, `revisionRole`, `composeProject`, `port`, `preDeployChecks`
+    (already inside `checks`) and `log` from the tagged output. The shape is closed,
+    so those fields stay in the native file only.
+- **Compatibility checks after repin:** round-trip `GOOD_RECEIPT_PASSED`,
+  `GOOD_RECEIPT_PENDING_FIRST`, `GOOD_RECEIPT_ROLLBACK`, `GOOD_IDENTITY` and
+  `GOOD_IDENTITY_UNREPORTED` from `tests/validate_delivery.py` through your binding.
+  Validate emitted receipts against the JSON Schema and port
+  `check_deployment_semantics`, because the binding does not enforce the conditional
+  and cross-field rules.
 
 ### v0.35.0 (operation retention coverage + safe missing-operation recovery)
 
