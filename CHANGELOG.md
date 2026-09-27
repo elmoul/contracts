@@ -16,6 +16,38 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.32.0 — 2026-09-27
+
+**Additive, Python binding only** (tag `v0.32.0`). Fulfils demand
+`factory-20260927-demand-after-binding`. Closes the caveat v0.26.0 left open
+on purpose.
+
+- `gen/python/platform_contracts/demand_coordinator/demand.py`: `Demand` gains
+  optional `after: list[constr(pattern=<demand id>)] | None` (`min_length=1`),
+  matching the `after` field `schemas/demand-coordinator/demand.json` has
+  carried since v0.26.0. Before this, `extra='forbid'` made the Python model
+  reject every demand that carried `after`.
+- **How the v0.26.0 blocker was avoided:** the file was regenerated with
+  datamodel-codegen 0.68.1 plus `--collapse-root-models`. That flag keeps the
+  existing `to` field as `list[constr(...)]` rather than rewriting it to
+  `list[ToItem]`. The diff against v0.31.0 is the `after` field and the header
+  timestamp, nothing else. `demand.to[0] == "factory"` still holds.
+- **Known limitation:** `uniqueItems` on `after` is enforced by the JSON Schema
+  but not by the pydantic model. The field stays a `list` so order is kept.
+  `--use-unique-items-as-set` would lose order. Validate against the schema if
+  duplicate rejection matters to you.
+- **Unchanged:** every schema (including `demand.json`), the Java and TS
+  bindings (TS/Java already carried `after` since v0.26.0; their version files
+  stay at `0.31.0`), and the `v0.31.0` tag itself. No Python binding for
+  `demand.queue-entry` yet (not asked for).
+- Tests: new fixture `tests/fixtures/demand-coordinator/demand-with-after.json`.
+  `tests/validate_demand.py` validates it against the schema and round-trips it
+  through the Python `Demand` (dump with `by_alias`/`exclude_none` → identical
+  document → re-validates against the schema). It does the same for a real
+  pre-`after` demand file from disk, and checks that empty/malformed `after` is
+  rejected. Verified that this test fails against the v0.31.0 binding with
+  `extra_forbidden`.
+
 ## v0.31.0 — 2026-09-27
 
 **Additive, TypeScript + Python bindings** (tag `v0.31.0`). Fulfils demand

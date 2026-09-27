@@ -1,0 +1,17 @@
+{
+  "id": "factory-20260927-demand-after-binding",
+  "date": "2026-09-27",
+  "from": "factory",
+  "to": ["contracts"],
+  "capability": "Restore Python Demand support for the published after dependency field",
+  "acceptance-criteria": [
+    "Publish a new tagged Python Demand binding that accepts and preserves the after field already present in the v0.31.0 demand JSON Schema.",
+    "Add a regression fixture that validates and round-trips a demand with after through both JSON Schema and Python binding; preserve compatibility without mutating the v0.31.0 tag."
+  ],
+  "needs-owner": false,
+  "status": "open",
+  "after": [
+    "factory-20260927-task-delivery-contracts",
+    "contracts-20260914-factory-repin-interface-extraction"
+  ]
+}

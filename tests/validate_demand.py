@@ -17,6 +17,7 @@ from referencing import Registry, Resource
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMAS = ROOT / "schemas" / "demand-coordinator"
 DEMANDS = ROOT / "demands"
+FIXTURES = ROOT / "tests" / "fixtures" / "demand-coordinator"
 
 GOOD_DEMAND = {
     "id": "demand-coordinator-20260709-demand-schema",
@@ -252,6 +253,53 @@ def expect_invalid(schema, doc: dict, label: str) -> None:
     print(f"PASS  {label} (rejected: {errors[0].message})")
 
 
+def python_binding_round_trip(demand_schema: dict, pre_after_file: dict) -> None:
+    """
+    v0.32.0 (factory-20260927-demand-after-binding): the Python Demand binding was left
+    stale for `after` in v0.26.0 and, with extra='forbid', rejected any demand carrying
+    it. Pin that it now accepts and preserves `after` (order included), that a demand
+    without `after` still round-trips without gaining one, and that `to` stays a plain
+    list of str (the generator drift v0.26.0 refused to ship).
+    """
+    sys.path.insert(0, str(ROOT / "gen" / "python"))
+    from pydantic import ValidationError
+
+    from platform_contracts.demand_coordinator.demand import Demand
+
+    fixture = json.loads((FIXTURES / "demand-with-after.json").read_text(encoding="utf-8"))
+    expect_valid(demand_schema, fixture, "demand fixture: demand-with-after.json (known-good)")
+
+    for label, doc in (
+        ("fixture with `after`", fixture),
+        ("real pre-`after` demand file", pre_after_file),
+    ):
+        model = Demand.model_validate(doc)
+        dumped = json.loads(model.model_dump_json(by_alias=True, exclude_none=True))
+        if dumped != doc:
+            raise AssertionError(f"python Demand round-trip ({label}): {dumped!r} != {doc!r}")
+        again = Demand.model_validate_json(model.model_dump_json(by_alias=True))
+        if again != model:
+            raise AssertionError(f"python Demand re-parse ({label}) changed the model")
+        expect_valid(demand_schema, dumped, f"python Demand round-trip output re-validates ({label})")
+        print(f"PASS  python Demand round-trip preserves document ({label})")
+
+    model = Demand.model_validate(fixture)
+    if model.after != fixture["after"] or model.to != ["contracts"]:
+        raise AssertionError(f"python Demand: after={model.after!r} to={model.to!r}")
+    print("PASS  python Demand: `after` order preserved, `to` is list[str]")
+
+    for label, bad in (
+        ("empty `after`", BAD_DEMAND_AFTER_EMPTY),
+        ("malformed `after` id", BAD_DEMAND_AFTER_MALFORMED_ID),
+    ):
+        try:
+            Demand.model_validate(bad)
+        except ValidationError:
+            print(f"PASS  python Demand rejects {label}")
+        else:
+            raise AssertionError(f"python Demand accepted {label}")
+
+
 def main() -> int:
     demand_schema = load("demand.json")
     fulfillment_schema = load("demand.fulfillment.json")
@@ -309,6 +357,10 @@ def main() -> int:
         demand_schema,
         frontmatter(DEMANDS / "archive" / "2026-09-14-factory-repin-interface-extraction.md"),
         "demand: real pre-`after` demand file on disk still validates (known-good)",
+    )
+    python_binding_round_trip(
+        demand_schema,
+        frontmatter(DEMANDS / "archive" / "2026-09-14-factory-repin-interface-extraction.md"),
     )
     expect_valid(
         queue_entry_schema,

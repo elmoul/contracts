@@ -231,6 +231,12 @@ base class. Diff the regenerated file against the previous one before
 committing if you're unsure which behavior your installed version defaults
 to.
 
+**Array-of-pattern-string fields (v0.32.0):** datamodel-codegen 0.68.1
+rewrites a field like `demand.to` (`items: {type: string, pattern: ...}`) to
+`list[ToItem]` (a `RootModel` wrapper), which breaks `demand.to[0] == "x"`
+for consumers. Add `--collapse-root-models` to keep `list[constr(...)]`. This
+is how `demand_coordinator/demand.py` was regenerated in v0.32.0.
+
 Verify: `pip install ./gen/python` in a scratch venv, then
 `python -c "import platform_contracts"` plus a round-trip
 (`model_dump_json()` → `model_validate_json()`) on any newly generated model.
