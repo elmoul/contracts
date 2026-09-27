@@ -1054,3 +1054,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-27_2257_close-loop-on-4-satisfied-contracts-dema
+
+## Session 78 (2026-09-27)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-28_0000_fulfill-demand-plantpal-20260927-contrac.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand plantpal-20260927-contracts-app-deploy-receipt-and-identity (capability: Tagged shapes for the app-deploy producer: a dev deployment receipt (with rollback identity), its lookup, and a running-app identity/revision record, so Factory and runtime never consume plantpal's native JSON, f... -- status: done.
+- Next step: plantpal closes its leg (contracts-20260928-plantpal-repin-app-deploy-receipt-and-identity); archive the origin demand once satisfied
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-28_0000_fulfill-demand-plantpal-20260927-contrac
