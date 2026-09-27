@@ -12,7 +12,7 @@ acceptance-criteria:
   - "ci-runner returns the not-found shape the document fixes — 404 with a delivery.error whose code is ci_result_not_found and retryable false — and 503 producer_unavailable only when its own store is unreachable; the two are never conflated."
   - "ci-runner re-pins whatever binding it reads these shapes from: the TypeScript file: dependency to ../contracts-worktrees/v0.34.0/gen/ts, the Java io.platform:contracts:0.34.0 install, or the Python git pin at @v0.34.0, and confirms an existing ci.run/BuildResult document without headSha still validates unchanged."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # contracts v0.34.0: close the consuming leg

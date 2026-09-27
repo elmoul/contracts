@@ -12,7 +12,7 @@ acceptance-criteria:
   - "agent-runner stops stripping workspace from the wire run record and echoes dispatchKey, so GET /runs/{id}/producer-result and GET /dispatches/{dispatchKey}/producer-result can fill repository, branch, revision and correlation.operationKey; an unkeyed dispatch stays unchanged."
   - "agent-runner reports factory-20260927-agent-runner-delivery-results (the downstream factory demand) once its leg is live, naming v0.33.0."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # contracts v0.33.0: close the consuming leg

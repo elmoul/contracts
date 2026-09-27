@@ -9,7 +9,7 @@ acceptance-criteria:
   - "factory re-pins to v0.31.0 at its reviewed integration step (package, image, descriptor and tests together) and confirms its stored v0.25.0 evidence receipts still load unchanged."
   - "factory raises its downstream producer demands (youtrack, agent-runner/ci-runner, plantpal/runtime/gateway) naming v0.31.0 and the gaps listed in docs/task-delivery.md §Producers, or explains why not."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # D113 task delivery: close the consuming leg

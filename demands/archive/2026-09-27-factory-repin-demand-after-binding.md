@@ -8,7 +8,7 @@ acceptance-criteria:
   - "factory re-pins its Python contracts dependency to v0.32.0 (git+https://github.com/elmoul/contracts.git@v0.32.0#subdirectory=gen/python) and confirms a demand carrying `after` now parses and round-trips through platform_contracts.demand_coordinator.demand.Demand."
   - "factory removes any local workaround it added for the missing `after` field, or explains why it stays."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Python Demand `after`: close the consuming leg
