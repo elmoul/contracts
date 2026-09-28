@@ -10,5 +10,4 @@ gen/python/build/
 *.egg-info
 
 .codex/*
-.brain/*
 .claude/*
