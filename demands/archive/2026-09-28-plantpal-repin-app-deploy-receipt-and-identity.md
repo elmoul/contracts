@@ -12,7 +12,7 @@ acceptance-criteria:
   - "plantpal round-trips its /actuator/info `deployment` block through AppDeploymentIdentity in a test, keeping null = not reported."
   - "plantpal tells factory and runtime that v0.36.0 is the tag to consume for the receipt and the running-app identity (their own demands or notes), or explains why not."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # App-deploy receipt + running-app identity: close the consuming leg
