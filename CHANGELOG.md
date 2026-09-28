@@ -16,6 +16,60 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.37.0 — 2026-09-28
+
+**Additive. Schemas/docs only — no binding changed** (tag `v0.37.0`). Fulfils demand
+`plantpal-20260928-contracts-app-deploy-lookup-route` (D113). No Java, TypeScript or
+Python generated code changed: this release publishes a route interface over the
+shapes v0.36.0 already ships.
+
+v0.36.0 named exactly one lookup transport for `plantpal:deployments/<id>`: a CLI run
+inside the plantpal checkout **on the deploying host**. Factory does not run there, so
+re-fetching `delivery.deployment-receipt` meant executing a process on someone else's
+host. §App-deploy said a new transport would have to be offered by the producer and
+published here first. This is that publication.
+
+- **New `schemas/delivery-api/app-deploy-lookup.openapi.yaml`** (OpenAPI 3.1, the
+  `ci-runner-results.openapi.yaml` precedent): `GET /delivery/v1/app-deploys/{deploymentId}`
+  returns the deployment's `delivery.producer-result` (producer `app-deploy`, the
+  §App-deploy mapping) and `GET /delivery/v1/app-deploys/{deploymentId}/receipt`
+  returns `delivery.deployment-receipt` **verbatim**, as the pinned v0.36.0 tagged
+  shape. 200 on a hit; a `pending` receipt is a hit. Same `{"data"}` / `{"error"}`
+  envelope as the other `/delivery/v1` routes.
+- **Miss vs. "could not ask", machine-distinguishable.** `deployment_not_found`
+  (404, `retryable: false`) is the miss: this store has no receipt for that id, which
+  the consumer records as `unavailable` and **never** as `failed`, and which is never
+  grounds to redeploy under the same key. It is the only 404 either route may return
+  and it must carry the `delivery.error` body. Separately named: `caller_not_authorized`
+  (403 — never answered as a 404), `producer_unavailable` (503, retryable — the store
+  could not be read), `invalid_request` (422). An absent producer (refused connection,
+  timeout, unparseable or non-producer response) has no code at all and must not be
+  collapsed into `deployment_not_found`.
+- **`schemas/delivery/delivery.error.json`:** code table and examples gain
+  `deployment_not_found`; `producer_unavailable` now names app-deploy too. `code`
+  stays an open string, so this is not a narrowing and no document's validity changed.
+- **Published-interface ruling** (`docs/task-delivery.md` §App-deploy): the path
+  template, method, response documents and the code table are **contracts'** and are
+  published here; **host/port and the concrete credential** behind the `deployCaller`
+  bearer scheme are the producer's own service design (PLATFORM_STATE §3, D040),
+  with contracts ruling only that the route is authenticated. plantpal can implement
+  immediately — no further contracts step.
+- **The CLI transport is not withdrawn.** The route is additive (D031):
+  `dev_delivery.py lookup <id>` / `receipt <id>` keep printing the same JSON on stdout
+  with the same exit codes (miss = exit `4`), plantpal keeps emitting it unchanged, and
+  no existing consumer is obligated to move.
+- **`docs/task-delivery.md`:** §App-deploy now documents both transports, the
+  miss/failure table, the ruling and the non-withdrawal; the handoff matrix gains the
+  app-deploy lookup row (route **unimplemented**, demand to `plantpal`); new §Upgrade /
+  repin v0.37.0.
+- **`tests/validate_delivery.py`:** `check_app_deploy_api` — route + operationId
+  presence, the 404 on both routes, that the receipt route serves the receipt schema
+  and the result route the producer-result schema, that all four codes are on the
+  published surface, and that the not-found body rejects a wrong code or
+  `retryable: true`. 114 schema cases, 0 failures.
+
+---
+
 ## v0.36.0 — 2026-09-28
 
 **Additive. TypeScript + Python** (tag `v0.36.0`). Fulfils demand

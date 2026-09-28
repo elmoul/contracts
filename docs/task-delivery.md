@@ -1,10 +1,17 @@
-# D113 task delivery — contract reference (v0.36.0)
+# D113 task delivery — contract reference (v0.37.0)
 
 Published for demand `factory-20260927-task-delivery-contracts` (D113,
 `factory/docs/YOUTRACK_DELIVERY.md` chunk 2). **This is an interface release, not a
 running system.** No `/delivery/v1` route, no producer integration and no Planotell
 dev deployment exists because of it; each owning service must implement and verify
 its own side (see the handoff matrix).
+
+Amended in **v0.37.0** for demand
+`plantpal-20260928-contracts-app-deploy-lookup-route`: `schemas/delivery-api/app-deploy-lookup.openapi.yaml`
+publishes the app-deploy HTTP lookup (by deployment id: one route for the receipt,
+one for its `delivery.producer-result` mapping), its miss/failure code table, and the
+ruling on which parts of that surface contracts owns. Additive: the CLI transport is
+**not withdrawn** and no consumer is obligated to move (D031). See §App-deploy.
 
 Amended in **v0.36.0** for demand
 `plantpal-20260927-contracts-app-deploy-receipt-and-identity`: the `app-deploy` row of
@@ -495,14 +502,14 @@ byte-for-byte.
 |---|---|---|---|
 | `agent-runner` (TS) | `runner.run-record` (`GET /runs/{id}`): `state`, nullable `exitCode`, `transcriptPath`, optional `dispatchKey`, optional observed `workspace` | `operationId`=run id, `nativeRef`=`agent-runner:runs/<id>`, `repository`=run `repo`, `branch`/`revision` from `workspace` (`revision` only when `dirty` is `false`, else `null`), `correlation.operationKey`=`dispatchKey` or `null`, `exitCode` as-is, `finished`+0 → passed, `failed` → failed, `stopped`/null exit → unknown, `launched` → pending. Served at `GET /runs/{id}/producer-result` and `GET /dispatches/{dispatchKey}/producer-result` | **Closed in v0.33.0** — the record now carries the observed revision + branch and the dispatch key, and keys are reserved with a lookup, so a lost `POST /dispatch` response resolves without a prompt scan. Still the owner's work: implementing reservation/replay/conflict and the lookups on top of the shipped observation. A transcript's claims remain `worker-claim` only. |
 | `ci-runner` | `ci.run` state event (`runId`, `jobId`, `ref`, `conclusion`, `steps[]`, `headSha`), `BuildResult` | `operationId`=`<runId>/<jobId>`, `nativeRef`=`ci-runner:ci.run/<runId>/<jobId>`, `repository`=platform repo name, `revision`=`headSha` (or `null` when never observed — never guessed from `ref`), `branch`=`ref`, `conclusion` success → passed, failure/timed_out → failed, cancelled/absent → unknown; `checks[]` from `steps[]` (step exit codes are not reported, so `null`). Served at `GET /delivery/v1/ci-results/{runId}/{jobId}` and `GET /delivery/v1/ci-results?repository=&revision=`. | **Closed in v0.34.0** at the interface level — `headSha` is on `CiRunPayload` and `BuildResult` (both optional/additive) and the lookup routes are published in `schemas/delivery-api/ci-runner-results.openapi.yaml`, so a run can be tied to an exact revision and re-fetched. Still the owner's work: emitting `headSha` from the GitHub webhook *and* implementing both lookup routes. Until `ci-runner` populates `headSha`, every result maps to `revision: null` and cannot pass a revision gate. |
-| `app-deploy` (`plantpal`; routing by `runtime`/`gateway`, name proxy by `launcher`) | `delivery.deployment-receipt` (v0.36.0), re-fetched through `nativeRef` `plantpal:deployments/<id>` over the CLI transport in §App-deploy; the running app reports `app/deployment-identity` | `operationId`=`deploymentId`, `revision`=`mergedRevision`, `outcome`=`result`, `environment` built **only** from `observed` (else `null`), `artifactRef`=primary component digest, `checks[]` as-is. Full table in §App-deploy. **Rollback identity is not in `delivery.producer-result`**; it is read from the receipt through `nativeRef` | **Closed in v0.36.0** at the interface level. Still plantpal's work: emitting the tagged receipt from `receipt <id>` (it prints its native `plantpal.dev-deployment-receipt/1` today) and moving `lookup` to the v0.36.0 binding. Managed hosting and the Planotell name route remain `runtime`'s (Factory demand `factory-20260927-dev-delivery-routing`). A Java binding will be generated on request. |
+| `app-deploy` (`plantpal`; routing by `runtime`/`gateway`, name proxy by `launcher`) | `delivery.deployment-receipt` (v0.36.0), re-fetched through `nativeRef` `plantpal:deployments/<id>` over the CLI transport (v0.36.0) or the HTTP lookup route (v0.37.0) in §App-deploy; the running app reports `app/deployment-identity` | `operationId`=`deploymentId`, `revision`=`mergedRevision`, `outcome`=`result`, `environment` built **only** from `observed` (else `null`), `artifactRef`=primary component digest, `checks[]` as-is. Full table in §App-deploy. **Rollback identity is not in `delivery.producer-result`**; it is read from the receipt through `nativeRef` | **Closed in v0.36.0** at the interface level. Still plantpal's work: emitting the tagged receipt from `receipt <id>` (it prints its native `plantpal.dev-deployment-receipt/1` today) and moving `lookup` to the v0.36.0 binding. Managed hosting and the Planotell name route remain `runtime`'s (Factory demand `factory-20260927-dev-delivery-routing`). A Java binding will be generated on request. |
 
 Factory correlates by (`repository`, `revision`, producer `operationId`, and
 `correlation.operationKey` when echoed). A result that cannot be correlated, has a
 `null` revision, or whose native record cannot be re-fetched is recorded as
 `unknown`, never `passed`.
 
-## App-deploy: receipt, running-app identity and lookup (v0.36.0)
+## App-deploy: receipt, running-app identity and lookup (v0.36.0, lookup route v0.37.0)
 
 ### The receipt
 
@@ -555,7 +562,13 @@ merged revision. Factory reads it through the receipt's `observed` and may also
 re-read it live. It is a different shape from `app/identity.json` (the tenant
 attribution stub sent with AI calls) and from `app.health`, which has no revision.
 
-### Lookup transport for `plantpal:deployments/<id>`
+### Lookup transports for `plantpal:deployments/<id>`
+
+Two transports, the same two documents. **Neither supersedes the other.** The CLI
+(v0.36.0) is for a caller that can run in the plantpal checkout on the deploying
+host; the HTTP route (v0.37.0) is for a caller that cannot.
+
+#### CLI, JSON on stdout (v0.36.0 — unchanged, and NOT withdrawn)
 
 **CLI, JSON on stdout.** The deploy tool stores receipts on the host that deployed,
 so the lookup runs **in the plantpal checkout on that host**, from the repository
@@ -575,9 +588,61 @@ root, with the tool's own venv:
   that lookup, not a result.
 - Validate stdout against the **JSON Schema** of the tag you pin, not only the
   binding (§Binding caveat).
-- No HTTP route exists. If Factory needs to re-fetch from another host, plantpal
-  must offer a new transport and contracts must publish it. The CLI is the transport
-  this release names.
+
+#### HTTP route (v0.37.0 — additive)
+
+`schemas/delivery-api/app-deploy-lookup.openapi.yaml` publishes the route interface the
+v0.36.0 text said would have to be published before it could exist, so a consumer that
+does not run on the deploying host — Factory, wherever it runs — can re-fetch by
+deployment id without executing a process inside the plantpal checkout. It follows the
+`ci-runner-results.openapi.yaml` precedent: same `{"data": ...}` / `{"error": ...}`
+envelope, same `delivery.error` codes, `GET` only.
+
+| Route | 200 body (`data`) |
+|---|---|
+| `GET /delivery/v1/app-deploys/{deploymentId}` | `delivery.producer-result`, the §Receipt → producer-result mapping below, producer `app-deploy` |
+| `GET /delivery/v1/app-deploys/{deploymentId}/receipt` | `delivery.deployment-receipt`, **served verbatim** as the pinned v0.36.0 tagged shape — the stored document, nothing added, dropped or renamed |
+
+A `pending` receipt is a normal 200, not a miss. Rollback identity is on the receipt
+route only; `delivery.producer-result` still gains no rollback field.
+
+**Miss / failure table.** Every case is machine-distinguishable by `error.code`, so a
+consumer can tell *no such deployment* from *could not ask*:
+
+| `error.code` | Status | `retryable` | Meaning | Consumer evidence |
+|---|---|---|---|---|
+| `deployment_not_found` | 404 | `false` | **Miss.** This store holds no receipt for that id. Same statement as CLI exit `4`: not proof the deployment never happened (another host, or a pruned store) | `unavailable`, **never `failed`**, and never grounds to redeploy under the same operation key |
+| `invalid_request` | 422 | `false` | Malformed deployment id | could not ask |
+| `caller_not_authorized` | 403 | `false` | Missing, expired or unenrolled credential. **Never answered as a 404** | could not ask |
+| `producer_unavailable` | 503 | `true` | Producer is up but cannot reach or read its own receipt store | could not ask; retry later |
+| *(absent — no `delivery.error` at all)* | — | — | Connection refused, DNS/TLS failure, timeout, unparseable body, or a 404/5xx from something that is not this producer. No code, because there is no producer answer | `unavailable`; **must not** be collapsed into `deployment_not_found` |
+
+`deployment_not_found` is the only 404 either route may return and it must carry the
+`delivery.error` body. A bare or HTML 404 is *could not ask*, not a miss.
+
+#### Published-interface ruling (v0.37.0)
+
+The demand asked which reading holds. **Split, and both halves are settled here — the
+producer needs no further contracts step before implementing.**
+
+| Part of the surface | Whose |
+|---|---|
+| Path template (`/delivery/v1/app-deploys/{deploymentId}` and `/receipt`), method, `operationId` | **contracts'** — published above and in the OpenAPI document. This is how v0.36.0 §App-deploy reads and how `ci-runner-results.openapi.yaml` already works: a consumer must be able to write the request without asking the producer |
+| Response documents and the `{"data"}` / `{"error"}` envelope | **contracts'** |
+| The miss/failure code table and each code's status + `retryable` | **contracts'** |
+| Host and port | **the producer's own service design.** Recorded in PLATFORM_STATE §3, not ruled here; the `servers` entry in the OpenAPI document is an example default, and loopback-only unless the producer's spec says otherwise (D040) |
+| The concrete credential behind the `deployCaller` bearer scheme — issuance, rotation, enrolment | **the producer's own service design.** Contracts rules only that the route is authenticated and that an unauthenticated call is `caller_not_authorized` (403), never a 404 |
+
+So: plantpal implements the paths and codes exactly as published, and chooses its own
+host, port and credential mechanics. Nothing further is owed by contracts.
+
+#### The CLI is not withdrawn
+
+The route is **additive** (D031). `dev_delivery.py lookup <id>` and `receipt <id>` keep
+printing the same JSON on stdout with the same exit codes, including exit `4` for a
+miss; plantpal keeps emitting it unchanged. No existing consumer is obligated to move
+to the route, and a consumer may use either transport — they serve the same documents,
+and a miss means the same thing on both.
 
 ### Receipt → `delivery.producer-result` (producer `app-deploy`)
 
@@ -631,7 +696,7 @@ through `DeliverySyncOperation` and never validates them against
 
 ## Handoff matrix
 
-| Interface | Producer | Consumer | Reference | Operation identity / recovery | Status at v0.35.0 |
+| Interface | Producer | Consumer | Reference | Operation identity / recovery | Status at v0.37.0 |
 |---|---|---|---|---|---|
 | Issue read / list | `youtrack` | `factory` | `delivery.issue`, `delivery.issue-page`; `GET /delivery/v1/issues[/{vendorId}]` | n/a (reads); `complete` + `unavailableProjects` | **Unimplemented** (demand to `youtrack`) |
 | Workflow metadata | `youtrack` | `factory` | `delivery.workflow`; `GET /delivery/v1/projects/{p}/workflow` | n/a | **Unimplemented** |
@@ -647,8 +712,32 @@ through `DeliverySyncOperation` and never validates them against
 | Dev deploy result | `plantpal` (+ `runtime`/`gateway`/`launcher`) | `factory` | `delivery.producer-result` ← `delivery.deployment-receipt`; CLI `dev_delivery.py lookup <id>` / `receipt <id>` | `deploymentId`; reserve-first `pending` receipt; `reconcile` re-observes only; rollback identity in the receipt | Contract published in v0.36.0. plantpal emits producer-result (v0.31.0 binding) and a **native** receipt today; repin pending |
 | Running-app identity | `plantpal` (any app) | `runtime`, `factory` | `app/deployment-identity`; plantpal `GET /actuator/info` → `deployment` | `revision` + `deploymentId` as reported; `null` = not reported | Contract published in v0.36.0; plantpal already serves this shape natively |
 | Routing/approval | `demand-coordinator` | `factory` | existing `demand` / `demand.fulfillment` | existing | Unchanged; not in this release |
+| App-deploy receipt / result lookup | `app-deploy` (`plantpal`) | `factory` | `delivery.deployment-receipt`, `delivery.producer-result`; CLI `dev_delivery.py receipt` / `lookup` (v0.36.0) and `GET /delivery/v1/app-deploys/{deploymentId}[/receipt]` (v0.37.0) | `deploymentId`; `nativeRef` `<repository>:deployments/<id>`; a miss is `unavailable`, never `failed` | Contract published in v0.36.0, HTTP route in v0.37.0; **route unimplemented** (demand to `plantpal`). The CLI is implemented natively and repinning it to the tagged shape is plantpal's open leg |
 
 ## Upgrade / repin
+
+### v0.37.0 (app-deploy HTTP lookup route)
+
+Additive, and **documents only** — no JSON Schema changed shape, so no binding changed.
+`schemas/delivery-api/app-deploy-lookup.openapi.yaml` is new and
+`schemas/delivery/delivery.error.json` gained `deployment_not_found` in its code table
+and examples (`code` is an open string, so that is not a narrowing). Nothing to re-pin
+for the shapes themselves: a consumer already on v0.36.0 reads the same
+`delivery.deployment-receipt` and `delivery.producer-result` over the new transport.
+
+- **`plantpal` (producer):** implement `GET /delivery/v1/app-deploys/{deploymentId}`
+  and `.../receipt` against the published document. Serve the receipt verbatim, return
+  `deployment_not_found` (404, `retryable: false`) for a miss, `caller_not_authorized`
+  (403) for an unauthenticated call — never a 404 — and `producer_unavailable` (503)
+  when the store cannot be read. Host, port and the credential behind `deployCaller`
+  are yours (§Published-interface ruling). Keep the CLI exactly as it is.
+- **`factory` (consumer):** you may keep using the CLI. If you move to the route, map
+  `deployment_not_found` and every absent/unauthorized/unreachable case to
+  `unavailable`, and only `deployment_not_found` to "this store has no such
+  deployment".
+- **OpenAPI-only:** no generated client is shipped for this document, as with
+  `ci-runner-results.openapi.yaml`. Consumers build the two GETs themselves and
+  validate the payloads against the pinned JSON Schemas.
 
 ### v0.36.0 (app-deploy receipt + running-app identity)
 

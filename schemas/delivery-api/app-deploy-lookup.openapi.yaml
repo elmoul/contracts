@@ -1,0 +1,166 @@
+openapi: 3.1.0
+info:
+  title: app-deploy deployment lookup (D113)
+  version: 0.37.0
+  description: >
+    Read-only lookup served by the `app-deploy` producer (plantpal's dev-delivery tool)
+    so a consumer that does NOT run on the deploying host — Factory, running wherever it
+    runs — can re-fetch a deployment's record by deployment id. It is the HTTP transport
+    §App-deploy said would need publishing before it could exist; `docs/task-delivery.md`
+    §App-deploy is the reference for both this route and the CLI.
+
+    Two routes, one deployment id: the receipt route serves
+    `delivery.deployment-receipt` **verbatim** as the pinned v0.36.0 tagged shape (no
+    re-wrapping, no added or dropped fields), and the result route serves its
+    `delivery.producer-result` mapping (producer `app-deploy`), the same mapping table
+    that `receipt_to_producer_result` in `tests/validate_delivery.py` executes.
+
+    ADDITIVE (D031). The CLI transport in §App-deploy is **not withdrawn**: the deploy
+    tool keeps printing the same JSON on stdout with the same exit codes, and no existing
+    consumer is obligated to move to this route. Publishing this document does NOT mean
+    the route is implemented — see the handoff matrix in `docs/task-delivery.md`.
+
+    Every response is `{"data": <payload>}` on success or `{"error": delivery.error}` on
+    failure. Host/port are the producer service's own (PLATFORM_STATE §3); see
+    §Published-interface ruling in `docs/task-delivery.md` §App-deploy for exactly which
+    parts of this surface contracts owns.
+
+    A store holds the deployments of the host that deployed them. A 200 from one host's
+    store says nothing about another host's; a miss says only that THIS store has no
+    such deployment (see `deployment_not_found`).
+servers:
+  - url: http://127.0.0.1:{port}
+    variables:
+      port:
+        default: "8085"
+        description: >
+          Assigned in PLATFORM_STATE, not ruled by this contract. The producer may serve
+          on any host/port its own spec chooses; loopback-only unless its spec says
+          otherwise (D040).
+security:
+  - deployCaller: []
+paths:
+  /delivery/v1/app-deploys/{deploymentId}:
+    get:
+      operationId: getAppDeployResult
+      summary: One deployment's `delivery.producer-result` by deployment id.
+      description: >
+        200 returns the receipt mapped to `delivery.producer-result` with
+        `producer: app-deploy`, `operationId` = `deploymentId`, `revision` =
+        `mergedRevision`, `outcome` = `result` and `nativeRef` =
+        `<repository>:deployments/<deploymentId>`. The mapping is fixed by
+        `docs/task-delivery.md` §App-deploy and is not the producer's to vary.
+        Rollback identity is NOT here — read `rollback` from the receipt route.
+        Lookups are stable: after a restart the same id returns the same result or a
+        later settled one (`pending` -> settled), never a different deployment.
+      parameters:
+        - $ref: "#/components/parameters/DeploymentId"
+      responses:
+        "200": { $ref: "#/components/responses/Result" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        default: { $ref: "#/components/responses/Error" }
+  /delivery/v1/app-deploys/{deploymentId}/receipt:
+    get:
+      operationId: getAppDeployReceipt
+      summary: One deployment's `delivery.deployment-receipt` by deployment id.
+      description: >
+        200 returns the receipt as the pinned v0.36.0 tagged shape, served **verbatim**:
+        byte-for-byte the document the producer stored, with no fields added, dropped or
+        renamed on the way out. This is the route that carries the rollback identity
+        (`rollback`, `rollbackOf`, `restores`) and the observed running-app identity.
+        A `pending` receipt is a normal 200; it is not a miss.
+      parameters:
+        - $ref: "#/components/parameters/DeploymentId"
+      responses:
+        "200": { $ref: "#/components/responses/Receipt" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        default: { $ref: "#/components/responses/Error" }
+components:
+  parameters:
+    DeploymentId:
+      name: deploymentId
+      in: path
+      required: true
+      description: The producer's `delivery.deployment-receipt.deploymentId`.
+      schema: { type: string, minLength: 1, pattern: "^[^\\s/]+$" }
+  securitySchemes:
+    deployCaller:
+      type: http
+      scheme: bearer
+      description: >
+        Placeholder for the service credential the producer's own spec chooses. Contracts
+        rules only that the route is authenticated and that an unauthenticated or
+        unenrolled call is answered `caller_not_authorized` (403) — never a 404, which
+        would be indistinguishable from a real miss. It is not a GitHub, registry or
+        container-engine credential and grants nothing anywhere else.
+  schemas:
+    DeploymentNotFoundError:
+      title: DeploymentNotFoundError
+      description: >
+        The 404 body of both routes: a `delivery.error` with a fixed code. `retryable` is
+        `false` — asking this store again will not change the answer. A miss means THIS
+        store holds no receipt for that id. It is NOT proof the deployment never happened
+        (it may live on another host, or the store may have been pruned or deleted), so a
+        consumer records the evidence as `unavailable`, NEVER as `failed`, and never
+        treats it as grounds to redeploy under the same operation key.
+      allOf:
+        - $ref: "../delivery/delivery.error.json"
+        - type: object
+          required: [code, retryable]
+          properties:
+            code: { const: deployment_not_found }
+            retryable: { const: false }
+  responses:
+    Result:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "../delivery/delivery.producer-result.json" } }
+    Receipt:
+      description: OK — the receipt, verbatim.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "../delivery/delivery.deployment-receipt.json" } }
+    NotFound:
+      description: >
+        No receipt for this deployment id in this store (`deployment_not_found`). The
+        ONLY 404 either route may return, and it must carry this body: a bare 404, an
+        HTML 404 or a 404 with any other code is "could not ask", not a miss.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties: { error: { $ref: "#/components/schemas/DeploymentNotFoundError" } }
+    Error:
+      description: >
+        Error envelope. The miss/failure table — every case machine-distinguishable by
+        `error.code`, so a consumer can tell "no such deployment" from "could not ask":
+
+        `deployment_not_found` 404, `retryable: false` — MISS. This store has no receipt
+        for that id. Consumer evidence: `unavailable`. Never `failed`.
+
+        `invalid_request` 422, `retryable: false` — the id is malformed. Could not ask.
+
+        `caller_not_authorized` 403, `retryable: false` — missing, expired or unenrolled
+        credential. Could not ask; never answered as a 404.
+
+        `producer_unavailable` 503, `retryable: true` — the producer is up but could not
+        reach or read its own receipt store. Could not ask; retry later.
+
+        ABSENT (no `delivery.error` at all): connection refused, DNS/TLS failure, timeout,
+        a non-JSON body, or a 404/5xx from something that is not this producer. There is
+        no code because there is no producer answer. The consumer treats it as
+        `unavailable` and MUST NOT collapse it into `deployment_not_found`.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties: { error: { $ref: "../delivery/delivery.error.json" } }

@@ -6,6 +6,10 @@ round-trip through the generated Python binding.
 Extended (v0.34.0) with schemas/delivery-api/ci-runner-results.openapi.yaml: route
 presence plus validation of its component schemas (result list, not-found body).
 
+Extended (v0.37.0) with schemas/delivery-api/app-deploy-lookup.openapi.yaml: route
+presence, the verbatim-receipt and mapped-result payloads, and the miss body that must
+be distinguishable from "could not ask" (check_app_deploy_api).
+
 Extended (v0.36.0) with delivery.deployment-receipt + app/deployment-identity, the
 cross-field deployment rules (check_deployment_semantics) and an executable
 reference of the receipt -> producer-result mapping (receipt_to_producer_result).
@@ -28,6 +32,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCHEMAS = ROOT / "schemas" / "delivery"
 API = ROOT / "schemas" / "delivery-api" / "youtrack-delivery.openapi.yaml"
 CI_API = ROOT / "schemas" / "delivery-api" / "ci-runner-results.openapi.yaml"
+DEPLOY_API = ROOT / "schemas" / "delivery-api" / "app-deploy-lookup.openapi.yaml"
 APP_SCHEMAS = ROOT / "schemas" / "app"
 IDENTITY = "../app/deployment-identity.json"  # resolved relative to SCHEMAS
 
@@ -1044,6 +1049,67 @@ def check_ci_api(reg: Registry) -> list[str]:
     return failures
 
 
+def check_app_deploy_api(reg: Registry) -> list[str]:
+    """v0.37.0 app-deploy HTTP lookup: routes, payloads, and a machine-distinguishable miss."""
+    text = DEPLOY_API.read_text(encoding="utf-8")
+    api = yaml.safe_load(text)
+    failures = []
+
+    receipt_route = "/delivery/v1/app-deploys/{deploymentId}/receipt"
+    result_route = "/delivery/v1/app-deploys/{deploymentId}"
+    for route, op in [(result_route, "getAppDeployResult"), (receipt_route, "getAppDeployReceipt")]:
+        get = api["paths"].get(route, {}).get("get", {})
+        if get.get("operationId") != op:
+            failures.append(f"app-deploy openapi: missing GET {route} ({op})")
+            continue
+        if "404" not in get["responses"]:
+            failures.append(f"app-deploy openapi: {op} has no 404 response")
+
+    # The two 200 payloads: the receipt verbatim, and its producer-result mapping.
+    def data_ref(route):
+        resp = api["paths"][route]["get"]["responses"]["200"]
+        target = resp["$ref"].removeprefix("#/components/responses/")
+        schema = api["components"]["responses"][target]["content"]["application/json"]["schema"]
+        return schema["properties"]["data"]["$ref"]
+
+    if data_ref(receipt_route) != "../delivery/delivery.deployment-receipt.json":
+        failures.append("app-deploy openapi: the receipt route must serve delivery.deployment-receipt verbatim")
+    if data_ref(result_route) != "../delivery/delivery.producer-result.json":
+        failures.append("app-deploy openapi: the result route must serve delivery.producer-result")
+
+    # A miss must be a named code, never retryable-looking, and never confusable with
+    # "could not ask": the other three codes have to be on the published surface too.
+    for code in ["deployment_not_found", "caller_not_authorized", "producer_unavailable", "invalid_request"]:
+        if code not in text:
+            failures.append(f"app-deploy openapi: status table does not name {code}")
+
+    comps = api["components"]["schemas"]
+    miss = {"code": "deployment_not_found", "message": "no receipt for pla-dev-1", "retryable": False}
+    cases = [
+        ("DeploymentNotFoundError", miss, True),
+        ("DeploymentNotFoundError", {**miss, "code": "producer_unavailable"}, False),
+        ("DeploymentNotFoundError", {**miss, "retryable": True}, False),
+    ]
+    for name, doc, ok in cases:
+        schema = {"$schema": "https://json-schema.org/draft/2020-12/schema", **_rewrite_refs(comps[name])}
+        errors = list(Draft202012Validator(schema, registry=reg, format_checker=FormatChecker()).iter_errors(doc))
+        if ok and errors:
+            failures.append(f"app-deploy openapi {name}: expected valid, got {errors[0].message}")
+        if not ok and not errors:
+            failures.append(f"app-deploy openapi {name}: expected INVALID fixture to be rejected")
+
+    # Both 200 payloads must accept the same deployment the mapping test uses.
+    envelope_cases = [
+        ("delivery.deployment-receipt.json", GOOD_RECEIPT_PASSED),
+        ("delivery.producer-result.json", receipt_to_producer_result(GOOD_RECEIPT_PASSED)),
+    ]
+    for name, doc in envelope_cases:
+        errors = list(Draft202012Validator(schema_for(name), registry=reg, format_checker=FormatChecker()).iter_errors(doc))
+        if errors:
+            failures.append(f"app-deploy openapi: {name} payload rejected: {errors[0].message}")
+    return failures
+
+
 def main() -> int:
     reg = registry()
     failures = []
@@ -1080,6 +1146,7 @@ def main() -> int:
         failures.append("openapi: the inconclusive-miss code is not documented on the surface")
 
     failures += check_ci_api(reg)
+    failures += check_app_deploy_api(reg)
     failures += check_bindings()
     failures += check_recovery_semantics()
     failures += check_deployment_semantics(reg)
