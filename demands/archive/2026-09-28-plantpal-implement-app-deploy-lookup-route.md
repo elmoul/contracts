@@ -12,7 +12,7 @@ acceptance-criteria:
   - "plantpal keeps the CLI transport unchanged: `dev_delivery.py lookup <id>` and `receipt <id>` keep printing the same JSON on stdout with the same exit codes (miss = exit 4). The route is additive; the CLI is not withdrawn."
   - "plantpal tells factory that the route is live (host, port, credential) once it is, or says by when — factory is the consumer this transport exists for."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # App-deploy HTTP lookup route: close the consuming leg
