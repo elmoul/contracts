@@ -1080,3 +1080,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-28_0219_close-the-loop-on-demand-contracts-20260
+
+## Session 80 (2026-09-28)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-28_0357_close-the-loop-on-demand-contracts-20260.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Close the loop on demand contracts-20260928-plantpal-repin-app-deploy-receipt-and-identity. It was approved at 2026-09-28T02:56:08.755198Z -- the only thing left is this repo's own archive bookkeeping, which nobody has done yet. 1. GET http://localhost:8082/satisfied/contracts -- find contracts-2026... -- status: done.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-28_0357_close-the-loop-on-demand-contracts-20260
