@@ -10,7 +10,7 @@ acceptance-criteria:
   - "factory validates operation records against the JSON Schema itself where the v0.35.0 conditionals apply, not against the generated bindings alone — the pydantic/TS types do not implement if/then, so DeliverySyncOperation accepts an unwindowed absence and a resend without absenceProvenAt (see docs/task-delivery.md §Binding caveat)."
   - "factory raises its downstream producer demand to youtrack naming v0.35.0 and the four producer obligations in docs/task-delivery.md §Producer obligations added in v0.35.0 (serve the coverage route with an honest coveredSince; classify every by-key miss; gate the write path on reservedAt; window every absence observation and never mark an uncertain record retryable), or explains why not."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Operation retention coverage: close the consuming leg
