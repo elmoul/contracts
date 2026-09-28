@@ -1093,3 +1093,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-28_0357_close-the-loop-on-demand-contracts-20260
+
+## Session 81 (2026-09-28)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-28_0349_fulfill-demand-plantpal-20260928-contrac.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: fulfill demand plantpal-20260928-contracts-app-deploy-lookup-route -- status: done.
+- Next step: Nothing owed by contracts. plantpal has two open legs: the v0.36.0 receipt repin and implementing the v0.37.0 route (host/port/credential are theirs). Watch for a gap raised back.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-28_0349_fulfill-demand-plantpal-20260928-contrac
