@@ -8,7 +8,7 @@ acceptance-criteria:
   - "platform-vault reviews contracts v0.40.0 (gen/java io.platform.contracts.agentrunner parked classes) and either accepts it or raises the specific gaps back to contracts, including the Object-typed wait.condition limitation."
   - "Follow-up demands for Java consumers name v0.40.0 (io.platform:contracts:0.40.0, built from the tag) as the pin."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # D115 Java bindings: close the consuming leg
