@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/parked.run-result",
+  "title": "ParkedRunResult",
+  "description": "The structured result of a run that ended PARKED (D115): it reached a step that depends on something outside its control and stopped instead of waiting in place. Fulfils demand `platform-vault-20260930-contracts-d115-parked-work`.\n\nA parked run has RELEASED its runner slot and repository lock; it keeps its `reference.branch` and `checkpoint`. The wait belongs to the run; the demand stays the statement of intent, and its board entry reads 'waiting on <condition>' from `wait.condition`. `demand-coordinator` routes and approves only and does not resume anything.\n\n**Every wait has a deadline.** `wait.deadline` is required and must be after `parkedAt`; an expired wait is surfaced to the owner through the owner UI, never left to stall silently. (Not expressible in JSON Schema; consumers enforce it.)\n\n**Who resumes.** `resumeOwner` is `factory` for a Factory delivery and `agent-runner` for a plain demand dispatch. Only that owner resumes the run, by ONE keyed dispatch per wake event (`parked.resume-request`).\n\n**Exact reference.** `reference` names the concrete things the wait is about (repo, branch, pull request, commit, demand ids) so a producer event can be matched without parsing `resumeNote`. `resumeNote` is what the resumed agent is told about where it stopped and what it was waiting for; it is carried into the resume dispatch prompt together with the observed outcome.",
+  "type": "object",
+  "required": [
+    "state",
+    "runId",
+    "repo",
+    "resumeOwner",
+    "parkedAt",
+    "wait",
+    "reference",
+    "resumeNote"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "state": {
+      "const": "parked"
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The parked run's id (`runner.run-record.id`)."
+    },
+    "dispatchKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$",
+      "description": "The dispatch key the parked run was started under, when it was keyed."
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+$"
+    },
+    "demandId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$",
+      "description": "The demand being worked, when the run was dispatched for one."
+    },
+    "resumeOwner": {
+      "type": "string",
+      "enum": [
+        "factory",
+        "agent-runner"
+      ]
+    },
+    "parkedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "wait": {
+      "type": "object",
+      "required": [
+        "waitId",
+        "condition",
+        "deadline"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "waitId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$",
+          "description": "Stable id of this wait, minted once when the run parks. Together with an event's `eventKey` it determines the resume dispatch key."
+        },
+        "condition": {
+          "$ref": "parked.wait-condition.json"
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the wait expires and is surfaced to the owner. Required."
+        }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "required": [
+        "repo"
+      ],
+      "additionalProperties": false,
+      "description": "The exact things the wait concerns. Only the members that apply are present.",
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullRequest": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "demandIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$"
+          }
+        }
+      }
+    },
+    "checkpoint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Full commit SHA of the run's last checkpoint on `reference.branch`; `null` or absent when nothing was checkpointed."
+    },
+    "resumeNote": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

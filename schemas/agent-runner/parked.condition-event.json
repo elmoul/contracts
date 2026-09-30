@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/parked.condition-event",
+  "title": "ParkedConditionEvent",
+  "description": "A fact a producer observed that can wake a parked run (D115): `ci-runner` publishes CI run / pull request / repository facts, `demand-coordinator` publishes demand-state facts, the owner UI publishes owner decisions. Producers publish; they never launch agents and never resume anything. Fulfils demand `platform-vault-20260930-contracts-d115-parked-work`.\n\n**`eventKey` makes a resume happen at most once per event.** It identifies the OBSERVED FACT, not the delivery attempt: a producer that re-publishes, retries or restarts re-sends the SAME `eventKey` for the same fact, and two different facts never share one. Recommended forms: `ci-run:<repo>:<commit>:<runId>`, `pull-request:<repo>:<number>:<result>`, `repository-created:<repo>`, `owner-decision:<decisionId>`, `demands:<waitId>`. The run's owner derives the resume dispatch key from `waitId` and `eventKey` (see `parked.resume-request`), so a duplicate event yields the same key and `agent-runner` replays instead of launching a second run.\n\n`outcome` is what was observed; its `kind` matches the `kind` of the wait condition it can satisfy, and its reference fields (repo, commit, pull request, demand ids, decision id) are what the owner matches against the wait's `reference`. An event is a statement of fact: a failed CI run is published as `result: failure`, and it is the resume request that turns it into 'fix the failure'. An expired wait is NOT an event; it is surfaced to the owner through the owner UI.",
+  "type": "object",
+  "required": [
+    "eventKey",
+    "source",
+    "observedAt",
+    "outcome"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "eventKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "ci-runner",
+        "demand-coordinator",
+        "owner-ui"
+      ]
+    },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outcome": {
+      "oneOf": [
+        {
+          "type": "object",
+          "title": "CiRunOutcome",
+          "required": [
+            "kind",
+            "repo",
+            "commit",
+            "runId",
+            "result"
+          ],
+          "additionalProperties": false,
+          "description": "Terminal outcome of a CI run. Anything but `success` resumes the run with `action: fix`.",
+          "properties": {
+            "kind": {
+              "const": "ci-run"
+            },
+            "repo": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]+$"
+            },
+            "commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "pullRequest": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "runId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "result": {
+              "type": "string",
+              "enum": [
+                "success",
+                "failure",
+                "cancelled",
+                "timed-out"
+              ]
+            },
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "failedChecks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Names of the failed checks, when `result` is `failure`."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "title": "PullRequestOutcome",
+          "required": [
+            "kind",
+            "repo",
+            "pullRequest",
+            "result"
+          ],
+          "additionalProperties": false,
+          "description": "A pull request was merged or closed.",
+          "properties": {
+            "kind": {
+              "const": "pull-request"
+            },
+            "repo": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]+$"
+            },
+            "pullRequest": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "result": {
+              "type": "string",
+              "enum": [
+                "merged",
+                "closed"
+              ],
+              "description": "`closed` means closed WITHOUT merge."
+            },
+            "mergeCommit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[0-9a-f]{40}$",
+              "description": "Merge commit SHA when `result` is `merged`; null otherwise."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "title": "RepositoryCreatedOutcome",
+          "required": [
+            "kind",
+            "repo",
+            "result",
+            "remoteUrl"
+          ],
+          "additionalProperties": false,
+          "description": "The remote repository now exists.",
+          "properties": {
+            "kind": {
+              "const": "repository-created"
+            },
+            "repo": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]+$"
+            },
+            "result": {
+              "const": "created"
+            },
+            "remoteUrl": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "title": "OwnerDecisionOutcome",
+          "required": [
+            "kind",
+            "decisionId",
+            "result",
+            "decidedBy"
+          ],
+          "additionalProperties": false,
+          "description": "The owner's decision.",
+          "properties": {
+            "kind": {
+              "const": "owner-decision"
+            },
+            "decisionId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$"
+            },
+            "result": {
+              "type": "string",
+              "enum": [
+                "approved",
+                "rejected",
+                "answered"
+              ]
+            },
+            "decidedBy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "answer": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Free-text answer, when the decision carried one."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "title": "DemandsOutcome",
+          "required": [
+            "kind",
+            "mode",
+            "result",
+            "demands"
+          ],
+          "additionalProperties": false,
+          "description": "The demand-state condition holds.",
+          "properties": {
+            "kind": {
+              "const": "demands"
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            },
+            "result": {
+              "const": "satisfied"
+            },
+            "demands": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "description": "The demands observed at their awaited state. For `mode: all` that is every awaited demand; for `mode: any` at least one.",
+              "items": {
+                "type": "object",
+                "required": [
+                  "demandId",
+                  "state"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "demandId": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$"
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "approved",
+                      "satisfied",
+                      "archived"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

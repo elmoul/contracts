@@ -73,3 +73,17 @@ export type { RunnerRunRecord, RunnerRunWorkspace } from "./runner-run-record";
 // the canonical ones. Both copies are generated from the same file in the same run,
 // so they cannot drift.
 export type { RunnerDispatchReservation } from "./runner-dispatch-reservation";
+
+// D115 parked work. parked-run-result.ts and parked-resume-request.ts each INLINE a copy of the
+// types they $ref (json-schema-to-typescript), so only each schema's own top-level type is
+// exported from them; the condition and outcome types come from their defining modules.
+export type {
+  ParkedWaitCondition, CiRunCondition, PullRequestCondition, RepositoryCreatedCondition,
+  OwnerDecisionCondition, DemandsCondition,
+} from "./parked-wait-condition";
+export type { ParkedRunResult } from "./parked-run-result";
+export type {
+  ParkedConditionEvent, CiRunOutcome, PullRequestOutcome, RepositoryCreatedOutcome,
+  OwnerDecisionOutcome, DemandsOutcome,
+} from "./parked-condition-event";
+export type { ParkedResumeRequest } from "./parked-resume-request";

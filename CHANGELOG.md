@@ -16,6 +16,36 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.39.0 — 2026-09-30
+
+**Additive** (tag `v0.39.0`). Python and TypeScript bindings added; Java unchanged.
+Fulfils demand `platform-vault-20260930-contracts-d115-parked-work` (D115): the shapes
+for parked work with wake conditions. Four new schemas under `schemas/agent-runner/`:
+
+- **`parked.wait-condition`:** one of `ci-run` (repo, commit, optional PR/run id),
+  `pull-request` (`until` merged / closed / merged-or-closed), `repository-created`,
+  `owner-decision` (decisionId, question) or `demands` (`mode` all / any over
+  `{demandId, state}`, state `approved | satisfied | archived`). `demand.after` and
+  `demand.json` are unchanged.
+- **`parked.run-result`:** `state: parked`, run/dispatch/demand ids, `resumeOwner`
+  (`factory | agent-runner`), `wait` (`waitId`, `condition`, required `deadline`), exact
+  `reference` (repo, branch, PR, commit, demand ids), `checkpoint`, `resumeNote`.
+- **`parked.condition-event`:** `eventKey` (stable per observed fact), `source`
+  (`ci-runner | demand-coordinator | owner-ui`), `observedAt`, and a per-kind `outcome`.
+- **`parked.resume-request`:** the full event, `action` (`continue | fix | reassess`),
+  `resumeNote`, and a keyed `dispatch`. Its `dispatchKey` is derived as `"resume:" +
+  sha256(waitId + "
+" + eventKey)` (worked example in the schema), so a duplicate event
+  replays under `runner.dispatch-reservation` instead of launching a second run.
+- **Bindings:** `parked_*` modules in `platform_contracts.agent_runner`; `parked-*.ts`
+  plus rebuilt `dist/`. The resume request's "`dispatch.dispatchKey` required" is a
+  sibling of a `$ref` and is not generated; the schema and `tests/validate_parked.py`
+  enforce it, the bindings do not. A wait `deadline` after `parkedAt` is a consumer rule.
+- **Tests:** `tests/validate_parked.py` (all five condition kinds, ALL/ANY, bad cases,
+  key derivation); added to `tests/run_all.py`.
+
+---
+
 ## v0.38.0 — 2026-09-30
 
 **Additive** (tag `v0.38.0`). Python and TypeScript bindings regenerated; Java unchanged.

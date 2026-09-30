@@ -46,3 +46,7 @@ export type { AppDeploymentIdentity } from "./deployment-identity";
 export type { RunnerDispatchRequest } from "./runner-dispatch-request";
 export type { RunnerRunRecord, RunnerRunWorkspace } from "./runner-run-record";
 export type { RunnerDispatchReservation } from "./runner-dispatch-reservation";
+export type { ParkedWaitCondition, CiRunCondition, PullRequestCondition, RepositoryCreatedCondition, OwnerDecisionCondition, DemandsCondition, } from "./parked-wait-condition";
+export type { ParkedRunResult } from "./parked-run-result";
+export type { ParkedConditionEvent, CiRunOutcome, PullRequestOutcome, RepositoryCreatedOutcome, OwnerDecisionOutcome, DemandsOutcome, } from "./parked-condition-event";
+export type { ParkedResumeRequest } from "./parked-resume-request";

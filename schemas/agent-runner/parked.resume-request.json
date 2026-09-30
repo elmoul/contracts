@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/parked.resume-request",
+  "title": "ParkedResumeRequest",
+  "description": "The keyed dispatch a parked run's owner (`factory` or `agent-runner`) sends to resume it after a wake event (D115). Fulfils demand `platform-vault-20260930-contracts-d115-parked-work`.\n\n**At most one resume per event.** `dispatch.dispatchKey` is DERIVED, never minted fresh: `\"resume:\" + lowercase-hex SHA-256 of the UTF-8 bytes of waitId + \"\\n\" + eventKey` (71 characters, inside the dispatch-key pattern). The same wait and event therefore always produce the same key, so a duplicate event or an owner restart replays the existing run (`200`) or conflicts (`409`) under `runner.dispatch-reservation`; it never starts a second run. Worked example: waitId `wait-plantpal-pr-92` and eventKey `ci-run:plantpal:0123456789abcdef0123456789abcdef01234567:88001` give key `resume:66b97d2f1a23c21f2e0f69279d8f63bb86ef13a035bb8c7fc8b85aabd2055306`.\n\n**The resume carries the outcome.** `event` is the full `parked.condition-event`, and `action` says what the resumed agent must do with it: `continue` (the wait was satisfied: CI succeeded, PR merged, repository created, decision approved, demands satisfied), `fix` (the work failed: CI `failure`/`cancelled`/`timed-out` -> 'fix the failure', not 'continue'), or `reassess` (the world changed the plan: PR closed unmerged, decision rejected, a demand archived). `resumeNote` is copied from the parked run result; `dispatch.prompt` is the prompt the resumed run receives and is expected to contain the note and the outcome.\n\nDeterministic next steps (for example a deploy command after a merge) run as commands, not as a resumed agent, and need no resume request.",
+  "type": "object",
+  "required": [
+    "waitId",
+    "runId",
+    "resumeOwner",
+    "action",
+    "resumeNote",
+    "event",
+    "dispatch"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "waitId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$"
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The parked run being resumed."
+    },
+    "resumeOwner": {
+      "type": "string",
+      "enum": [
+        "factory",
+        "agent-runner"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "continue",
+        "fix",
+        "reassess"
+      ]
+    },
+    "resumeNote": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event": {
+      "$ref": "parked.condition-event.json"
+    },
+    "dispatch": {
+      "$ref": "runner.dispatch-request.json",
+      "required": [
+        "dispatchKey"
+      ],
+      "description": "The keyed `POST /dispatch` body. `dispatchKey` is REQUIRED here and is the derived key described above."
+    }
+  }
+}
