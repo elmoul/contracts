@@ -11,7 +11,7 @@ acceptance-criteria:
   - "factory treats review_environment_not_found (404) and every absent/unauthorized/unreachable launcher answer as unavailable, never failed."
   - "factory tells launcher (its own demand or note) that v0.38.0 is the tag whose review-environment port it implements, or explains why not."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Review environment: close the consuming leg
