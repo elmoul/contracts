@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.34.0</version>
+    <version>0.40.0</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -244,6 +244,29 @@
                                 <sourcePath>${project.basedir}/../../schemas/app-studio/app.task-plan.json</sourcePath>
                             </sourcePaths>
                             <targetPackage>io.platform.contracts.appstudio</targetPackage>
+                            <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
+                            <annotationStyle>jackson2</annotationStyle>
+                            <includeAdditionalProperties>false</includeAdditionalProperties>
+                            <includeConstructors>true</includeConstructors>
+                            <generateBuilders>false</generateBuilders>
+                            <useTitleAsClassname>true</useTitleAsClassname>
+                            <dateTimeType>java.time.OffsetDateTime</dateTimeType>
+                            <useJakartaValidation>true</useJakartaValidation>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>agent-runner-parked</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${project.basedir}/../../schemas/agent-runner/parked.wait-condition.json</sourcePath>
+                                <sourcePath>${project.basedir}/../../schemas/agent-runner/parked.run-result.json</sourcePath>
+                                <sourcePath>${project.basedir}/../../schemas/agent-runner/parked.condition-event.json</sourcePath>
+                                <sourcePath>${project.basedir}/../../schemas/agent-runner/parked.resume-request.json</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>io.platform.contracts.agentrunner</targetPackage>
                             <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
                             <annotationStyle>jackson2</annotationStyle>
                             <includeAdditionalProperties>false</includeAdditionalProperties>

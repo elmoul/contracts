@@ -16,6 +16,17 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.40.0 — 2026-09-30
+
+**Additive** (tag `v0.40.0`). Java only; no existing schema changes. Fulfils demand
+`platform-vault-20260930-contracts-d115-java-bindings`: the four D115 `parked.*` schemas
+(v0.39.0) are now generated into the Java bindings (package
+`io.platform.contracts.agentrunner`: `ParkedRunResult`, `ParkedConditionEvent`,
+`ParkedResumeRequest`, plus `RunnerDispatchRequest` via `$ref`). `gen/java/pom.xml`
+version bumped 0.34.0 -> 0.40.0 (TS/Python stay at their own versions). Limitation:
+`parked.wait-condition` has a root `oneOf`, which jsonschema2pojo cannot turn into
+per-variant classes, so `ParkedRunResult.wait.condition` is typed `Object` (Jackson map).
+
 ## v0.39.0 â€” 2026-09-30
 
 **Additive** (tag `v0.39.0`). Python and TypeScript bindings added; Java unchanged.
