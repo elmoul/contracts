@@ -1149,3 +1149,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-28_0535_close-the-loop-on-demand-contracts-20260
+
+## Session 85 (2026-09-30)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-30_1547_fulfill-demand-factory-20260930-contract.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand factory-20260930-contracts-review-deployment (capability: Publish the shapes for a review environment that runs an unmerged PR revision, so launcher, apps and Factory can prove which revision a review URL serves, from: factory, target: contracts). Acceptance criteria: - A tagged relea... -- status: done.
+- Next step: factory re-pins v0.38.0 and records review evidence; launcher implements the port
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none: launcher port registration would need a platform-vault demand
+- Session: 2026-09-30_1547_fulfill-demand-factory-20260930-contract
