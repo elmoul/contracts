@@ -4,7 +4,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 /**
- * The app-deploy producer's durable record of one dev deployment (D113): which merged revision was deployed, which images ran, what the running app reported, which checks passed, and which earlier deployment it can be rolled back to. It is the native record behind `delivery.producer-result` for producer `app-deploy`, re-fetched through `nativeRef`. It is written when the deployment is reserved (`result: pending`) and settled in place. A settled receipt is never rewritten to a different result, except that `reconcile` may settle a `pending` one. It is never acceptance. See `docs/task-delivery.md` §App-deploy for the lookup transport and the mapping to `delivery.producer-result`.
+ * The app-deploy producer's durable record of one dev deployment (D113), or (v0.38.0) of one review environment running an unmerged PR revision: which merged revision was deployed, which images ran, what the running app reported, which checks passed, and which earlier deployment it can be rolled back to. It is the native record behind `delivery.producer-result` for producer `app-deploy`, re-fetched through `nativeRef`. It is written when the deployment is reserved (`result: pending`) and settled in place. A settled receipt is never rewritten to a different result, except that `reconcile` may settle a `pending` one. It is never acceptance. A review receipt (`environment.name: review`) is the same record with `revisionRole: task`, a `review` block and an optional `environment.apiDocsUrl`; a dev receipt is unchanged. See `docs/task-delivery.md` §App-deploy for the lookup transport and the mapping to `delivery.producer-result`, and §Review environments for the review shape.
  */
 export type DeliveryDeploymentReceipt = {
     /**
@@ -24,9 +24,14 @@ export type DeliveryDeploymentReceipt = {
      */
     branch: string;
     /**
-     * Full SHA of the merged revision this deployment was built from (for `kind: rollback`, the revision of the restored deployment). It is known when the deployment is reserved, so it is never `null`. That the running app actually serves it is shown by `observed.revision`, not by this field.
+     * Full SHA of the revision this deployment was built from (for `kind: rollback`, the revision of the restored deployment). For a dev deployment it is the merged revision. For a review environment (`revisionRole: task`) it is the PR head, which is NOT merged; the field keeps its v0.36.0 name so dev receipts stay valid unchanged. It is known when the deployment is reserved, so it is never `null`. That the running app actually serves it is shown by `observed.revision`, not by this field.
      */
     mergedRevision: string;
+    /**
+     * Role of `mergedRevision`, same meaning as `delivery.evidence.revisionRole`. ABSENT means `merged` (every v0.36.0 dev receipt). `task` is required for, and only for, a review environment: the PR head, never a merged SHA.
+     */
+    revisionRole?: "task" | "merged";
+    review?: DeliveryReviewReference;
     imageDigests: DeliveryImageDigests;
     /**
      * What the digests are. `local-image-id`: the local container engine's image id (sha256 of the image config). It identifies the image only on the deploying host and was never pushed. `registry-manifest`: a pushed manifest digest. A rollback verifies digests of this same kind.
@@ -77,6 +82,19 @@ export type DeliveryDeploymentReceipt = {
     nativeRef: string;
 };
 /**
+ * Present only for a review environment: which PR the environment was started for. The PR's head branch is the receipt's `branch`. `null` members mean the caller did not supply them (a branch-only review), never a default.
+ */
+export interface DeliveryReviewReference {
+    /**
+     * PR number in `repository`, or `null` for a branch-only review.
+     */
+    pullRequest: number | null;
+    /**
+     * Web URL of the PR, or `null`.
+     */
+    pullRequestUrl: string | null;
+}
+/**
  * Component name → image digest (`sha256:<64 hex>`), one entry per deployed component (plantpal: `backend`, `frontend`). A value is `null` while pending, or when the image was never built or could not be inspected.
  */
 export interface DeliveryImageDigests {
@@ -84,13 +102,17 @@ export interface DeliveryImageDigests {
 }
 export interface DeliveryDeploymentEnvironment {
     /**
-     * D113 authorizes dev only; production is outside this contract.
+     * `dev`: the integration-branch deployment (D113). `review`: an environment running an unmerged PR revision (v0.38.0). Production is outside this contract.
      */
-    name: "dev";
+    name: "dev" | "review";
     /**
-     * URL the identity observation and smoke checks were run against. A configured hostname (e.g. `http://planotell.platform.localhost`) appears here only if the identity observed through that hostname matched this deployment. Otherwise this is the URL that was actually observed, e.g. loopback.
+     * For a review environment this is the frontend URL. URL the identity observation and smoke checks were run against. A configured hostname (e.g. `http://planotell.platform.localhost`) appears here only if the identity observed through that hostname matched this deployment. Otherwise this is the URL that was actually observed, e.g. loopback.
      */
     url: string;
+    /**
+     * Review environments only: the API documentation (Swagger) URL, or `null` when the environment has none. Not allowed on a dev receipt.
+     */
+    apiDocsUrl?: string | null;
 }
 /**
  * What a RUNNING app reports about itself: which app it is, which revision it was built from and which deployment started it. It is read through the URL under test, so it shows which revision that URL actually serves. `runtime` and Factory read it to verify a deployment, and the app-deploy producer embeds it in `delivery.deployment-receipt` as `observed`. Every nullable field means NOT REPORTED: an app that does not know a value emits `null` and never fills in a default or a configured value. A consumer must treat `null` as unverified; it never matches an expected value. The app chooses the route that serves it. plantpal serves it at `GET /actuator/info` under the key `deployment` (see `docs/task-delivery.md` §App-deploy). Separate from `app/identity.json`, which is the tenant/app attribution claim sent with AI calls.

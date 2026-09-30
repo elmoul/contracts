@@ -48,7 +48,7 @@
     "revisionRole": {
       "type": "string",
       "enum": ["task", "merged"],
-      "description": "`task`: a task-branch revision before merge. `merged`: the integration-branch revision produced by the merge. A `task` observation can never prove a `merged` SHA; `deployment` and `live` evidence MUST be `merged`."
+      "description": "`task`: a task-branch revision before merge. `merged`: the integration-branch revision produced by the merge. A `task` observation can never prove a `merged` SHA. `deployment` and `live` evidence MUST be `merged` when `environment.name` is `dev`, and MUST be `task` when it is `review` (v0.38.0: a review environment serves the unmerged PR head, so a `merged` role there would claim a merge that has not happened)."
     },
     "source": { "$ref": "#/$defs/source" },
     "observer": { "type": "string", "minLength": 2, "maxLength": 160, "description": "Service or person that made the observation." },
@@ -70,10 +70,10 @@
     {
       "if": { "properties": { "stage": { "enum": ["deployment", "live"] } }, "required": ["stage"] },
       "then": {
-        "properties": {
-          "environment": { "$ref": "#/$defs/environment" },
-          "revisionRole": { "const": "merged" }
-        }
+        "properties": { "environment": { "$ref": "#/$defs/environment" } },
+        "if": { "properties": { "environment": { "properties": { "name": { "const": "review" } }, "required": ["name"] } }, "required": ["environment"] },
+        "then": { "properties": { "revisionRole": { "const": "task" } } },
+        "else": { "properties": { "revisionRole": { "const": "merged" } } }
       }
     },
     {
@@ -149,15 +149,15 @@
       "required": ["name", "appIdentity", "deploymentId", "deployedRevision", "url"],
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string", "const": "dev", "description": "D113 authorizes dev only; production is outside this contract." },
+        "name": { "type": "string", "enum": ["dev", "review"], "description": "`dev`: the integration-branch deployment (D113). `review`: an environment running an unmerged PR head (v0.38.0); its evidence has `revisionRole: task`. Production is outside this contract." },
         "appIdentity": { "type": "string", "minLength": 1, "description": "Identity the RUNNING app reported (e.g. its health/identity endpoint `app` name), not the configured name." },
         "deploymentId": { "type": "string", "minLength": 1, "description": "Exact deployment identifier; never just a URL or a branch name." },
         "deployedRevision": {
           "type": "string",
           "pattern": "^[0-9a-f]{40}$",
-          "description": "Revision the running app reported. Must equal `revision`; a mismatch is recorded as `failed`, never as `passed`."
+          "description": "Revision the running app reported. Must equal `revision`; a mismatch is recorded as `failed`, never as `passed`. Applies to a review environment too: the review URL must serve the PR head."
         },
-        "url": { "type": "string", "format": "uri", "description": "Test URL the owner uses." }
+        "url": { "type": "string", "format": "uri", "description": "Test URL the owner uses (for a review environment, its frontend URL)." }
       }
     },
     "legacyReceipt": {

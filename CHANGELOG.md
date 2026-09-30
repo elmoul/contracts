@@ -16,6 +16,42 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.38.0 — 2026-09-30
+
+**Additive** (tag `v0.38.0`). Python and TypeScript bindings regenerated; Java unchanged.
+Fulfils demand `factory-20260930-contracts-review-deployment` (D113): the shapes for a
+review environment that runs an unmerged PR revision, so launcher, apps and Factory can
+prove which revision a review URL serves. Reference: `docs/task-delivery.md` §Review
+environments.
+
+- **`delivery.deployment-receipt`:** `environment.name` is `dev | review`. New optional
+  `revisionRole` (`task | merged`; absent = `merged`), `review` (`pullRequest`,
+  `pullRequestUrl`, both nullable) and `environment.apiDocsUrl` (nullable). A `review`
+  receipt requires `revisionRole: task`, the `review` block, `kind: deploy` and
+  `rollback: null`; a dev receipt must not carry `review`/`apiDocsUrl` or a `task` role.
+  `mergedRevision` keeps its name and holds the PR head for a review receipt. Every dev
+  receipt validates unchanged.
+- **`delivery.evidence`:** `environment.name` is `dev | review`. `deployment`/`live`
+  evidence with `review` must have `revisionRole: task`; with `dev` it is still `merged`.
+  Factory records "the review URL serves PR head `<sha>`" as machine evidence, and a
+  `deployedRevision != revision` mismatch is `failed`.
+- **New `schemas/launcher/review-environment.openapi.yaml`:** `POST
+  /review/v1/environments` (repository, branch, pullRequest, expectedRevision,
+  idempotencyKey), `GET`/`DELETE /review/v1/environments/{idempotencyKey}`; status
+  `starting | ready | failed | stopped` coupled to the receipt (`ready` = `passed` review
+  receipt); `review_environment_not_found` 404 as the machine-distinguishable miss. One
+  environment per repository is the caller's concern, not the schema's.
+- **Bindings:** `delivery_deployment_receipt`, `delivery_evidence`, `delivery_error` (also
+  picks up `deployment_not_found`, added to the schema in v0.37.0 but never regenerated)
+  in Python; the matching `.ts` files plus `delivery-producer-result.ts`, and rebuilt
+  `dist/`. As before, the bindings do not enforce the `if/then` rules.
+- **Tests:** `tests/validate_delivery.py` 139 cases (was 114): a review receipt, the dev
+  receipt unchanged, a revision mismatch recorded `failed`, an unreported identity staying
+  `null`, review evidence at the task revision, the mapping to `delivery.producer-result`,
+  and the launcher port's status/receipt coupling.
+
+---
+
 ## v0.37.0 — 2026-09-28
 
 **Additive. Schemas/docs only — no binding changed** (tag `v0.37.0`). Fulfils demand

@@ -1,0 +1,246 @@
+openapi: 3.1.0
+info:
+  title: launcher review-environment port (D113)
+  version: 0.38.0
+  description: >
+    The port through which a caller (Factory, an app, an owner tool) asks `launcher` to run an
+    UNMERGED PR revision as a review environment, and to prove which revision the resulting
+    review URL serves. `docs/task-delivery.md` §Review environments is the reference.
+
+    Three routes over one caller-chosen `idempotencyKey`: start, status/lookup, stop. The key
+    is the environment's identity on this port: starting again with the same key and the same
+    body returns the existing environment, never a second one; the same key with a different
+    body is `idempotency_key_conflict`.
+
+    A `ready` environment carries a `delivery.deployment-receipt` with `environment.name:
+    review` and `revisionRole: task`, and that receipt's `observed.revision` (what the running
+    app reported through the frontend URL) equals `expectedRevision`. A revision that does not
+    match is `failed`, with the receipt kept as reported, and is never `ready`. An identity the
+    app did not report stays `null` in the receipt and is likewise never `ready`.
+
+    One environment per repository at a time is the CALLER's concern. This schema does not
+    enforce it, and a launcher that also enforces it does so as its own policy, not this
+    contract's.
+
+    ADDITIVE (D031). Nothing here obligates an existing consumer to move. Every response is
+    `{"data": <payload>}` on success or `{"error": delivery.error}` on failure. Host/port and
+    the credential are the launcher's own (PLATFORM_STATE); contracts owns the paths, methods,
+    documents and error codes.
+servers:
+  - url: http://127.0.0.1:{port}
+    variables:
+      port:
+        default: "8090"
+        description: Assigned in PLATFORM_STATE, not ruled by this contract. Loopback-only unless launcher's spec says otherwise (D040).
+security:
+  - reviewCaller: []
+paths:
+  /review/v1/environments:
+    post:
+      operationId: startReviewEnvironment
+      summary: Start (or replay) a review environment for one PR revision.
+      description: >
+        Idempotent on `idempotencyKey`. 202 with `status: starting` for a new environment; a
+        replay of the same key and body returns 200 with the current status. 409
+        `idempotency_key_conflict` if the key exists with a different repository, branch,
+        pullRequest or expectedRevision.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StartReviewEnvironmentRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/Environment" }
+        "202": { $ref: "#/components/responses/Environment" }
+        "409": { $ref: "#/components/responses/Error" }
+        default: { $ref: "#/components/responses/Error" }
+  /review/v1/environments/{idempotencyKey}:
+    get:
+      operationId: getReviewEnvironment
+      summary: Status of one review environment by its idempotency key.
+      description: >
+        200 with the environment in any status, including `failed`. A `starting` environment is
+        a normal 200. 404 `review_environment_not_found` is the only 404: this launcher has no
+        environment for that key. It is not proof one never existed, so a consumer records
+        `unavailable`, never `failed`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200": { $ref: "#/components/responses/Environment" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      operationId: stopReviewEnvironment
+      summary: Stop and remove a review environment.
+      description: >
+        Idempotent: stopping a `stopped` environment is a 200 with the same body. 200 returns the
+        environment with `status: stopped`; its last receipt is kept so the record of what it
+        served survives. Stopping never rewrites a receipt to a different result.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200": { $ref: "#/components/responses/Environment" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        default: { $ref: "#/components/responses/Error" }
+components:
+  parameters:
+    IdempotencyKey:
+      name: idempotencyKey
+      in: path
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 200, pattern: "^[^\\s/]+$" }
+  securitySchemes:
+    reviewCaller:
+      type: http
+      scheme: bearer
+      description: >
+        Placeholder for the service credential launcher's own spec chooses. An unauthenticated
+        or unenrolled call is answered `caller_not_authorized` (403), never a 404. It grants
+        nothing on GitHub, a registry or a container engine.
+  schemas:
+    PullRequestRef:
+      title: ReviewPullRequestRef
+      type: object
+      required: [number, url]
+      additionalProperties: false
+      properties:
+        number: { type: integer, minimum: 1 }
+        url: { type: [string, "null"], format: uri }
+    StartReviewEnvironmentRequest:
+      title: StartReviewEnvironmentRequest
+      type: object
+      required: [repository, branch, pullRequest, expectedRevision, idempotencyKey]
+      additionalProperties: false
+      properties:
+        repository: { type: string, pattern: "^[a-z][a-z0-9-]{1,79}$", description: "Functional repo name (D002)." }
+        branch: { type: string, minLength: 1, description: "The PR head branch. It becomes the receipt's `branch`." }
+        pullRequest:
+          oneOf:
+            - $ref: "#/components/schemas/PullRequestRef"
+            - type: "null"
+          description: PR reference, or null for a branch-only review.
+        expectedRevision:
+          type: string
+          pattern: "^[0-9a-f]{40}$"
+          description: Full SHA of the PR head the caller expects the review URL to serve. If the branch has moved, launcher builds what it finds and the environment ends `failed`, not `ready`.
+        idempotencyKey: { type: string, minLength: 1, maxLength: 200, pattern: "^[^\\s/]+$" }
+    ReviewEnvironment:
+      title: ReviewEnvironment
+      type: object
+      required: [idempotencyKey, repository, branch, pullRequest, expectedRevision, status, receipt, error, startedAt, updatedAt]
+      additionalProperties: false
+      properties:
+        idempotencyKey: { type: string, minLength: 1 }
+        repository: { type: string, pattern: "^[a-z][a-z0-9-]{1,79}$" }
+        branch: { type: string, minLength: 1 }
+        pullRequest:
+          oneOf:
+            - $ref: "#/components/schemas/PullRequestRef"
+            - type: "null"
+        expectedRevision: { type: string, pattern: "^[0-9a-f]{40}$" }
+        status:
+          type: string
+          enum: [starting, ready, failed, stopped]
+          description: >
+            `starting`: reserved or building; the receipt is null or `pending`. `ready`: the
+            receipt is `passed`, `environment.name: review`, and `observed.revision` equals
+            `expectedRevision`. `failed`: it did not come up, or came up serving something else;
+            the receipt (when there is one) is `failed`, `unknown` or `unavailable`, and a
+            revision mismatch is recorded here and never corrected. `stopped`: removed by the
+            stop route.
+        receipt:
+          oneOf:
+            - $ref: "../delivery/delivery.deployment-receipt.json"
+            - type: "null"
+          description: The environment's `delivery.deployment-receipt`, verbatim. `null` only when nothing was deployed.
+        error:
+          oneOf:
+            - $ref: "../delivery/delivery.error.json"
+            - type: "null"
+          description: Why the environment is `failed` when there is no receipt to say so; otherwise null.
+        startedAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      allOf:
+        - if: { properties: { status: { const: ready } }, required: [status] }
+          then:
+            properties:
+              receipt:
+                type: object
+                required: [result, environment]
+                properties:
+                  result: { const: passed }
+                  environment: { type: object, properties: { name: { const: review } } }
+              error: { type: "null" }
+        - if: { properties: { status: { const: starting } }, required: [status] }
+          then:
+            properties:
+              error: { type: "null" }
+              receipt:
+                oneOf:
+                  - type: "null"
+                  - type: object
+                    properties: { result: { const: pending } }
+        - if: { properties: { status: { const: failed } }, required: [status] }
+          then:
+            properties:
+              receipt:
+                oneOf:
+                  - type: "null"
+                  - type: object
+                    properties: { result: { enum: [failed, unknown, unavailable] } }
+            anyOf:
+              - properties: { receipt: { type: object } }
+                required: [receipt]
+              - properties: { error: { type: object } }
+                required: [error]
+    ReviewEnvironmentNotFoundError:
+      title: ReviewEnvironmentNotFoundError
+      allOf:
+        - $ref: "../delivery/delivery.error.json"
+        - type: object
+          required: [code, retryable]
+          properties:
+            code: { const: review_environment_not_found }
+            retryable: { const: false }
+  responses:
+    Environment:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "#/components/schemas/ReviewEnvironment" } }
+    NotFound:
+      description: >
+        `review_environment_not_found`, the only 404, carrying this body. A bare or HTML 404 is
+        "could not ask", not a miss.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties: { error: { $ref: "#/components/schemas/ReviewEnvironmentNotFoundError" } }
+    Error:
+      description: >
+        Error envelope; every case is machine-distinguishable by `error.code`.
+
+        `review_environment_not_found` 404, `retryable: false` — MISS: no environment for that key.
+
+        `idempotency_key_conflict` 409, `retryable: false` — the key exists with a different body.
+
+        `invalid_request` 422, `retryable: false` — malformed body, key or revision.
+
+        `caller_not_authorized` 403, `retryable: false` — never answered as a 404.
+
+        `launcher_unavailable` 503, `retryable: true` — launcher is up but could not act or read its own state.
+
+        ABSENT (no `delivery.error`): connection refused, DNS/TLS failure, timeout, non-JSON
+        body, or a 404/5xx from something that is not launcher. Treated as `unavailable`, never
+        collapsed into a miss.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties: { error: { $ref: "../delivery/delivery.error.json" } }

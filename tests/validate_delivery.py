@@ -10,6 +10,10 @@ Extended (v0.37.0) with schemas/delivery-api/app-deploy-lookup.openapi.yaml: rou
 presence, the verbatim-receipt and mapped-result payloads, and the miss body that must
 be distinguishable from "could not ask" (check_app_deploy_api).
 
+Extended (v0.38.0) with the review environment: `environment.name: review` + `revisionRole:
+task` on the receipt and evidence, and schemas/launcher/review-environment.openapi.yaml
+(check_review_api, check_review_evidence_semantics).
+
 Extended (v0.36.0) with delivery.deployment-receipt + app/deployment-identity, the
 cross-field deployment rules (check_deployment_semantics) and an executable
 reference of the receipt -> producer-result mapping (receipt_to_producer_result).
@@ -33,6 +37,7 @@ SCHEMAS = ROOT / "schemas" / "delivery"
 API = ROOT / "schemas" / "delivery-api" / "youtrack-delivery.openapi.yaml"
 CI_API = ROOT / "schemas" / "delivery-api" / "ci-runner-results.openapi.yaml"
 DEPLOY_API = ROOT / "schemas" / "delivery-api" / "app-deploy-lookup.openapi.yaml"
+REVIEW_API = ROOT / "schemas" / "launcher" / "review-environment.openapi.yaml"
 APP_SCHEMAS = ROOT / "schemas" / "app"
 IDENTITY = "../app/deployment-identity.json"  # resolved relative to SCHEMAS
 
@@ -636,6 +641,80 @@ BAD_RECEIPT_NATIVE_FIELDS = {**GOOD_RECEIPT_PASSED, "schema": "plantpal.dev-depl
 BAD_RECEIPT_NATIVEREF_OTHER = {**GOOD_RECEIPT_PASSED, "nativeRef": f"agent-runner:runs/{DEPLOY_ID}"}
 
 
+# --- review environment (v0.38.0): an UNMERGED PR head served for review -------------------
+REV_PR = "3" * 40
+REVIEW_ID = "pla-review-20260930120000-333333333333"
+REVIEW_URL = "http://pr-42.plantpal.review.localhost"
+GOOD_IDENTITY_REVIEW = {"appIdentity": "plantpal", "revision": REV_PR, "deploymentId": REVIEW_ID, "environment": "review"}
+
+GOOD_RECEIPT_REVIEW = {
+    **GOOD_RECEIPT_PASSED,
+    "deploymentId": REVIEW_ID,
+    "branch": "factory/pla-42",
+    "mergedRevision": REV_PR,
+    "revisionRole": "task",
+    "review": {"pullRequest": 42, "pullRequestUrl": "https://github.com/elmoul/plantpal/pull/42"},
+    "environment": {"name": "review", "url": REVIEW_URL, "apiDocsUrl": REVIEW_URL + "/swagger-ui/index.html"},
+    "observed": GOOD_IDENTITY_REVIEW,
+    "rollback": None,
+    "nativeRef": f"plantpal:deployments/{REVIEW_ID}",
+}
+# A revision mismatch: the URL serves the merged revision, not the PR head. Recorded as
+# reported, settled `failed`; never corrected and never passed.
+GOOD_RECEIPT_REVIEW_MISMATCH = {
+    **GOOD_RECEIPT_REVIEW,
+    "result": "failed",
+    "observed": {**GOOD_IDENTITY_REVIEW, "revision": REV_MERGED},
+    "checks": [{"name": "identity:revision", "criterionId": None, "outcome": "failed", "exitCode": None}],
+}
+# The app did not report its identity: stays null, settles unknown, never passed.
+GOOD_RECEIPT_REVIEW_UNREPORTED = {
+    **GOOD_RECEIPT_REVIEW,
+    "result": "unknown",
+    "observed": {**GOOD_IDENTITY_REVIEW, "revision": None, "deploymentId": None, "environment": None},
+    "checks": [{"name": "identity:revision", "criterionId": None, "outcome": "unknown", "exitCode": None}],
+}
+GOOD_RECEIPT_REVIEW_NO_DOCS = {**GOOD_RECEIPT_REVIEW, "environment": {"name": "review", "url": REVIEW_URL, "apiDocsUrl": None}}
+GOOD_RECEIPT_REVIEW_BRANCH_ONLY = {**GOOD_RECEIPT_REVIEW, "review": {"pullRequest": None, "pullRequestUrl": None}}
+GOOD_RECEIPT_DEV_EXPLICIT_MERGED = {**GOOD_RECEIPT_PASSED, "revisionRole": "merged"}
+
+BAD_RECEIPT_REVIEW_MERGED_ROLE = {**GOOD_RECEIPT_REVIEW, "revisionRole": "merged"}
+BAD_RECEIPT_REVIEW_NO_ROLE = {k: v for k, v in GOOD_RECEIPT_REVIEW.items() if k != "revisionRole"}
+BAD_RECEIPT_REVIEW_NO_REFERENCE = {k: v for k, v in GOOD_RECEIPT_REVIEW.items() if k != "review"}
+BAD_RECEIPT_REVIEW_ROLLBACK = {**GOOD_RECEIPT_REVIEW, "kind": "rollback", "rollbackOf": DEPLOY_ID, "restores": DEPLOY_PREV}
+BAD_RECEIPT_REVIEW_WITH_ROLLBACK_IDENTITY = {**GOOD_RECEIPT_REVIEW, "rollback": GOOD_RECEIPT_PASSED["rollback"]}
+BAD_RECEIPT_REVIEW_PASSED_NOT_OBSERVED = {**GOOD_RECEIPT_REVIEW, "observed": None}
+BAD_RECEIPT_DEV_WITH_REVIEW_BLOCK = {**GOOD_RECEIPT_PASSED, "review": GOOD_RECEIPT_REVIEW["review"]}
+BAD_RECEIPT_DEV_TASK_ROLE = {**GOOD_RECEIPT_PASSED, "revisionRole": "task"}
+BAD_RECEIPT_DEV_API_DOCS = {**GOOD_RECEIPT_PASSED, "environment": {"name": "dev", "url": "http://127.0.0.1:8184", "apiDocsUrl": "http://127.0.0.1:8184/docs"}}
+BAD_RECEIPT_REVIEW_PR_ZERO = {**GOOD_RECEIPT_REVIEW, "review": {"pullRequest": 0, "pullRequestUrl": None}}
+
+GOOD_EVIDENCE_REVIEW = {
+    **GOOD_EVIDENCE_LIVE,
+    "stage": "deployment",
+    "criteria": [],
+    "branch": "factory/pla-42",
+    "revision": REV_PR,
+    "revisionRole": "task",
+    "source": {"producer": "app-deploy", "recordRef": f"plantpal:deployments/{REVIEW_ID}", "runId": None, "artifactRef": DIGEST_BE, "url": None},
+    "environment": {"name": "review", "appIdentity": "plantpal", "deploymentId": REVIEW_ID, "deployedRevision": REV_PR, "url": REVIEW_URL},
+    "summary": "The review URL serves PR head 3333333 (identity endpoint agreed)",
+}
+GOOD_EVIDENCE_REVIEW_LIVE = {**GOOD_EVIDENCE_REVIEW, "stage": "live", "criteria": [{"criterionId": "reminder-card", "evaluableAt": "live"}]}
+# The URL serves a different revision than the PR head: recorded as `failed`.
+GOOD_EVIDENCE_REVIEW_MISMATCH = {
+    **GOOD_EVIDENCE_REVIEW,
+    "result": "failed",
+    "environment": {**GOOD_EVIDENCE_REVIEW["environment"], "deployedRevision": REV_MERGED},
+    "summary": "The review URL serves 2222222, not PR head 3333333 (mismatch)",
+}
+BAD_EVIDENCE_REVIEW_MERGED_ROLE = {**GOOD_EVIDENCE_REVIEW, "revisionRole": "merged"}
+BAD_EVIDENCE_DEV_TASK_ROLE = {**GOOD_EVIDENCE_LIVE, "stage": "deployment", "revisionRole": "task"}
+BAD_EVIDENCE_REVIEW_NO_ENV = {**GOOD_EVIDENCE_REVIEW, "environment": None}
+BAD_EVIDENCE_REVIEW_UNKNOWN_ENV = {**GOOD_EVIDENCE_REVIEW, "environment": {**GOOD_EVIDENCE_REVIEW["environment"], "name": "staging"}}
+BAD_EVIDENCE_CI_WITH_REVIEW_ENV = {**GOOD_EVIDENCE_CI_TASK, "environment": GOOD_EVIDENCE_REVIEW["environment"]}
+
+
 def receipt_to_producer_result(receipt: dict, primary_component: str = "backend") -> dict:
     """The app-deploy mapping in `docs/task-delivery.md` §App-deploy, as executable reference.
 
@@ -788,6 +867,31 @@ CASES = [
     ("delivery.deployment-receipt.json", BAD_RECEIPT_DEPLOY_WITH_RESTORES, False),
     ("delivery.deployment-receipt.json", BAD_RECEIPT_NATIVE_FIELDS, False),
     ("delivery.deployment-receipt.json", BAD_RECEIPT_NATIVEREF_OTHER, False),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_REVIEW, True),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_REVIEW_MISMATCH, True),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_REVIEW_UNREPORTED, True),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_REVIEW_NO_DOCS, True),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_REVIEW_BRANCH_ONLY, True),
+    ("delivery.deployment-receipt.json", GOOD_RECEIPT_DEV_EXPLICIT_MERGED, True),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_REVIEW_MERGED_ROLE, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_REVIEW_NO_ROLE, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_REVIEW_NO_REFERENCE, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_REVIEW_ROLLBACK, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_REVIEW_WITH_ROLLBACK_IDENTITY, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_REVIEW_PASSED_NOT_OBSERVED, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_DEV_WITH_REVIEW_BLOCK, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_DEV_TASK_ROLE, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_DEV_API_DOCS, False),
+    ("delivery.deployment-receipt.json", BAD_RECEIPT_REVIEW_PR_ZERO, False),
+    ("delivery.evidence.json", GOOD_EVIDENCE_REVIEW, True),
+    ("delivery.evidence.json", GOOD_EVIDENCE_REVIEW_LIVE, True),
+    ("delivery.evidence.json", GOOD_EVIDENCE_REVIEW_MISMATCH, True),
+    ("delivery.evidence.json", BAD_EVIDENCE_REVIEW_MERGED_ROLE, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_DEV_TASK_ROLE, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_REVIEW_NO_ENV, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_REVIEW_UNKNOWN_ENV, False),
+    ("delivery.evidence.json", BAD_EVIDENCE_CI_WITH_REVIEW_ENV, False),
+    (IDENTITY, GOOD_IDENTITY_REVIEW, True),
     ("delivery.error.json", GOOD_ERROR, True),
     ("delivery.error.json", BAD_ERROR_NO_RETRYABLE, False),
 ]
@@ -964,6 +1068,9 @@ def check_deployment_semantics(reg: Registry) -> list[str]:
         ("GOOD_RECEIPT_UNKNOWN_UNREPORTED", GOOD_RECEIPT_UNKNOWN_UNREPORTED),
         ("GOOD_RECEIPT_TIMEOUT", GOOD_RECEIPT_TIMEOUT),
         ("GOOD_RECEIPT_ROLLBACK", GOOD_RECEIPT_ROLLBACK),
+        ("GOOD_RECEIPT_REVIEW", GOOD_RECEIPT_REVIEW),
+        ("GOOD_RECEIPT_REVIEW_MISMATCH", GOOD_RECEIPT_REVIEW_MISMATCH),
+        ("GOOD_RECEIPT_REVIEW_UNREPORTED", GOOD_RECEIPT_REVIEW_UNREPORTED),
     ]:
         failures += [f"deployment: {name}: {v}" for v in violations(doc)]
 
@@ -974,6 +1081,9 @@ def check_deployment_semantics(reg: Registry) -> list[str]:
         ("passed with unreported revision", {**GOOD_RECEIPT_PASSED, "observed": {**GOOD_IDENTITY, "revision": None}}),
         ("rollback identity names itself", {**GOOD_RECEIPT_PASSED, "rollback": {**GOOD_RECEIPT_PASSED["rollback"], "deploymentId": DEPLOY_ID}}),
         ("nativeRef names another deployment", {**GOOD_RECEIPT_PASSED, "nativeRef": f"plantpal:deployments/{DEPLOY_PREV}"}),
+        ("review passed serving the merged revision", {**GOOD_RECEIPT_REVIEW, "observed": {**GOOD_IDENTITY_REVIEW, "revision": REV_MERGED}}),
+        ("review passed with unreported identity", {**GOOD_RECEIPT_REVIEW_UNREPORTED, "result": "passed"}),
+        ("review passed reporting the dev environment", {**GOOD_RECEIPT_REVIEW, "observed": {**GOOD_IDENTITY_REVIEW, "environment": "dev"}}),
     ]:
         if not violations(doc):
             failures.append(f"deployment: '{name}' was not caught")
@@ -987,6 +1097,9 @@ def check_deployment_semantics(reg: Registry) -> list[str]:
         ("GOOD_RECEIPT_UNKNOWN_UNREPORTED", GOOD_RECEIPT_UNKNOWN_UNREPORTED),
         ("GOOD_RECEIPT_TIMEOUT", GOOD_RECEIPT_TIMEOUT),
         ("GOOD_RECEIPT_ROLLBACK", GOOD_RECEIPT_ROLLBACK),
+        ("GOOD_RECEIPT_REVIEW", GOOD_RECEIPT_REVIEW),
+        ("GOOD_RECEIPT_REVIEW_MISMATCH", GOOD_RECEIPT_REVIEW_MISMATCH),
+        ("GOOD_RECEIPT_REVIEW_UNREPORTED", GOOD_RECEIPT_REVIEW_UNREPORTED),
     ]:
         mapped = receipt_to_producer_result(doc)
         errors = list(validator.iter_errors(mapped))
@@ -994,6 +1107,14 @@ def check_deployment_semantics(reg: Registry) -> list[str]:
             failures.append(f"mapping: {name} -> producer-result invalid: {errors[0].message}")
         if (mapped["environment"] is None) != (doc["observed"] is None or doc["observed"]["revision"] is None):
             failures.append(f"mapping: {name} environment must be present exactly when the app reported a revision")
+    review = receipt_to_producer_result(GOOD_RECEIPT_REVIEW)
+    if review["environment"]["name"] != "review" or review["revision"] != REV_PR:
+        failures.append("mapping: a review receipt must map to environment review at the PR head")
+    if receipt_to_producer_result(GOOD_RECEIPT_REVIEW_UNREPORTED)["environment"] is not None:
+        failures.append("mapping: an unreported review identity must stay null, not be filled from the receipt")
+    mismatch = receipt_to_producer_result(GOOD_RECEIPT_REVIEW_MISMATCH)
+    if mismatch["outcome"] != "failed" or mismatch["environment"]["deployedRevision"] != REV_MERGED:
+        failures.append("mapping: a revision mismatch must be failed and keep the revision the app reported")
     mapped = receipt_to_producer_result(GOOD_RECEIPT_PASSED)
     if mapped["environment"]["deployedRevision"] != GOOD_RECEIPT_PASSED["observed"]["revision"]:
         failures.append("mapping: deployedRevision must come from observed.revision")
@@ -1110,6 +1231,88 @@ def check_app_deploy_api(reg: Registry) -> list[str]:
     return failures
 
 
+def check_review_evidence_semantics() -> list[str]:
+    """`passed` deployment/live evidence must show the URL serving the recorded revision."""
+    failures = []
+
+    def violations(e: dict) -> list[str]:
+        env = e["environment"]
+        if env is None or e["result"] != "passed":
+            return []
+        out = []
+        if env["deployedRevision"] != e["revision"]:
+            out.append("passed requires environment.deployedRevision == revision")
+        return out
+
+    for name, doc in [("GOOD_EVIDENCE_LIVE", GOOD_EVIDENCE_LIVE), ("GOOD_EVIDENCE_REVIEW", GOOD_EVIDENCE_REVIEW), ("GOOD_EVIDENCE_REVIEW_LIVE", GOOD_EVIDENCE_REVIEW_LIVE), ("GOOD_EVIDENCE_REVIEW_MISMATCH", GOOD_EVIDENCE_REVIEW_MISMATCH)]:
+        failures += [f"review evidence: {name}: {v}" for v in violations(doc)]
+    if not violations({**GOOD_EVIDENCE_REVIEW_MISMATCH, "result": "passed"}):
+        failures.append("review evidence: a revision mismatch recorded as passed was not caught")
+    return failures
+
+
+def check_review_api(reg: Registry) -> list[str]:
+    """v0.38.0 launcher review-environment port: routes, status/receipt coupling, miss body."""
+    api = yaml.safe_load(REVIEW_API.read_text(encoding="utf-8"))
+    failures = []
+    for route, method, op in [
+        ("/review/v1/environments", "post", "startReviewEnvironment"),
+        ("/review/v1/environments/{idempotencyKey}", "get", "getReviewEnvironment"),
+        ("/review/v1/environments/{idempotencyKey}", "delete", "stopReviewEnvironment"),
+    ]:
+        if api["paths"].get(route, {}).get(method, {}).get("operationId") != op:
+            failures.append(f"review openapi: missing {method.upper()} {route} ({op})")
+    if "404" not in api["paths"]["/review/v1/environments/{idempotencyKey}"]["get"]["responses"]:
+        failures.append("review openapi: lookup has no 404 response")
+
+    components = api["components"]
+
+    def validate(name: str, doc: dict) -> list:
+        schema = {"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://platform/contracts/launcher/review-environment", **components["schemas"][name], "components": components}
+        return list(Draft202012Validator(schema, registry=reg, format_checker=FormatChecker()).iter_errors(doc))
+
+    request = {"repository": "plantpal", "branch": "factory/pla-42", "pullRequest": {"number": 42, "url": None}, "expectedRevision": REV_PR, "idempotencyKey": "pla-42-3333333"}
+    env = {
+        "idempotencyKey": "pla-42-3333333", "repository": "plantpal", "branch": "factory/pla-42",
+        "pullRequest": {"number": 42, "url": None}, "expectedRevision": REV_PR, "status": "ready",
+        "receipt": GOOD_RECEIPT_REVIEW, "error": None, "startedAt": NOW, "updatedAt": NOW,
+    }
+    err = {"code": "build_failed", "message": "image build failed", "retryable": True}
+    not_found = {"code": "review_environment_not_found", "message": "no environment for that key", "retryable": False}
+    cases = [
+        ("StartReviewEnvironmentRequest", request, True),
+        ("StartReviewEnvironmentRequest", {**request, "pullRequest": None}, True),
+        ("StartReviewEnvironmentRequest", {**request, "expectedRevision": "3333333"}, False),
+        ("StartReviewEnvironmentRequest", {k: v for k, v in request.items() if k != "idempotencyKey"}, False),
+        ("ReviewEnvironment", env, True),
+        ("ReviewEnvironment", {**env, "status": "starting", "receipt": None}, True),
+        ("ReviewEnvironment", {**env, "status": "starting", "receipt": {**GOOD_RECEIPT_REVIEW, "result": "pending"}}, True),
+        ("ReviewEnvironment", {**env, "status": "failed", "receipt": GOOD_RECEIPT_REVIEW_MISMATCH}, True),
+        ("ReviewEnvironment", {**env, "status": "failed", "receipt": None, "error": err}, True),
+        ("ReviewEnvironment", {**env, "status": "stopped"}, True),
+        ("ReviewEnvironment", {**env, "receipt": None}, False),
+        ("ReviewEnvironment", {**env, "receipt": GOOD_RECEIPT_REVIEW_MISMATCH}, False),
+        ("ReviewEnvironment", {**env, "receipt": GOOD_RECEIPT_REVIEW_UNREPORTED}, False),
+        ("ReviewEnvironment", {**env, "receipt": GOOD_RECEIPT_PASSED}, False),
+        ("ReviewEnvironment", {**env, "status": "failed", "receipt": None, "error": None}, False),
+        ("ReviewEnvironment", {**env, "status": "failed", "receipt": GOOD_RECEIPT_REVIEW}, False),
+        ("ReviewEnvironment", {**env, "status": "starting", "receipt": None, "error": err}, False),
+        ("ReviewEnvironmentNotFoundError", not_found, True),
+        ("ReviewEnvironmentNotFoundError", {**not_found, "retryable": True}, False),
+        ("ReviewEnvironmentNotFoundError", {**not_found, "code": "launcher_unavailable"}, False),
+    ]
+    for name, doc, ok in cases:
+        errors = validate(name, doc)
+        if ok and errors:
+            failures.append(f"review openapi {name}: expected valid, got {errors[0].message}")
+        if not ok and not errors:
+            failures.append(f"review openapi {name}: expected INVALID fixture to be rejected")
+
+    if env["receipt"]["observed"]["revision"] != env["expectedRevision"]:
+        failures.append("review openapi: the ready fixture does not serve expectedRevision")
+    return failures
+
+
 def main() -> int:
     reg = registry()
     failures = []
@@ -1147,6 +1350,8 @@ def main() -> int:
 
     failures += check_ci_api(reg)
     failures += check_app_deploy_api(reg)
+    failures += check_review_api(reg)
+    failures += check_review_evidence_semantics()
     failures += check_bindings()
     failures += check_recovery_semantics()
     failures += check_deployment_semantics(reg)

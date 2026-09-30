@@ -50,7 +50,7 @@ export type DeliveryEvidence = {
      */
     revision: string;
     /**
-     * `task`: a task-branch revision before merge. `merged`: the integration-branch revision produced by the merge. A `task` observation can never prove a `merged` SHA; `deployment` and `live` evidence MUST be `merged`.
+     * `task`: a task-branch revision before merge. `merged`: the integration-branch revision produced by the merge. A `task` observation can never prove a `merged` SHA. `deployment` and `live` evidence MUST be `merged` when `environment.name` is `dev`, and MUST be `task` when it is `review` (v0.38.0: a review environment serves the unmerged PR head, so a `merged` role there would claim a merge that has not happened).
      */
     revisionRole: "task" | "merged";
     source: DeliveryEvidenceSource;
@@ -137,9 +137,9 @@ export interface DeliveryEvidenceSource {
 }
 export interface DeliveryEnvironment {
     /**
-     * D113 authorizes dev only; production is outside this contract.
+     * `dev`: the integration-branch deployment (D113). `review`: an environment running an unmerged PR head (v0.38.0); its evidence has `revisionRole: task`. Production is outside this contract.
      */
-    name: "dev";
+    name: "dev" | "review";
     /**
      * Identity the RUNNING app reported (e.g. its health/identity endpoint `app` name), not the configured name.
      */
@@ -149,11 +149,11 @@ export interface DeliveryEnvironment {
      */
     deploymentId: string;
     /**
-     * Revision the running app reported. Must equal `revision`; a mismatch is recorded as `failed`, never as `passed`.
+     * Revision the running app reported. Must equal `revision`; a mismatch is recorded as `failed`, never as `passed`. Applies to a review environment too: the review URL must serve the PR head.
      */
     deployedRevision: string;
     /**
-     * Test URL the owner uses.
+     * Test URL the owner uses (for a review environment, its frontend URL).
      */
     url: string;
 }

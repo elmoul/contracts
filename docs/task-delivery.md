@@ -69,6 +69,7 @@ is unchanged from v0.31.0.
 | `schemas/delivery/delivery.decision.json` | JSON Schema | Plan approval / policy authorization / owner acceptance / request changes / abandon |
 | `schemas/delivery/delivery.producer-result.json` | JSON Schema | Normalized runner / CI / app-deploy result; v0.36.0 moves `correlation`/`check` into `$defs` (no validation change) |
 | `schemas/delivery/delivery.deployment-receipt.json` | JSON Schema | `app-deploy` native record: dev deployment receipt with image digests, observed identity, checks and rollback identity (v0.36.0) |
+| `schemas/launcher/review-environment.openapi.yaml` | OpenAPI 3.1 | `launcher` review-environment port: start / status by idempotency key / stop, for an unmerged PR revision (v0.38.0) |
 | `schemas/app/deployment-identity.json` | JSON Schema | What a running app reports: `appIdentity` + nullable `revision`/`deploymentId`/`environment` (v0.36.0) |
 | `schemas/delivery-api/youtrack-delivery.openapi.yaml` | OpenAPI 3.1 | `youtrack` service routes under `/delivery/v1` |
 | `schemas/agent-runner/runner.dispatch-request.json` | JSON Schema | `POST /dispatch` body; v0.33.0 adds optional `dispatchKey` |
@@ -77,7 +78,7 @@ is unchanged from v0.31.0.
 | `schemas/delivery-api/ci-runner-results.openapi.yaml` | OpenAPI 3.1 | `ci-runner` CI-result lookup routes under `/delivery/v1` (v0.34.0) |
 | `schemas/ci-runner/build-result.yaml` | JSON Schema | `ci-runner` → control-plane build result; v0.34.0 adds optional `headSha` |
 | `schemas/state-feed/state.event.json` | JSON Schema | `ci.run` payload; v0.34.0 adds optional `headSha` |
-| `tests/validate_delivery.py` | test | 114 positive/negative fixtures (v0.36.0 adds the receipt + identity cases, `check_deployment_semantics` and the executable `receipt_to_producer_result` mapping) + OpenAPI route checks (youtrack + ci-runner) + ci-runner component fixtures + Python binding round-trip + `check_recovery_semantics` (the two cross-field timestamp rules JSON Schema cannot express) |
+| `tests/validate_delivery.py` | test | 139 positive/negative fixtures (v0.38.0 adds the review-environment cases, `check_review_api` and `check_review_evidence_semantics`; v0.36.0 added the receipt + identity cases, `check_deployment_semantics` and the executable `receipt_to_producer_result` mapping) + OpenAPI route checks (youtrack + ci-runner) + ci-runner component fixtures + Python binding round-trip + `check_recovery_semantics` (the two cross-field timestamp rules JSON Schema cannot express) |
 | `tests/validate_runner.py` | test | Runner fixtures incl. the keyed/workspace/reservation cases + an executable `requestHash` conformance check |
 
 Bindings: Python `platform_contracts.delivery.*` (`gen/python`), TypeScript
@@ -369,9 +370,10 @@ owner, so:
   `evaluableAt`, so deployment-only criteria do not block pre-deploy checks and cannot
   be satisfied by them.
 - **Revisions** are full 40-hex SHAs. `revisionRole: task` evidence can never prove a
-  `merged` SHA. `merge`/`deployment`/`live` must be `merged`. `deployment`/`live`
-  require `environment` with `name: dev`, the running app's reported `appIdentity`,
-  `deploymentId` and `deployedRevision`. Factory must record `failed` when
+  `merged` SHA. `merge` must be `merged`. `deployment`/`live` require `environment`
+  with `name` `dev` or `review` (v0.38.0), the running app's reported `appIdentity`,
+  `deploymentId` and `deployedRevision`, and are `merged` for `dev` and `task` for
+  `review` (§Review environments). Factory must record `failed` when
   `deployedRevision != revision`; that cross-field equality is enforced by Factory,
   not by the schema.
 - Scope binding: every record carries `planHash` + `issueScope`. A changed issue scope
@@ -694,6 +696,88 @@ Obligation 4 is the one that does not survive the generated bindings — see
 through `DeliverySyncOperation` and never validates them against
 `schemas/delivery/delivery.sync-operation.json` will emit the unsafe shapes happily.
 
+## Review environments (v0.38.0)
+
+A review environment runs an **unmerged PR head** so the owner can look at it before
+merge. Its whole point is proof of which revision the review URL serves, so it reuses
+the app-deploy receipt and the `delivery.evidence` `deployment`/`live` observation
+rather than adding a parallel record. Additive: every v0.36.0/v0.37.0 dev receipt and
+every dev evidence record validates unchanged.
+
+**Receipt (`delivery.deployment-receipt`).** `environment.name` is `dev` or `review`.
+For `review` the schema requires:
+
+- `revisionRole: task`. The field is new and optional; ABSENT means `merged`, which is
+  what every dev receipt already says. `mergedRevision` keeps its v0.36.0 name so dev
+  receipts do not change, and for a review receipt it holds the PR head SHA. It is not
+  a merged revision.
+- a `review` block: `pullRequest` (number or `null`) and `pullRequestUrl` (URI or
+  `null`). The PR's head branch is the receipt's `branch`. `null` means the caller did
+  not supply it (a branch-only review), never a default.
+- `kind: deploy` and `rollback: null`. A review environment is not rolled back; it is
+  stopped.
+- `environment.url` is the **frontend URL**. `environment.apiDocsUrl` is the optional
+  API documentation (Swagger) URL, `null` or absent when there is none.
+
+A dev receipt must NOT carry `review` or `apiDocsUrl`, and its `revisionRole` may only
+be `merged`. All the v0.36.0 rules apply to a review receipt unchanged: a `passed`
+receipt needs `exitCode: 0`, a non-null `observed`, and every digest present; the
+equality rules in `check_deployment_semantics` (`passed` requires
+`observed.revision == mergedRevision`, the same `deploymentId`, and
+`observed.environment == environment.name`) hold, so a review URL that serves a
+different revision is settled `failed` with `observed` kept as reported, and an
+identity the app did not report stays `null` and settles `unknown`. Neither is ever
+`passed`.
+
+**Evidence (`delivery.evidence`).** `deployment` and `live` evidence may have
+`environment.name: review`, and then MUST have `revisionRole: task` (for `dev` it must
+still be `merged`, so a task-role dev record stays invalid). Factory records "the
+review URL serves PR head `<sha>`" as `basis: machine-observation`, `stage:
+deployment`, `source.producer: app-deploy`, `source.recordRef` = the receipt's
+`nativeRef`, `revision` = PR head, and `environment.deployedRevision` = what the app
+reported. `deployedRevision != revision` is recorded `failed`, exactly as for dev; the
+schema cannot compare the two fields, so Factory enforces it (the executable check is
+`check_review_evidence_semantics`). Review evidence can never satisfy a `merged`
+gate, and it says nothing about the merged revision.
+
+**`delivery.producer-result`.** The §App-deploy mapping applies as written to a review
+receipt: `revision` = `mergedRevision` (the PR head) and `environment.name` = `review`,
+built only from what the app reported. The producer-result has no revision role field:
+the role is read from the receipt through `nativeRef`.
+
+**Launcher port (`schemas/launcher/review-environment.openapi.yaml`).**
+
+- `POST /review/v1/environments` starts one. Body: `repository`, `branch`,
+  `pullRequest` (`{number, url}` or `null`), `expectedRevision` (40-hex PR head), and
+  `idempotencyKey`. `202` for a new environment. The same key with the same body
+  returns the existing environment (`200`); the same key with a different body is
+  `409 idempotency_key_conflict`.
+- `GET /review/v1/environments/{idempotencyKey}` is the status lookup. The body's
+  `status` is `starting`, `ready`, `failed` or `stopped`, with the environment's
+  `receipt` (`delivery.deployment-receipt`, verbatim, or `null`) and an `error` when
+  there is no receipt to explain a failure.
+  - `ready`: the receipt is `passed`, `environment.name: review`, and its
+    `observed.revision` equals `expectedRevision` (the schema pins the first two;
+    the equality is the launcher's and the consumer's check, as for dev).
+  - `starting`: receipt `null` or `pending`.
+  - `failed`: receipt `null` (with `error`) or `failed`/`unknown`/`unavailable`. A
+    revision mismatch is `failed`, never `ready`.
+  - `stopped`: after `DELETE`; the last receipt is retained.
+- `DELETE /review/v1/environments/{idempotencyKey}` stops it; idempotent.
+- A miss is `404 review_environment_not_found` (`retryable: false`), the only 404. A
+  consumer records `unavailable`, never `failed`. `caller_not_authorized` 403,
+  `invalid_request` 422, `launcher_unavailable` 503 (retryable) and an absent
+  producer are distinct from a miss, as in the app-deploy route.
+- **One environment per repository at a time is the caller's concern.** The schema
+  does not enforce it and does not add a conflict code for it.
+- Host, port and the credential are launcher's own (PLATFORM_STATE); contracts owns the
+  paths, methods, documents and error codes. No generated client is shipped.
+
+**Binding caveat.** As with §Binding caveat, the generated Python/TypeScript models do
+not enforce the new `if/then` rules (a `review` receipt without `review`, a task-role
+dev receipt, a `ready` environment whose receipt is not `passed`). Validate emitted
+documents against the JSON Schema.
+
 ## Handoff matrix
 
 | Interface | Producer | Consumer | Reference | Operation identity / recovery | Status at v0.37.0 |
@@ -711,10 +795,29 @@ through `DeliverySyncOperation` and never validates them against
 | CI result | `ci-runner` | `factory` | `delivery.producer-result` ← `ci.run`; `GET /delivery/v1/ci-results/{runId}/{jobId}`, `GET /delivery/v1/ci-results?repository=&revision=` | `runId/jobId`; `revision` = `headSha` (on the event and on the lookup response, v0.34.0) | Contract published in v0.34.0; **emitting `headSha` and both lookup routes unimplemented** (ci-runner) |
 | Dev deploy result | `plantpal` (+ `runtime`/`gateway`/`launcher`) | `factory` | `delivery.producer-result` ← `delivery.deployment-receipt`; CLI `dev_delivery.py lookup <id>` / `receipt <id>` | `deploymentId`; reserve-first `pending` receipt; `reconcile` re-observes only; rollback identity in the receipt | Contract published in v0.36.0. plantpal emits producer-result (v0.31.0 binding) and a **native** receipt today; repin pending |
 | Running-app identity | `plantpal` (any app) | `runtime`, `factory` | `app/deployment-identity`; plantpal `GET /actuator/info` → `deployment` | `revision` + `deploymentId` as reported; `null` = not reported | Contract published in v0.36.0; plantpal already serves this shape natively |
+| Review environment | `launcher` | `factory`, apps, owner tools | `schemas/launcher/review-environment.openapi.yaml`: `POST /review/v1/environments`, `GET`/`DELETE /review/v1/environments/{idempotencyKey}`; the environment carries a `delivery.deployment-receipt` (`environment.name: review`, `revisionRole: task`) | caller `idempotencyKey`; same key + same body replays, different body `409`; a miss is `unavailable`, never `failed` | Contract published in v0.38.0; **unimplemented** (launcher); Factory evidence recording unimplemented |
 | Routing/approval | `demand-coordinator` | `factory` | existing `demand` / `demand.fulfillment` | existing | Unchanged; not in this release |
 | App-deploy receipt / result lookup | `app-deploy` (`plantpal`) | `factory` | `delivery.deployment-receipt`, `delivery.producer-result`; CLI `dev_delivery.py receipt` / `lookup` (v0.36.0) and `GET /delivery/v1/app-deploys/{deploymentId}[/receipt]` (v0.37.0) | `deploymentId`; `nativeRef` `<repository>:deployments/<id>`; a miss is `unavailable`, never `failed` | Contract published in v0.36.0, HTTP route in v0.37.0; **route unimplemented** (demand to `plantpal`). The CLI is implemented natively and repinning it to the tagged shape is plantpal's open leg |
 
 ## Upgrade / repin
+
+### v0.38.0 (review environment)
+
+Additive. Nothing validates differently for an existing document: `environment.name`
+widens from `dev` to `dev | review`, and the receipt gains optional `revisionRole`,
+`review` and `environment.apiDocsUrl`. Nobody is obligated to move (D031).
+
+- **`launcher`:** implement the review-environment port; emit a receipt with
+  `environment.name: review`, `revisionRole: task` and the `review` block, and settle a
+  revision mismatch or an unreported identity as `failed`/`unknown`, never `ready`.
+- **`factory`:** record review observations as `delivery.evidence` at the task revision
+  (§Review environments) and compare `deployedRevision` to `revision`.
+- **`plantpal` (and other apps):** serve the same `app/deployment-identity` block on the
+  review instance, with `environment: review`. The shape already allows it.
+- **Bindings:** the Python and TypeScript models for the receipt and evidence widen
+  `environment.name`; `delivery_error` picks up the `deployment_not_found` code that
+  v0.37.0 added to the schema without regenerating. `delivery.producer-result` is
+  regenerated (its `environment` refs the evidence one) with no change of meaning.
 
 ### v0.37.0 (app-deploy HTTP lookup route)
 
