@@ -8,7 +8,7 @@ acceptance-criteria:
   - "platform-vault reviews contracts v0.39.0 (schemas/agent-runner/parked.wait-condition.json, parked.run-result.json, parked.condition-event.json, parked.resume-request.json) and either accepts it or raises the specific gaps back to contracts."
   - "platform-vault's follow-up demands (ci-runner, demand-coordinator, dashboard, agent-runner, factory), each after the contracts demand, name v0.39.0 as the tag to pin."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # D115 parked work: close the consuming leg
