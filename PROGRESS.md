@@ -1207,3 +1207,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-09-30_2215_close-the-loop-on-demand-contracts-20260
+
+## Session 89 (2026-09-30)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-09-30_2148_fulfill-demand-platform-vault-20260930-c.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: fulfill demand platform-vault-20260930-contracts-d115-java-bindings -- status: done.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-09-30_2148_fulfill-demand-platform-vault-20260930-c
