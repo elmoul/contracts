@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/launcher/command.error",
+  "title": "CommandError",
+  "description": "The `error` payload of the `{\"error\": ...}` envelope on the `launcher` command port. Fulfils demand `platform-vault-20260930-contracts-d115-command-port`. Every code here is decided BEFORE a reservation is written: none starts a process and none reserves the key, except `command_key_conflict`, which leaves the existing reservation untouched.\n\n| Code | Status | Meaning |\n|---|---|---|\n| `unknown_command` | 404 | `command` is not a name in the provider's owner-controlled allowlist (or is not listed at all). Nothing was started. Not retryable until the owner adds the command. |\n| `command_refused` | 403 | The name is known but THIS request is refused: the entry is disabled, a parameter is not declared for it, or the caller is not enrolled. `reason` says which. Nothing was started. |\n| `command_key_conflict` | 409 | `commandKey` is reserved with a different `requestHash`. The stored reservation is never overwritten; mint a new key for a different execution. |\n| `invalid_request` | 422 | The body does not match `command.request`. |\n\n`code` is a closed set here; a new code is an additive release. `retryable` is `true` only when resending the SAME key and body later could succeed without an owner action.",
+  "type": "object",
+  "required": ["code", "message", "retryable"],
+  "additionalProperties": false,
+  "properties": {
+    "code": {
+      "type": "string",
+      "enum": ["unknown_command", "command_refused", "command_key_conflict", "invalid_request"]
+    },
+    "message": { "type": "string" },
+    "retryable": { "type": "boolean" },
+    "command": {
+      "type": "string",
+      "description": "The command name the request asked for, echoed for the owner's log."
+    },
+    "reason": {
+      "type": "string",
+      "enum": ["disabled", "parameter_not_allowed", "caller_not_enrolled"],
+      "description": "Only with `command_refused`: why a known command was refused."
+    },
+    "ownerAction": {
+      "type": ["string", "null"],
+      "description": "Plain-language action the owner must take (add the command to the allowlist, enable it), for the caller to show in its waiting view."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "code": { "const": "command_refused" } }, "required": ["code"] },
+      "then": { "required": ["reason"] }
+    }
+  ]
+}

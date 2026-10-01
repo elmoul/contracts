@@ -30,6 +30,7 @@ VALIDATORS = [
     "validate_factory.py",
     "validate_runner.py",
     "validate_parked.py",
+    "validate_command.py",
     "validate_delivery.py",
     "check_state_event_sync.py",
 ]

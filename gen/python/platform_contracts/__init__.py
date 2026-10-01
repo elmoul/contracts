@@ -37,6 +37,11 @@ from platform_contracts.agent_runner import (
     parked_condition_event,
     parked_resume_request,
 )
+from platform_contracts.launcher import (
+    command_request,
+    command_result,
+    command_error,
+)
 from platform_contracts.youtrack import (
     planner_project,
     planner_model,
@@ -99,6 +104,9 @@ __all__ = [
     "parked_run_result",
     "parked_condition_event",
     "parked_resume_request",
+    "command_request",
+    "command_result",
+    "command_error",
     "planner_project",
     "planner_model",
     "planner_plan_request",

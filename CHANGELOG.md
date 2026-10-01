@@ -16,6 +16,36 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.41.0 â€” 2026-10-01
+
+**Additive** (tag `v0.41.0`). Java, Python and TypeScript bindings generated; no existing
+schema changes. Fulfils demand `platform-vault-20260930-contracts-d115-command-port` (D115
+amendment): the shapes for the `launcher` command-execution port, which runs one
+deterministic, owner-allowlisted command. New schemas under `schemas/launcher/`:
+
+- **`command.request`:** `commandKey` (same pattern and role as
+  `runner.dispatch-request.dispatchKey`), `command` (a NAME only; no program, shell text or
+  env), optional string `parameters`, optional `demandId`. Keyed like
+  `runner.dispatch-reservation`: reservation (key, `requestHash`, `executionId`) is written
+  BEFORE any process starts; same key + same hash replays the one execution (`200`,
+  `replayed: true`), same key + different hash is `409`. `requestHash` canonicalization is
+  specified exactly with two checked worked examples.
+- **`command.result`:** `state` `running | exited | unknown`, `exitCode` (integer only when
+  `exited`; `null` otherwise, never 0 for "not reported"), `evidence` pointer
+  (`kind` `log | file | url`, `location`, optional `sha256`; required when `exited`),
+  `executionId`, timestamps, `replayed`. A restart before a settled outcome yields
+  `unknown`, never an automatic re-run.
+- **`command.error`:** `unknown_command` (404), `command_refused` (403, with `reason`
+  `disabled | parameter_not_allowed | caller_not_enrolled`), plus `command_key_conflict`
+  (409) and `invalid_request` (422).
+- **Bindings:** Java `io.platform.contracts.launcher` (`CommandRequest`, `CommandResult`,
+  `CommandError`; new `launcher-command` jsonschema2pojo execution; pom 0.41.0), Python
+  `platform_contracts.launcher.command_{request,result,error}` (version 0.41.0),
+  TypeScript `command-{request,result,error}.ts` plus rebuilt `dist/` (0.41.0).
+- **Tests:** `tests/validate_command.py` (added to `tests/run_all.py`).
+
+---
+
 ## v0.40.0 — 2026-09-30
 
 **Additive** (tag `v0.40.0`). Java only; no existing schema changes. Fulfils demand

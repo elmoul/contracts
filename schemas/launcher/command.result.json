@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/launcher/command.result",
+  "title": "CommandResult",
+  "description": "What `launcher` returns for a command execution: the durable reservation for a `commandKey` plus the execution's outcome (`202` first use, `200` replay, and the body of `GET /commands/{commandKey}`). See `command.request` for the keying and replay rules. Fulfils demand `platform-vault-20260930-contracts-d115-command-port`.\n\n**Exit code.** `exitCode` is the process's exit status once `state` is `exited`. It is `null` while `running` and when `unknown`: `null` means 'not reported', NEVER 0 (D113). A caller maps `exited` with `exitCode` 0 to success, `exited` non-zero to failure, and `unknown` to unknown, never to failure.\n\n**Evidence.** When the execution has exited, `evidence` points at where its output is kept (for example the captured log). The consumer records it as EVIDENCE at the stage it belongs to (D113 clause 3), not as acceptance; it is a pointer, not the log itself.\n\n**States.** `running`: reserved and started, not settled; poll `GET /commands/{commandKey}`. `exited`: the process ended and reported a status. `unknown`: the provider cannot say what happened (restart after reserving, lost process); it is never re-run automatically.",
+  "type": "object",
+  "required": ["commandKey", "requestHash", "executionId", "command", "state", "exitCode", "evidence", "reservedAt", "replayed"],
+  "additionalProperties": false,
+  "properties": {
+    "commandKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$"
+    },
+    "requestHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase hex SHA-256 of the canonical request JSON (exact canonicalization in `command.request`)."
+    },
+    "executionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Minted by the provider AT RESERVATION TIME, before any process is started. Bound to the key for its whole lifetime."
+    },
+    "command": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{0,63}$",
+      "description": "The command name that was run, echoed from the request."
+    },
+    "state": {
+      "type": "string",
+      "enum": ["running", "exited", "unknown"]
+    },
+    "exitCode": {
+      "type": ["integer", "null"],
+      "description": "Exit status; integer only when `state` is `exited`, otherwise `null` (never 0 for 'not reported')."
+    },
+    "evidence": {
+      "type": ["object", "null"],
+      "required": ["kind", "location"],
+      "additionalProperties": false,
+      "description": "Pointer to the execution's captured output. Required (non-null) when `state` is `exited`; may be null while `running` or when `unknown` left nothing behind.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["log", "file", "url"],
+          "description": "How to read `location`."
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the output is kept: a provider-relative path for `log`/`file`, an absolute URL for `url`."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Lowercase hex SHA-256 of the evidence content, when the provider computed it."
+        }
+      }
+    },
+    "reservedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the reservation was durably committed; at or before `startedAt`."
+    },
+    "startedAt": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "finishedAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Null unless `state` is `exited`."
+    },
+    "replayed": {
+      "type": "boolean",
+      "description": "`true` on the `200` answer to a repeated key (no new process was started); `false` on the `202` first use. A plain `GET` returns `false`."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "state": { "const": "exited" } }, "required": ["state"] },
+      "then": {
+        "properties": {
+          "exitCode": { "type": "integer" },
+          "evidence": { "type": "object" },
+          "finishedAt": { "type": "string" }
+        }
+      },
+      "else": {
+        "properties": { "exitCode": { "type": "null" } }
+      }
+    }
+  ]
+}

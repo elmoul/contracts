@@ -87,3 +87,8 @@ export type {
   OwnerDecisionOutcome, DemandsOutcome,
 } from "./parked-condition-event";
 export type { ParkedResumeRequest } from "./parked-resume-request";
+
+// D115 command-execution port (launcher).
+export type { CommandRequest } from "./command-request";
+export type { CommandResult } from "./command-result";
+export type { CommandError } from "./command-error";

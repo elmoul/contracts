@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/launcher/command.request",
+  "title": "CommandRequest",
+  "description": "The body a caller (`factory`) sends to `launcher` to run ONE deterministic, owner-allowlisted command (D115 amendment 2026-09-30, the command-execution port). Fulfils demand `platform-vault-20260930-contracts-d115-command-port`.\n\n**Authority is not in this shape.** `command` only NAMES a command. Which names exist, and which parameters each accepts, is the provider's owner-controlled allowlist; no caller can add, edit or widen an entry, and this request carries no program, script, shell text or environment. A name the provider does not have is refused with `command.error` `unknown_command`; a known name whose request the provider will not run (disabled, parameter not declared for it, caller not enrolled) is refused with `command_refused`. Neither starts anything.\n\n**Keyed like `runner.dispatch-reservation`: a retry replays one execution.** The caller mints `commandKey` once per intended execution. The provider records the key, `requestHash` and the minted `executionId` durably BEFORE it starts any process; the key is bound to exactly one execution for its lifetime.\n\n| Situation | Response | Process started? |\n|---|---|---|\n| Key not reserved | `202` with a `command.result` (`replayed: false`) | yes |\n| Key reserved, `requestHash` identical | `200` with the SAME `command.result` (`replayed: true`) | no, never a second one |\n| Key reserved, `requestHash` different | `409` `command.error` `command_key_conflict`; the stored reservation is never overwritten | no |\n| Two first uses of one key at once | exactly one `202`; the loser gets the `200` replay or the `409` | exactly one |\n\n`GET /commands/{commandKey}` returns the stored `command.result` (`404` with no body claim of non-execution for any other key: it means only 'no reservation under this key'). A refusal (`unknown_command`, `command_refused`, `invalid_request`) is decided BEFORE the reservation is written and reserves nothing, so the same key may be reused for a corrected request.\n\n**Uncertain execution.** If the provider restarts after reserving but before a settled outcome, it settles that execution `state: unknown` with `exitCode: null`. It NEVER re-runs it automatically: it cannot prove the first process did not already do the work. A caller that decides a retry is warranted mints a NEW key.\n\n**`requestHash` — the exact canonicalization.** SHA-256, lowercase hex (64 characters), over the UTF-8 bytes of the canonical JSON serialization of the request's execution-defining fields:\n\n1. Take exactly `command` and, only when PRESENT, `parameters`. `commandKey` is NOT included (it is the key the hash is stored under) and neither is `demandId` (an audit label, not part of what runs).\n2. An absent `parameters` is omitted entirely, never written as `null`; a present empty object `{}` IS included and differs from absent.\n3. Serialize as JSON with members sorted by key in Unicode code point order at every nesting level, no insignificant whitespace (`,` and `:` separators), strings escaped per RFC 8259 with non-ASCII emitted as UTF-8, no trailing newline. All values are strings, so there is no number/boolean formatting to disagree about.\n4. In Python: `json.dumps(obj, sort_keys=True, separators=(\",\", \":\"), ensure_ascii=False).encode(\"utf-8\")`.\n\n**Worked example.** `{\"command\": \"deploy-plantpal\", \"parameters\": {\"commit\": \"0123456789abcdef0123456789abcdef01234567\"}}` canonicalizes to the 96-byte string `{\"command\":\"deploy-plantpal\",\"parameters\":{\"commit\":\"0123456789abcdef0123456789abcdef01234567\"}}`, whose SHA-256 is `32cd1ff2c7399c376014f82724aa99855c9b245fd1ea2d066201602b33a59311`. `{\"command\": \"deploy-plantpal\"}` alone hashes to `289e2c287969f78079c011a5b655361aa58dfbbb5f95412ad7098cd9d81f2501`.",
+  "type": "object",
+  "required": ["commandKey", "command"],
+  "additionalProperties": false,
+  "properties": {
+    "commandKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$",
+      "description": "Caller-minted idempotency key, one per intended execution. Same pattern as `runner.dispatch-request.dispatchKey`."
+    },
+    "command": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{0,63}$",
+      "description": "The allowlisted command NAME (for example `deploy-plantpal`). A name only; never a path, program or shell text."
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Optional named string arguments. The provider accepts only the parameter names its allowlist entry declares for this command and refuses the request (`command_refused`) on any other. Values are data, never interpreted as shell."
+    },
+    "demandId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$",
+      "description": "The demand this execution is for, when there is one. Audit label only; not part of `requestHash`."
+    }
+  }
+}

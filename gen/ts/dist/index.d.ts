@@ -50,3 +50,6 @@ export type { ParkedWaitCondition, CiRunCondition, PullRequestCondition, Reposit
 export type { ParkedRunResult } from "./parked-run-result";
 export type { ParkedConditionEvent, CiRunOutcome, PullRequestOutcome, RepositoryCreatedOutcome, OwnerDecisionOutcome, DemandsOutcome, } from "./parked-condition-event";
 export type { ParkedResumeRequest } from "./parked-resume-request";
+export type { CommandRequest } from "./command-request";
+export type { CommandResult } from "./command-result";
+export type { CommandError } from "./command-error";
