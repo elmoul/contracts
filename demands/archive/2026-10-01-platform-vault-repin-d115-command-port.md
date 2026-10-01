@@ -8,7 +8,7 @@ acceptance-criteria:
   - "platform-vault reviews contracts v0.41.0 (schemas/launcher/command.request, command.result, command.error and the Java/Python/TypeScript bindings) and either accepts it or raises the specific gaps back to contracts."
   - "Follow-up demands for launcher and factory name v0.41.0 as the pin."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # D115 command port: close the consuming leg
