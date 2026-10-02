@@ -16,6 +16,27 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.43.0 — 2026-10-02
+
+**Additive** (tag `v0.43.0`). Java, Python and TypeScript bindings regenerated. Fulfils demand
+`factory-20261002-contracts-descriptor-delivery-fields`, so Factory can deliver from the registry
+without reading `app.yaml`:
+
+- **`app.descriptor`** gains optional `code.githubSlug` (`owner/name`, for apps whose GitHub slug
+  differs from the hexagon repo, e.g. `ElasMoul/plants`), `tracker.workflow` (Factory stages
+  `planned`, `developing`, `ready-for-test`, `accepted` mapped to YouTrack state names; each stage
+  optional, each value a non-empty string) and `urls.hostname` (a lowercase DNS label for the
+  `<hostname>.platform.localhost` dev/review routes; consumers default it to `name`).
+  **Consumers must enforce what the schema cannot:** a mapped state must be a non-resolved state,
+  and `Done` is never a Factory target (only the owner sets Done).
+- **`registry.entry.app`** gains optional `repoUrl`, `integrationBranch`, `githubSlug`, `workflow`
+  and `hostname`, mirroring the descriptor. Entries and descriptors without them still validate.
+- Fixtures: valid with every new field, valid with none, invalid for an empty workflow state, a
+  hostname with a dot, an uppercase hostname and a `githubSlug` without a slash; registry cases in
+  `tests/validate_app_descriptor.py`.
+
+---
+
 ## v0.42.0 â€” 2026-10-02
 
 **Additive** (tag `v0.42.0`). Java, Python and TypeScript bindings generated. Fulfils demand

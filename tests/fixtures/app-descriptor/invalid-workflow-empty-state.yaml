@@ -1,0 +1,19 @@
+# tracker.workflow: a mapped state must be a non-resolved state and Done is never a Factory target
+# (only the owner sets Done). The schema cannot check this; consumers must.
+schema: app.descriptor/1
+name: planotell
+display: Planotell
+tracker:
+  youtrack: PLA
+  workflow: { planned: Plan, developing: "", ready-for-test: Review, accepted: Staging }
+code:
+  layout: in-repo
+  appRoot: "."
+  ownership: owned
+  repo: https://github.com/ElasMoul/plants
+  githubSlug: ElasMoul/plants
+  integrationBranch: dev
+delivery:
+  mode: full
+  requiredChecks: ["CI"]
+urls: { hostname: planotell, dev: "http://planotell.platform.localhost" }

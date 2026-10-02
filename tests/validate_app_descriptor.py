@@ -22,6 +22,8 @@ EXPECTED_VALID = {
     "valid-in-repo-full.yaml",
     "valid-in-repo-ungated-pr-only.yaml",
     "valid-wrapped-third-party-pr-only.yaml",
+    "valid-in-repo-all-delivery-fields.yaml",
+    "valid-in-repo-no-delivery-fields.yaml",
 }
 EXPECTED_INVALID = {
     "invalid-third-party-no-fork.yaml",
@@ -32,6 +34,10 @@ EXPECTED_INVALID = {
     "invalid-wrapped-app-root-dot.yaml",
     "invalid-command-shell-string.yaml",
     "invalid-env-map.yaml",
+    "invalid-workflow-empty-state.yaml",
+    "invalid-hostname-dot.yaml",
+    "invalid-hostname-uppercase.yaml",
+    "invalid-github-slug-no-slash.yaml",
 }
 
 
@@ -84,6 +90,26 @@ def main():
     bad = copy.deepcopy(with_app)
     bad["app"]["env"] = {"K": "v"}
     expect_invalid(REGISTRY, bad, "registry.entry: app summary rejects extra properties")
+    full = copy.deepcopy(with_app)
+    full["app"].update({
+        "repoUrl": "https://github.com/ElasMoul/plants", "integrationBranch": "dev",
+        "githubSlug": "ElasMoul/plants", "hostname": "planotell",
+        "workflow": {"planned": "Plan", "developing": "Develop", "ready-for-test": "Review", "accepted": "Staging"},
+    })
+    expect_valid(REGISTRY, full, "registry.entry: app summary with every delivery field")
+    for path, value, label in [
+        (("workflow", "planned"), "", "empty workflow state"),
+        (("workflow", "done"), "Done", "unknown workflow stage"),
+        (("hostname",), "Plano.tell", "hostname with dot/uppercase"),
+        (("githubSlug",), "plants", "githubSlug without slash"),
+        (("repoUrl",), "git@github.com:x/y", "non-http repoUrl"),
+    ]:
+        bad = copy.deepcopy(full)
+        target = bad["app"]
+        for k in path[:-1]:
+            target = target[k]
+        target[path[-1]] = value
+        expect_invalid(REGISTRY, bad, f"registry.entry: app.{label}")
     return 0
 
 

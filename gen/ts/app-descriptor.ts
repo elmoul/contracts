@@ -39,6 +39,7 @@ export type AppDescriptor = {
      * YouTrack project key.
      */
     youtrack: string;
+    workflow?: Workflow;
   };
   code: {
     /**
@@ -58,6 +59,10 @@ export type AppDescriptor = {
      * Our fork of the code. Required (non-empty) when ownership is `third-party`; null or absent otherwise.
      */
     fork?: string | null;
+    /**
+     * GitHub `owner/name` of the repository Factory delivers to, for apps whose slug differs from the hexagon repo (e.g. `ElasMoul/plants` for Planotell). Optional.
+     */
+    githubSlug?: string;
     integrationBranch: string;
     releaseBranch?: string;
   };
@@ -72,6 +77,10 @@ export type AppDescriptor = {
     requiredChecks: string[];
   };
   urls?: {
+    /**
+     * A single lowercase DNS label: the `<hostname>.platform.localhost` name used for dev and review routes. Defaults to `name` when absent.
+     */
+    hostname?: string;
     dev?: string;
     production?: string;
   };
@@ -93,3 +102,13 @@ export type AppDescriptor = {
  * @minItems 1
  */
 export type Argv = [string, ...string[]];
+
+/**
+ * Maps Factory's delivery stages to YouTrack state names. Every stage is optional; each value is a non-empty state name. A mapped state must be a non-resolved state, and `Done` is never a Factory target (only the owner sets Done). The schema cannot check either rule, so consumers must.
+ */
+export interface Workflow {
+  planned?: string;
+  developing?: string;
+  "ready-for-test"?: string;
+  accepted?: string;
+}

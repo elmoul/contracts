@@ -55,5 +55,30 @@ export interface RegistryEntry {
          * Descriptor urls.dev, when declared.
          */
         devUrl?: string;
+        /**
+         * Descriptor code.repo.
+         */
+        repoUrl?: string;
+        /**
+         * Descriptor code.integrationBranch.
+         */
+        integrationBranch?: string;
+        /**
+         * Descriptor code.githubSlug, when declared.
+         */
+        githubSlug?: string;
+        /**
+         * Descriptor tracker.workflow: Factory stage to YouTrack state name. Every stage optional. A mapped state must be a non-resolved state and Done is never a Factory target (only the owner sets Done); the schema cannot check this, consumers must.
+         */
+        workflow?: {
+            planned?: string;
+            developing?: string;
+            "ready-for-test"?: string;
+            accepted?: string;
+        };
+        /**
+         * Descriptor urls.hostname: DNS label for <hostname>.platform.localhost routes; consumers default it to name.
+         */
+        hostname?: string;
     };
 }

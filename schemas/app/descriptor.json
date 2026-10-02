@@ -30,7 +30,8 @@
           "type": "string",
           "pattern": "^[A-Z][A-Z0-9]*$",
           "description": "YouTrack project key."
-        }
+        },
+        "workflow": { "$ref": "#/$defs/workflow" }
       }
     },
     "code": {
@@ -60,6 +61,11 @@
         "fork": {
           "type": ["string", "null"],
           "description": "Our fork of the code. Required (non-empty) when ownership is `third-party`; null or absent otherwise."
+        },
+        "githubSlug": {
+          "type": "string",
+          "pattern": "^[^/\\s]+/[^/\\s]+$",
+          "description": "GitHub `owner/name` of the repository Factory delivers to, for apps whose slug differs from the hexagon repo (e.g. `ElasMoul/plants` for Planotell). Optional."
         },
         "integrationBranch": {
           "type": "string",
@@ -93,6 +99,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "hostname": {
+          "type": "string",
+          "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+          "maxLength": 63,
+          "description": "A single lowercase DNS label: the `<hostname>.platform.localhost` name used for dev and review routes. Defaults to `name` when absent."
+        },
         "dev": { "type": "string", "pattern": "^https?://\\S+$" },
         "production": { "type": "string", "pattern": "^https?://\\S+$" }
       }
@@ -164,6 +176,17 @@
     }
   ],
   "$defs": {
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Maps Factory's delivery stages to YouTrack state names. Every stage is optional; each value is a non-empty state name. A mapped state must be a non-resolved state, and `Done` is never a Factory target (only the owner sets Done). The schema cannot check either rule, so consumers must.",
+      "properties": {
+        "planned": { "type": "string", "minLength": 1 },
+        "developing": { "type": "string", "minLength": 1 },
+        "ready-for-test": { "type": "string", "minLength": 1 },
+        "accepted": { "type": "string", "minLength": 1 }
+      }
+    },
     "argv": {
       "type": "array",
       "minItems": 1,
