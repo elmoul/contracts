@@ -16,6 +16,31 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.42.0 — 2026-10-02
+
+**Additive** (tag `v0.42.0`). Java, Python and TypeScript bindings generated. Fulfils demand
+`factory-20261002-contracts-app-descriptor` (docs/APP_ONBOARDING_ARCHITECTURE.md section 6):
+
+- **New `app.descriptor`** (`schemas/app/descriptor.json`, `app.descriptor/1`): the `app.yaml` an
+  app hexagon carries at its root: `schema`, `name`, `display`, `tracker.youtrack`,
+  `code {layout, appRoot, ownership, repo, fork, integrationBranch, releaseBranch}`,
+  `delivery {mode, requiredChecks}`, `urls`, `commands {test, review {start, stop,
+  startTimeoutMs}, deploy {dev}}`. Distinct from `app.manifest` (runtime registration payload);
+  its description says so and records the launcher command environment contract.
+  The schema enforces: `third-party` => non-empty `fork` and `pr-only`; empty `requiredChecks`
+  => `pr-only`; `in-repo` iff `appRoot` is `"."` (`wrapped` => `"app"`); commands are argv
+  arrays, never a shell string; `additionalProperties: false` throughout, so there is no env map
+  and no place for a secret.
+- **`registry.entry`** gains an optional `app` summary (`name`, `trackerKey`, `layout`,
+  `ownership`, `deliveryMode`, optional `devUrl`). Entries without it still validate.
+- Fixtures under `tests/fixtures/app-descriptor/` (3 valid, 8 invalid: one per enforced rule)
+  run via `tests/validate_app_descriptor.py`, wired into `tests/run_all.py`.
+- **Binding caveat:** the rules above are `if/then`, which the Python/TS generators do not emit
+  (see DEPLOYMENT.md); validate documents against the JSON Schema. The Python `schema` field
+  is `schema_` with alias `schema`: use `model_dump(by_alias=True)` to round-trip.
+
+---
+
 ## v0.41.0 — 2026-10-01
 
 **Additive** (tag `v0.41.0`). Java, Python and TypeScript bindings generated; no existing

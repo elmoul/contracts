@@ -53,3 +53,4 @@ export type { ParkedResumeRequest } from "./parked-resume-request";
 export type { CommandRequest } from "./command-request";
 export type { CommandResult } from "./command-result";
 export type { CommandError } from "./command-error";
+export type { AppDescriptor } from "./app-descriptor";

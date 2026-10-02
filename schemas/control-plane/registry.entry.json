@@ -56,6 +56,20 @@
       "type": "string",
       "enum": ["free", "pro", "enterprise"],
       "description": "App-only. Populated when app.manifest registration arrives; enum aligned with app.manifest's plan field."
+    },
+    "app": {
+      "type": "object",
+      "description": "App-only, optional. Summary of the app's `app.descriptor` (schemas/app/descriptor.json, the repo's app.yaml), so GET /registry can carry it. Entries without it remain valid.",
+      "required": ["name", "trackerKey", "layout", "ownership", "deliveryMode"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+        "trackerKey": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*$", "description": "YouTrack project key (descriptor tracker.youtrack)." },
+        "layout": { "type": "string", "enum": ["in-repo", "wrapped"] },
+        "ownership": { "type": "string", "enum": ["owned", "third-party"] },
+        "deliveryMode": { "type": "string", "enum": ["full", "pr-only"] },
+        "devUrl": { "type": "string", "pattern": "^https?://\\S+$", "description": "Descriptor urls.dev, when declared." }
+      }
     }
   },
   "additionalProperties": false

@@ -6,7 +6,7 @@
 
     <groupId>io.platform</groupId>
     <artifactId>contracts</artifactId>
-    <version>0.41.0</version>
+    <version>0.42.0</version>
     <packaging>jar</packaging>
 
     <name>platform-contracts</name>
@@ -289,6 +289,26 @@
                                 <sourcePath>${project.basedir}/../../schemas/launcher/command.error.json</sourcePath>
                             </sourcePaths>
                             <targetPackage>io.platform.contracts.launcher</targetPackage>
+                            <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
+                            <annotationStyle>jackson2</annotationStyle>
+                            <includeAdditionalProperties>false</includeAdditionalProperties>
+                            <includeConstructors>true</includeConstructors>
+                            <generateBuilders>false</generateBuilders>
+                            <useTitleAsClassname>true</useTitleAsClassname>
+                            <dateTimeType>java.time.OffsetDateTime</dateTimeType>
+                            <useJakartaValidation>true</useJakartaValidation>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>app-descriptor</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${project.basedir}/../../schemas/app/descriptor.json</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>io.platform.contracts.app</targetPackage>
                             <outputDirectory>${project.basedir}/target/generated-sources/jsonschema2pojo</outputDirectory>
                             <annotationStyle>jackson2</annotationStyle>
                             <includeAdditionalProperties>false</includeAdditionalProperties>

@@ -1,0 +1,7 @@
+schema: app.descriptor/1
+name: portfolio
+display: Portfolio
+tracker: { youtrack: POR }
+code: { layout: in-repo, appRoot: ".", ownership: owned, repo: "https://github.com/elmoul/portfolio", integrationBranch: dev }
+delivery: { mode: pr-only, requiredChecks: [] }
+commands: { test: "mvn -B test" }
