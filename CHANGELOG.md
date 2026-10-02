@@ -16,6 +16,18 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.45.0 â€” 2026-10-02
+
+**Additive** (tag `v0.45.0`). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand
+`factory-20261002-contracts-commands-working-directory`:
+
+- **`app.descriptor`** gains optional `commands.workingDirectory` (enum `hexagon` | `app`, default `hexagon` when
+  absent). `hexagon` is the hexagon repository root; `app` is `<hexagon>/<code.appRoot>`, so a wrapped app's
+  product-owned tools run inside the product repository. For `in-repo` layout both values resolve to the same
+  directory. The resolved directory is always inside the hexagon, which the launcher's trust rule relies on.
+- Fixtures: `valid-wrapped-working-directory-app`, `valid-in-repo-working-directory-hexagon`,
+  `invalid-working-directory-value`; the existing fixtures cover the field-absent case.
+
 ## v0.44.0 — 2026-10-02
 
 **Additive** (tag `v0.44.0`). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand

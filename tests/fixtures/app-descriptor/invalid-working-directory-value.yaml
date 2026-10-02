@@ -1,0 +1,21 @@
+schema: app.descriptor/1
+name: portfolio
+display: Portfolio
+tracker: { youtrack: POR }
+code:
+  layout: in-repo
+  appRoot: "."
+  ownership: owned
+  repo: https://github.com/elmoul/portfolio
+  fork: null
+  integrationBranch: dev
+  releaseBranch: main
+delivery:
+  mode: full
+  requiredChecks: ["Backend CI", "Frontend CI"]
+urls: { dev: "http://portfolio.platform.localhost", production: "https://portfolio.moulworks.com" }
+commands:
+  workingDirectory: product
+  test: ["mvn", "-B", "test"]
+  review: { start: ["python", "tools/review-start.py"], stop: ["python", "tools/review-stop.py"], startTimeoutMs: 1800000 }
+  deploy: { dev: ["python", "tools/deploy-dev.py"] }

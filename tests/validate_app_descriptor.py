@@ -24,6 +24,8 @@ EXPECTED_VALID = {
     "valid-wrapped-third-party-pr-only.yaml",
     "valid-in-repo-all-delivery-fields.yaml",
     "valid-in-repo-no-delivery-fields.yaml",
+    "valid-wrapped-working-directory-app.yaml",
+    "valid-in-repo-working-directory-hexagon.yaml",
 }
 EXPECTED_INVALID = {
     "invalid-third-party-no-fork.yaml",
@@ -38,6 +40,7 @@ EXPECTED_INVALID = {
     "invalid-hostname-dot.yaml",
     "invalid-hostname-uppercase.yaml",
     "invalid-github-slug-no-slash.yaml",
+    "invalid-working-directory-value.yaml",
 }
 
 

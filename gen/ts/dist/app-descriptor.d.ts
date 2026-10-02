@@ -12,7 +12,7 @@
  * - `code.ownership: third-party` requires a non-empty `code.fork` AND `delivery.mode: pr-only` (agents push to the fork only).
  * - `delivery.requiredChecks: []` requires `delivery.mode: pr-only` (`full` needs at least one required check).
  * - `code.layout: in-repo` holds exactly when `code.appRoot` is `"."`; `wrapped` means `appRoot: "app"`.
- * - Every command is an argv array (program then arguments), never a single shell string; cwd is the hexagon root.
+ * - Every command is an argv array (program then arguments), never a single shell string; the working directory is set by `commands.workingDirectory` (default: the hexagon root).
  * - No property can hold a secret: there is no free-form env map and no additional properties anywhere. Platform wiring is injected as environment by the launcher at run time.
  *
  * **Command environment contract (shipped by `launcher` 2026-10-01; described here, not redesigned).** `commands.review.start` receives `REVIEW_EXPECTED_REVISION`, `REVIEW_IDEMPOTENCY_KEY`, `REVIEW_PR_NUMBER`, `REVIEW_BRANCH` and prints a JSON receipt on stdout; `commands.deploy.dev` receives `COMMAND_PARAM_COMMIT` and prints a JSON receipt on stdout.
@@ -83,6 +83,10 @@ export type AppDescriptor = {
         production?: string;
     };
     commands?: {
+        /**
+         * Directory the review and deploy commands run in. `hexagon` (the default when absent) is the hexagon repository root; `app` is `<hexagon>/<code.appRoot>`, so a wrapped app's product-owned tools run inside the product repository. For `code.layout: in-repo`, `appRoot` is `.` and both values resolve to the same directory. The resolved directory is always inside the hexagon (`appRoot` is only `.` or `app`), which is what the launcher's trust rule relies on.
+         */
+        workingDirectory?: "hexagon" | "app";
         test?: Argv;
         review?: {
             start: Argv;
