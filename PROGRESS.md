@@ -1409,3 +1409,18 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-02_2030_close-the-loop-on-demand-contracts-20261
+
+## Session 103 (2026-10-02)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-02_2212_fulfill-demand-factory-20261002-contract.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+agent-runner's dispatch supervisor from an auto-drafted, unconfirmed close --
+not a second hand-written account, and not yet reviewed by a human or the
+worker agent itself).
+
+- State: Fulfill demand factory-20261002-contracts-commands-working-directory (capability: The app descriptor can say whether its review and deploy commands run in the hexagon root or in the app root, so a wrapped app's product-owned tools run inside the product repository, from: factory, target: contracts).... -- status: done (close: auto-drafted, unconfirmed).
+- Next step: Review this session's auto-drafted close (`.brain/sessions/2026-10-02_2212_fulfill-demand-factory-20261002-contract.md`) and confirm or correct it.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-02_2212_fulfill-demand-factory-20261002-contract
