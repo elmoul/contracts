@@ -8,7 +8,7 @@ acceptance-criteria:
   - "factory reviews contracts v0.43.0 (code.githubSlug, tracker.workflow and urls.hostname in schemas/app/descriptor.json; repoUrl, integrationBranch, githubSlug, workflow and hostname on the app object of schemas/control-plane/registry.entry.json; the Java/Python/TypeScript bindings) and either accepts it or raises the specific gaps back to contracts."
   - "Factory re-pins to v0.43.0 and honours the rule the schema cannot check: a workflow state must be non-resolved and Done is never a Factory target."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Descriptor delivery fields: close the consuming leg
