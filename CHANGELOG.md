@@ -16,6 +16,21 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.44.0 — 2026-10-02
+
+**Additive** (tag `v0.44.0`). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand
+`factory-20261002-contracts-summary-required-checks`, so Factory can build agent instructions and verify
+pull requests from the registry record instead of hard-coded check names and a fixed branch:
+
+- **`registry.entry.app`** gains optional `requiredChecks` (array of unique non-empty strings), `appRoot`
+  (`.` or `app`) and `releaseBranch`, mirroring the descriptor's `delivery.requiredChecks`, `code.appRoot`
+  and `code.releaseBranch`. Entries without them still validate. The descriptor itself is unchanged.
+- Cases in `tests/validate_app_descriptor.py`: summary with all three, with none, empty `requiredChecks`
+  for a pr-only app, and invalid for an empty or duplicate check name, an `appRoot` other than `.`/`app`,
+  and an empty `releaseBranch`.
+
+---
+
 ## v0.43.0 — 2026-10-02
 
 **Additive** (tag `v0.43.0`). Java, Python and TypeScript bindings regenerated. Fulfils demand

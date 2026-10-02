@@ -82,5 +82,17 @@ export interface RegistryEntry {
      * Descriptor urls.hostname: DNS label for <hostname>.platform.localhost routes; consumers default it to name.
      */
     hostname?: string;
+    /**
+     * Descriptor delivery.requiredChecks: required check names on the integration branch. Empty only for pr-only apps (the schema cannot check this here; the descriptor does).
+     */
+    requiredChecks?: string[];
+    /**
+     * Descriptor code.appRoot: app root relative to the hexagon root. `.` for in-repo, `app` for wrapped.
+     */
+    appRoot?: "." | "app";
+    /**
+     * Descriptor code.releaseBranch.
+     */
+    releaseBranch?: string;
   };
 }

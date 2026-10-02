@@ -110,6 +110,23 @@ def main():
             target = target[k]
         target[path[-1]] = value
         expect_invalid(REGISTRY, bad, f"registry.entry: app.{label}")
+
+    gate = copy.deepcopy(with_app)
+    gate["app"].update({"requiredChecks": ["build", "test", "lint"], "appRoot": "app", "releaseBranch": "main"})
+    expect_valid(REGISTRY, gate, "registry.entry: app summary with requiredChecks, appRoot, releaseBranch")
+    pr_only = copy.deepcopy(with_app)
+    pr_only["app"].update({"deliveryMode": "pr-only", "requiredChecks": [], "appRoot": "."})
+    expect_valid(REGISTRY, pr_only, "registry.entry: app summary with empty requiredChecks (pr-only)")
+    for key, value, label in [
+        ("requiredChecks", ["build", ""], "empty check name"),
+        ("requiredChecks", ["build", "build"], "duplicate check name"),
+        ("appRoot", "src", "appRoot other than '.' or 'app'"),
+        ("appRoot", "./app", "appRoot './app'"),
+        ("releaseBranch", "", "empty releaseBranch"),
+    ]:
+        bad = copy.deepcopy(gate)
+        bad["app"][key] = value
+        expect_invalid(REGISTRY, bad, f"registry.entry: app.{label}")
     return 0
 
 

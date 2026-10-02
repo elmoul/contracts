@@ -83,7 +83,15 @@
             "accepted": { "type": "string", "minLength": 1 }
           }
         },
-        "hostname": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", "maxLength": 63, "description": "Descriptor urls.hostname: DNS label for <hostname>.platform.localhost routes; consumers default it to name." }
+        "hostname": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", "maxLength": 63, "description": "Descriptor urls.hostname: DNS label for <hostname>.platform.localhost routes; consumers default it to name." },
+        "requiredChecks": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Descriptor delivery.requiredChecks: required check names on the integration branch. Empty only for pr-only apps (the schema cannot check this here; the descriptor does)."
+        },
+        "appRoot": { "type": "string", "enum": [".", "app"], "description": "Descriptor code.appRoot: app root relative to the hexagon root. `.` for in-repo, `app` for wrapped." },
+        "releaseBranch": { "type": "string", "minLength": 1, "description": "Descriptor code.releaseBranch." }
       }
     }
   },
