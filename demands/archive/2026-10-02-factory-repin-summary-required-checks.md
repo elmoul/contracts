@@ -8,7 +8,7 @@ acceptance-criteria:
   - "factory reviews contracts v0.44.0 (optional requiredChecks, appRoot and releaseBranch on the app object of schemas/control-plane/registry.entry.json; the Python and TypeScript bindings) and either accepts it or raises the specific gaps back to contracts."
   - "Factory re-pins to v0.44.0 and reads required checks, app root and release branch from the registry app record instead of hard-coded check names and a fixed branch."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Summary required checks: close the consuming leg
