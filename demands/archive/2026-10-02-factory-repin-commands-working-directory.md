@@ -8,7 +8,7 @@ acceptance-criteria:
   - "factory reviews contracts v0.45.0 (optional commands.workingDirectory, enum hexagon or app, default hexagon, in schemas/app/descriptor.json; the Python and TypeScript bindings) and either accepts it or raises the specific gaps back to contracts."
   - "Factory re-pins to v0.45.0 so the wrap migration script can write and validate the field."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Commands working directory: close the consuming leg
