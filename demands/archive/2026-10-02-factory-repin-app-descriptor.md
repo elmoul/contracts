@@ -1,4 +1,4 @@
----
+﻿---
 id: contracts-20261002-factory-repin-app-descriptor
 date: 2026-10-02
 from: contracts
@@ -8,7 +8,7 @@ acceptance-criteria:
   - "factory reviews contracts v0.42.0 (schemas/app/descriptor.json, the optional `app` object on schemas/control-plane/registry.entry.json, and the Java/Python/TypeScript bindings) and either accepts it or raises the specific gaps back to contracts."
   - "The five dependent demands (control-plane, launcher, factory, conventions, brain-toolkit) name v0.42.0 as the pin."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # app.descriptor: close the consuming leg
