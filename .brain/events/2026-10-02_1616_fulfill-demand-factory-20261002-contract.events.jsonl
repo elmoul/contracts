@@ -1,0 +1,2 @@
+{"ev": "session_start", "ts": "2026-10-02T16:16:05+00:00", "agent": "contracts", "model": "claude-sonnet-5-5"}
+{"ev": "session_stop", "ts": "2026-10-02T16:17:36+00:00"}
