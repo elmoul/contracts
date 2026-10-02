@@ -1323,3 +1323,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-02_1433_close-the-loop-on-demand-contracts-20261
+
+## Session 97 (2026-10-02)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-02_1446_fulfill-demand-factory-20261002-contract.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: fulfill demand factory-20261002-contracts-descriptor-delivery-fields -- status: done.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-02_1446_fulfill-demand-factory-20261002-contract
