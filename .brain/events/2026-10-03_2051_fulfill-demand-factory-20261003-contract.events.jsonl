@@ -1,0 +1,4 @@
+{"ev": "session_start", "ts": "2026-10-03T20:51:58+00:00", "agent": "contracts", "model": "claude-sonnet-5-5"}
+{"ev": "read", "ts": "2026-10-03T20:51:59+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\schemas\\delivery-api\\youtrack-delivery.openapi.yaml"}
+{"ev": "search", "ts": "2026-10-03T20:52:03+00:00", "tool": "grep", "pattern": "Workflow:|project_not_enabled|examples?:"}
+{"ev": "session_stop", "ts": "2026-10-03T20:54:11+00:00"}
