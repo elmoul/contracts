@@ -8,7 +8,7 @@ acceptance-criteria:
   - "factory reviews contracts v0.47.0 (optional access on delivery.workflow, closed values delivery and read-only, absent means the producer does not say, in schemas/delivery/delivery.workflow.json; worked examples in schemas/delivery-api/youtrack-delivery.openapi.yaml; Python and TypeScript bindings) and either accepts it or raises the specific gaps back to contracts."
   - "Factory re-pins to v0.47.0 and reads access instead of inferring whether a project is open to delivery; it treats an absent access as not stated. Consumers pin the tag before any producer starts sending access, so factory and youtrack must both be on v0.47.0 first."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # delivery.workflow access: close the consuming leg
