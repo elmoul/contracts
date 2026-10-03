@@ -16,6 +16,20 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.46.0 - 2026-10-03
+
+**Additive** (tag `v0.46.0`). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand
+`factory-20261003-contracts-commands-cleanup`:
+
+- **`app.descriptor`** gains optional `commands.cleanup`, an argv array like the other commands, run in the directory
+  `commands.workingDirectory` resolves to. Contract (stated in the schema description): the launcher passes
+  `COMMAND_PARAM_BRANCH` (the integration branch) and `COMMAND_PARAM_COMMIT` (the 40-hex merge commit); exit 0 means the
+  checkout is back on the integration branch, exit 3 means refused with nothing touched (dirty tracked tree, commit not on
+  `origin/<branch>`, or local commits origin lacks) and is informational, any other exit is a failure. Factory records
+  refusals and failures with their reason and never holds an issue back from Staging because of them.
+- Fixtures: `valid-in-repo-cleanup`, `valid-wrapped-cleanup-working-directory-app`, `valid-in-repo-no-cleanup`,
+  `invalid-cleanup-shell-string`, `invalid-cleanup-empty-argv`.
+
 ## v0.45.0 — 2026-10-02
 
 **Additive** (tag `v0.45.0`). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand
