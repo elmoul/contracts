@@ -31,6 +31,13 @@ paths:
     get:
       operationId: getDeliveryWorkflow
       summary: Existing workflow state metadata of an enabled project (read-only).
+      description: >
+        The response may carry `access` (`delivery` | `read-only`, optional): `delivery`
+        means the service accepts delivery writes for the project; `read-only` means
+        issues, workflow and detail can be read but comments, transitions and operations
+        are refused with `project_not_enabled`; absent means the producer does not say.
+        Rollout order: consumers pin the release that adds `access` before any producer
+        starts sending it.
       parameters:
         - $ref: "#/components/parameters/project"
       responses:
@@ -244,6 +251,42 @@ components:
             type: object
             required: [data]
             properties: { data: { $ref: "../delivery/delivery.workflow.json" } }
+          examples:
+            deliveryOpen:
+              summary: access delivery - the service accepts delivery writes for the project.
+              value:
+                data:
+                  project: PLA
+                  stateField: State
+                  states:
+                    - { id: s-1, name: Open, resolved: false, ordinal: 0, archived: false }
+                    - { id: s-2, name: In Progress, resolved: false, ordinal: 1, archived: false }
+                    - { id: s-3, name: Done, resolved: true, ordinal: 2, archived: false }
+                  complete: true
+                  readAt: "2026-10-03T10:00:00Z"
+                  access: delivery
+            readOnly:
+              summary: access read-only - reads work; comments, transitions and operations are refused with project_not_enabled.
+              value:
+                data:
+                  project: OPS
+                  stateField: State
+                  states:
+                    - { id: s-1, name: Open, resolved: false, ordinal: 0, archived: false }
+                    - { id: s-3, name: Done, resolved: true, ordinal: 1, archived: false }
+                  complete: true
+                  readAt: "2026-10-03T10:00:00Z"
+                  access: read-only
+            accessNotStated:
+              summary: access absent - the producer does not say; do not infer either value.
+              value:
+                data:
+                  project: PLA
+                  stateField: State
+                  states:
+                    - { id: s-1, name: Open, resolved: false, ordinal: 0, archived: false }
+                  complete: true
+                  readAt: "2026-10-03T10:00:00Z"
     IssuePage:
       description: OK
       content:

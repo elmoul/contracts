@@ -18,6 +18,10 @@ export interface DeliveryWorkflow {
      */
     complete: boolean;
     readAt: string;
+    /**
+     * Whether the project is open to delivery. `delivery`: the service accepts delivery writes for the project. `read-only`: issues, workflow and detail can be read, but comments, transitions and operations are refused with `project_not_enabled`. Absent: the producer does not say, and a consumer must not infer either value. Additive and optional (D043). Rollout order: consumers pin the release that introduces this property BEFORE any producer starts sending `access`, because the closed shape (`additionalProperties: false`) makes an older pin reject a document that carries it.
+     */
+    access?: "delivery" | "read-only";
 }
 export interface DeliveryWorkflowState {
     id: string;

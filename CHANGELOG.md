@@ -16,6 +16,21 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.47.0 - 2026-10-03
+
+**Additive** (tag `v0.47.0`). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand
+`factory-20261003-contracts-delivery-workflow-project-access`:
+
+- **`delivery.workflow`** gains optional `access`, closed enum `delivery` | `read-only`. `delivery`: the service accepts
+  delivery writes for the project. `read-only`: issues, workflow and detail can be read, but comments, transitions and
+  operations are refused with `project_not_enabled`. Absent: the producer does not say. Existing documents stay valid.
+- **Rollout order:** the shape is closed, so consumers (`factory`, `youtrack`) must pin `v0.47.0` BEFORE any producer
+  starts sending `access`.
+- `youtrack-delivery.openapi.yaml`: `access` described on the workflow route, with worked examples for `delivery`,
+  `read-only` and absent.
+- Tests: `validate_delivery.py` cases for `access` delivery, `access` read-only, no `access` (existing), and unknown
+  value `write` (rejected).
+
 ## v0.46.0 - 2026-10-03
 
 **Additive** (tag `v0.46.0`). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand

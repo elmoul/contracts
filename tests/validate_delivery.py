@@ -125,6 +125,10 @@ GOOD_WORKFLOW = {
     "readAt": NOW,
 }
 
+GOOD_WORKFLOW_ACCESS_DELIVERY = {**GOOD_WORKFLOW, "access": "delivery"}
+GOOD_WORKFLOW_ACCESS_READ_ONLY = {**GOOD_WORKFLOW, "access": "read-only"}
+BAD_WORKFLOW_ACCESS_UNKNOWN = {**GOOD_WORKFLOW, "access": "write"}  # closed enum
+
 CORRELATION = {"deliveryId": DELIVERY, "planHash": SHA_B, "candidateRevision": REV_MERGED, "stage": "accepted"}
 
 ACCEPTANCE_REF = {
@@ -763,6 +767,9 @@ CASES = [
     ("delivery.issue-page.json", GOOD_PAGE_LAST_PARTIAL, True),
     ("delivery.issue-page.json", BAD_PAGE_NO_COMPLETE_FLAG, False),
     ("delivery.workflow.json", GOOD_WORKFLOW, True),
+    ("delivery.workflow.json", GOOD_WORKFLOW_ACCESS_DELIVERY, True),
+    ("delivery.workflow.json", GOOD_WORKFLOW_ACCESS_READ_ONLY, True),
+    ("delivery.workflow.json", BAD_WORKFLOW_ACCESS_UNKNOWN, False),
     ("delivery.sync-request.json", GOOD_SYNC_RESOLVE, True),
     ("delivery.sync-request.json", GOOD_SYNC_COMMENT_NO_SCOPE, True),
     ("delivery.sync-request.json", GOOD_SYNC_LINK, True),
