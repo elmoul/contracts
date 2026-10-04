@@ -91,7 +91,12 @@
           "description": "Descriptor delivery.requiredChecks: required check names on the integration branch. Empty only for pr-only apps (the schema cannot check this here; the descriptor does)."
         },
         "appRoot": { "type": "string", "enum": [".", "app"], "description": "Descriptor code.appRoot: app root relative to the hexagon root. `.` for in-repo, `app` for wrapped." },
-        "releaseBranch": { "type": "string", "minLength": 1, "description": "Descriptor code.releaseBranch." }
+        "releaseBranch": { "type": "string", "minLength": 1, "description": "Descriptor code.releaseBranch." },
+        "access": { "type": "string", "enum": ["fork", "push"], "description": "Descriptor code.access: how we write to the code (`fork`: code.fork; `push`: branches pushed to code.repo)." },
+        "slug": { "type": "string", "pattern": "^[^/\\s]+(/[^/\\s]+)+$", "description": "Descriptor code.slug: host-neutral repository path of two or more segments." },
+        "host": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$", "maxLength": 253, "description": "Descriptor code.host: lowercase DNS host name of the forge." },
+        "pr": { "type": "string", "enum": ["open", "draft", "hold"], "description": "Descriptor delivery.pr: when the pull request opens (`open` when the descriptor omits it)." },
+        "aiPolicy": { "type": "string", "enum": ["allowed", "forbidden"], "description": "Descriptor policy.ai. The descriptor's code.credential is deliberately NOT mirrored: the name is read from app.yaml by the component that supplies it and is not published." }
       }
     }
   },

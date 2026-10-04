@@ -92,5 +92,25 @@ export interface RegistryEntry {
          * Descriptor code.releaseBranch.
          */
         releaseBranch?: string;
+        /**
+         * Descriptor code.access: how we write to the code (`fork`: code.fork; `push`: branches pushed to code.repo).
+         */
+        access?: "fork" | "push";
+        /**
+         * Descriptor code.slug: host-neutral repository path of two or more segments.
+         */
+        slug?: string;
+        /**
+         * Descriptor code.host: lowercase DNS host name of the forge.
+         */
+        host?: string;
+        /**
+         * Descriptor delivery.pr: when the pull request opens (`open` when the descriptor omits it).
+         */
+        pr?: "open" | "draft" | "hold";
+        /**
+         * Descriptor policy.ai. The descriptor's code.credential is deliberately NOT mirrored: the name is read from app.yaml by the component that supplies it and is not published.
+         */
+        aiPolicy?: "allowed" | "forbidden";
     };
 }

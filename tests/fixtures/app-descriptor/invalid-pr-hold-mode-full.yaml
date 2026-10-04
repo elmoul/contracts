@@ -1,0 +1,6 @@
+schema: app.descriptor/1
+name: notes-app
+display: Notes App
+tracker: { youtrack: NOT }
+code: { layout: in-repo, appRoot: ".", ownership: owned, repo: "https://github.com/elmoul/notes-app", integrationBranch: main }
+delivery: { mode: full, requiredChecks: ["ci"], pr: hold }

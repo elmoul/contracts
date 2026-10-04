@@ -9,7 +9,9 @@
  * **This is NOT `app.manifest`.** `app.manifest` is the runtime registration payload a running app sends to control-plane (identity, class, plan, endpoints); it has a different audience and a different lifetime. `app.descriptor` is a static, repo-resident delivery record read by control-plane, launcher, Factory, conventions and brain-toolkit. `HEXAGON.md` keeps identity and `kind: app`; this file carries the delivery facts.
  *
  * **Rules the schema itself enforces:**
- * - `code.ownership: third-party` requires a non-empty `code.fork` AND `delivery.mode: pr-only` (agents push to the fork only).
+ * - `code.ownership: third-party` requires `delivery.mode: pr-only`, and: with `code.access` absent or `fork`, a non-empty `code.fork` (agents push to the fork only); with `code.access: push`, `code.fork` absent or null (agents push branches to `code.repo`).
+ * - `code.ownership: owned` with `code.access: fork` is invalid (an owned app has no fork); `push` or absent is as before.
+ * - `delivery.pr: draft` or `hold` requires `delivery.mode: pr-only`.
  * - `delivery.requiredChecks: []` requires `delivery.mode: pr-only` (`full` needs at least one required check).
  * - `code.layout: in-repo` holds exactly when `code.appRoot` is `"."`; `wrapped` means `appRoot: "app"`.
  * - Every command is an argv array (program then arguments), never a single shell string; the working directory is set by `commands.workingDirectory` (default: the hexagon root).
@@ -60,9 +62,25 @@ export type AppDescriptor = {
          */
         fork?: string | null;
         /**
-         * GitHub `owner/name` of the repository Factory delivers to, for apps whose slug differs from the hexagon repo (e.g. `ElasMoul/plants` for Planotell). Optional.
+         * GitHub `owner/name` of the repository Factory delivers to, for apps whose slug differs from the hexagon repo (e.g. `ElasMoul/plants` for Planotell). Optional. Means a slug on github.com. When both `githubSlug` and `slug` are present, consumers prefer `slug`; the schema cannot check that they agree, so consumers must.
          */
         githubSlug?: string;
+        /**
+         * How we write to the code. `fork`: the work repository is `code.fork`. `push`: the work repository is `code.repo` and the agent pushes branches there. Absent means `fork` for third-party apps and no fork for owned apps (as before). Optional, additive (D043).
+         */
+        access?: "fork" | "push";
+        /**
+         * Host-neutral repository path of two or more segments, so GitLab's `group/subgroup/project` is valid. Used with `host`. When both `githubSlug` and `slug` are present, consumers prefer `slug`; the schema cannot check that they agree, so consumers must.
+         */
+        slug?: string;
+        /**
+         * Lowercase DNS host name of the forge, such as `github.com` or `gitlab.com` (no scheme, port or path). When absent, consumers derive it from `code.repo`.
+         */
+        host?: string;
+        /**
+         * A NAME that references an owner-managed local credential used by this app's runs. It is a name and never the secret: no token, key or password belongs here. The component that supplies the credential reads the name from app.yaml; it is not published to the registry.
+         */
+        credential?: string;
         integrationBranch: string;
         releaseBranch?: string;
     };
@@ -75,6 +93,19 @@ export type AppDescriptor = {
          * Required check names on the integration branch. Empty requires `mode: pr-only`.
          */
         requiredChecks: string[];
+        /**
+         * When the pull request opens. `open` (the default when absent): opened ready for review. `draft`: opened as a draft. `hold`: not opened until the owner releases it. `draft` and `hold` require `mode: pr-only`.
+         */
+        pr?: "open" | "draft" | "hold";
+    };
+    /**
+     * Owner policy switches for the app. Optional.
+     */
+    policy?: {
+        /**
+         * Whether AI work on this app is allowed. `allowed` is the default when absent; `forbidden` means no AI work may touch the app's code.
+         */
+        ai?: "allowed" | "forbidden";
     };
     urls?: {
         /**

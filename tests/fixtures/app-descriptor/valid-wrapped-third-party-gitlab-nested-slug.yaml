@@ -1,0 +1,6 @@
+schema: app.descriptor/1
+name: notes-app
+display: Notes App
+tracker: { youtrack: NOT }
+code: { layout: wrapped, appRoot: app, ownership: third-party, repo: "https://gitlab.com/acme/platform/notes-app", access: push, slug: acme/platform/notes-app, host: gitlab.com, integrationBranch: main }
+delivery: { mode: pr-only, requiredChecks: [] }

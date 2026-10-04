@@ -29,6 +29,14 @@ EXPECTED_VALID = {
     "valid-in-repo-cleanup.yaml",
     "valid-wrapped-cleanup-working-directory-app.yaml",
     "valid-in-repo-no-cleanup.yaml",
+    "valid-in-repo-policy-ai-allowed.yaml",
+    "valid-in-repo-policy-ai-forbidden.yaml",
+    "valid-wrapped-slug-and-github-slug.yaml",
+    "valid-wrapped-third-party-fork-explicit.yaml",
+    "valid-wrapped-third-party-gitlab-nested-slug.yaml",
+    "valid-wrapped-third-party-hold.yaml",
+    "valid-wrapped-third-party-push-draft.yaml",
+    "valid-wrapped-third-party-push-fork-null.yaml",
 }
 EXPECTED_INVALID = {
     "invalid-third-party-no-fork.yaml",
@@ -46,6 +54,22 @@ EXPECTED_INVALID = {
     "invalid-working-directory-value.yaml",
     "invalid-cleanup-shell-string.yaml",
     "invalid-cleanup-empty-argv.yaml",
+    "invalid-access-unknown.yaml",
+    "invalid-credential-spaces.yaml",
+    "invalid-credential-token-like.yaml",
+    "invalid-credential-too-long.yaml",
+    "invalid-credential-uppercase.yaml",
+    "invalid-host-uppercase.yaml",
+    "invalid-host-with-path.yaml",
+    "invalid-owned-access-fork.yaml",
+    "invalid-policy-ai-unknown.yaml",
+    "invalid-policy-extra-property.yaml",
+    "invalid-pr-draft-mode-full.yaml",
+    "invalid-pr-hold-mode-full.yaml",
+    "invalid-pr-unknown.yaml",
+    "invalid-slug-one-segment.yaml",
+    "invalid-third-party-push-mode-full.yaml",
+    "invalid-third-party-push-with-fork.yaml",
 }
 
 
@@ -133,6 +157,22 @@ def main():
         ("releaseBranch", "", "empty releaseBranch"),
     ]:
         bad = copy.deepcopy(gate)
+        bad["app"][key] = value
+        expect_invalid(REGISTRY, bad, f"registry.entry: app.{label}")
+    client = copy.deepcopy(with_app)
+    client["app"].update({"access": "push", "slug": "acme/platform/notes-app", "host": "gitlab.com",
+                          "pr": "draft", "aiPolicy": "forbidden"})
+    expect_valid(REGISTRY, client, "registry.entry: app summary with access, slug, host, pr, aiPolicy")
+    for key, value, label in [
+        ("access", "clone", "unknown access"),
+        ("slug", "notes-app", "one-segment slug"),
+        ("host", "GitLab.com", "uppercase host"),
+        ("host", "gitlab.com/acme", "host with a path"),
+        ("pr", "auto", "unknown pr"),
+        ("aiPolicy", "maybe", "unknown aiPolicy"),
+        ("credential", "client-notes", "credential (not published to the registry)"),
+    ]:
+        bad = copy.deepcopy(client)
         bad["app"][key] = value
         expect_invalid(REGISTRY, bad, f"registry.entry: app.{label}")
     return 0

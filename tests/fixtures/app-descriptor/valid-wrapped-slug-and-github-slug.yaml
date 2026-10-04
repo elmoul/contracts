@@ -1,0 +1,7 @@
+# githubSlug and slug together: consumers prefer slug; the schema cannot check that they agree, so consumers must
+schema: app.descriptor/1
+name: notes-app
+display: Notes App
+tracker: { youtrack: NOT }
+code: { layout: wrapped, appRoot: app, ownership: third-party, repo: "https://github.com/someone/notes-app", fork: "https://github.com/elmoul/notes-app", githubSlug: someone/notes-app, slug: someone/notes-app, host: github.com, integrationBranch: main }
+delivery: { mode: pr-only, requiredChecks: ["ci"] }
