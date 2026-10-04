@@ -16,6 +16,23 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.48.0 - 2026-10-04
+
+**Additive** (tag `v0.48.0`, local; the owner pushes). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand
+`factory-20261004-contracts-descriptor-client-repos`. Every field is optional; `app.descriptor/1` stays the schema id and major version; every existing document and fixture validates unchanged.
+
+- **`app.descriptor` `code.access`**: `fork` | `push`. How we write to the code. `fork`: the work repository is `code.fork`. `push`: the work repository is `code.repo` and the agent pushes branches there. Absent: as today.
+- **`code.slug`**: host-neutral repository path of two or more segments (GitLab `group/subgroup/project` is valid).
+- **`code.host`**: lowercase DNS host name (`github.com`, `gitlab.com`; no scheme, port or path). Absent: consumers derive it from `code.repo`.
+- **`code.credential`**: a name (at most 64 characters, `^[a-z][a-z0-9-]*$`) that references an owner-managed local credential. A name, never the secret. Not published to the registry.
+- **`delivery.pr`**: `open` | `draft` | `hold`, when the pull request opens. Absent means `open`.
+- **`policy.ai`** (new optional closed object `policy`): `allowed` | `forbidden`. Absent means `allowed`.
+- **Conditional rules:** `third-party` still requires `delivery.mode: pr-only`; `third-party` with `access` absent or `fork` still requires a non-empty `code.fork`; `third-party` with `access: push` forbids `code.fork` (absent or null); `owned` with `access: fork` is invalid (`push` or absent as today); `delivery.pr` `draft` or `hold` requires `delivery.mode: pr-only`. All existing rules (ungated implies `pr-only`, layout and `appRoot`) are unchanged.
+- **`code.githubSlug`** is accepted exactly as before and means a slug on github.com. When both `githubSlug` and `slug` are present, consumers prefer `slug`; the schema cannot check agreement, so consumers must.
+- **`registry.entry.app`** gains optional `access`, `slug`, `host`, `pr` (the `delivery.pr` value) and `aiPolicy` (the `policy.ai` value). It does not carry `code.credential`. Entries without the new fields still validate.
+- Tests: `validate_app_descriptor.py` and `tests/fixtures/app-descriptor` gain 8 valid and 16 invalid fixtures plus registry cases.
+- No consumer is re-pinned by this release (D031).
+
 ## v0.47.0 - 2026-10-03
 
 **Additive** (tag `v0.47.0`). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand
