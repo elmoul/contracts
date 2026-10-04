@@ -1510,3 +1510,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-03_2202_close-the-loop-on-demand-contracts-20261
+
+## Session 110 (2026-10-04)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-04_1941_fulfill-demand-factory-20261004-contract.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand factory-20261004-contracts-descriptor-client-repos (capability: app.descriptor carries what client and employer repositories need: how we write to the code (fork or push), a host-neutral slug and host, when the pull request opens, a per-app credential name, and an AI policy switch; re... -- status: done.
+- Next step: Owner pushes main and tag v0.48.0; then re-run the D031 install from the GitHub URL
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-04_1941_fulfill-demand-factory-20261004-contract
