@@ -1,0 +1,12 @@
+{"ev": "read", "ts": "2026-09-27T10:36:39+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\.brain\\sessions\\2026-09-27_1136_fulfill-demand-agent-runner-20260927-con.md"}
+{"ev": "read", "ts": "2026-09-27T10:38:24+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\agent-runner\\demands\\2026-09-27-contracts-runner-keyed-dispatch.md"}
+{"ev": "read", "ts": "2026-09-27T10:38:30+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\schemas\\agent-runner\\runner.dispatch-request.json"}
+{"ev": "read", "ts": "2026-09-27T10:38:30+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\schemas\\agent-runner\\runner.run-record.json"}
+{"ev": "read", "ts": "2026-09-27T10:38:32+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\docs\\task-delivery.md"}
+{"ev": "read", "ts": "2026-09-27T10:38:35+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\schemas\\delivery\\delivery.producer-result.json"}
+{"ev": "read", "ts": "2026-09-27T10:38:37+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\README.md"}
+{"ev": "read", "ts": "2026-09-27T10:38:38+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\DEPLOYMENT.md"}
+{"ev": "read", "ts": "2026-09-27T10:38:39+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\tests\\validate_runner.py"}
+{"ev": "read", "ts": "2026-09-27T10:38:39+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\demands\\fulfilled\\factory-20260927-task-delivery-contracts-report.md"}
+{"ev": "read", "ts": "2026-09-27T10:38:45+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\contracts\\gen\\ts\\index.ts"}
+{"ev": "read", "ts": "2026-09-27T10:38:53+00:00", "path": "C:\\Users\\pc\\Desktop\\platform\\agent-runner\\src\\domain\\workspace.ts"}
