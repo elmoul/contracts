@@ -8,7 +8,7 @@ acceptance-criteria:
   - "factory reviews contracts v0.48.0 (app.descriptor gains optional code.access fork|push, code.slug, code.host, code.credential, delivery.pr open|draft|hold and policy.ai allowed|forbidden, with the conditional rules in schemas/app/descriptor.json; registry.entry.app mirrors access, slug, host, pr, aiPolicy but not the credential name) and either accepts it or raises the specific gaps back to contracts."
   - "Factory re-pins to v0.48.0 when it is ready to read the new fields; it treats absent access as fork, absent delivery.pr as open and absent policy.ai as allowed, and prefers code.slug over code.githubSlug when both are present (the schema cannot check agreement)."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # app.descriptor client-repository fields: close the consuming leg
