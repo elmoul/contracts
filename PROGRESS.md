@@ -1551,3 +1551,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-04_2108_close-the-loop-on-demand-contracts-20261
+
+## Session 113 (2026-10-06)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-06_1521_fulfill-demand-youtrack-20261006-contrac.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand youtrack-20261006-contracts-planner-from-brief-schema (capability: Closed contracts schemas for the planner's POST /plans/from-brief request and response, so the Factory caller and the planner share one versioned shape instead of two hand-written copies, from: youtrack, target: contra... -- status: done.
+- Next step: Owner pushes main and tag v0.49.0, then raise the D043 origin demand to youtrack (re-pin and adopt)
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-06_1521_fulfill-demand-youtrack-20261006-contrac
