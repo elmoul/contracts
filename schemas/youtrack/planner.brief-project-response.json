@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.brief-project-response",
+  "title": "PlannerBriefProjectResponse",
+  "description": "The `data` payload of a 200 answer from `POST /plans/from-brief` (`{\"data\": ...}`), built by `BriefProjectService._result` in `brief_project.py`. `status` is `partial` when any epic failed (a retry creates only the missing epics) and `complete` otherwise; only a complete result is stored and replayed. Nothing here carries a credential or a raw upstream body.",
+  "type": "object",
+  "required": [
+    "idempotencyKey",
+    "status",
+    "briefId",
+    "briefHash",
+    "project",
+    "appName",
+    "stage",
+    "stateFields",
+    "epics",
+    "ownerSteps",
+    "plannerEditsEnv",
+    "note",
+    "replayed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "idempotencyKey": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 of `<brief hash>:<project key>`."
+    },
+    "status": {
+      "enum": [
+        "complete",
+        "partial"
+      ]
+    },
+    "briefId": {
+      "type": "string"
+    },
+    "briefHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "id",
+        "shortName",
+        "name",
+        "isNew",
+        "url"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "shortName": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "isNew": {
+          "type": "boolean",
+          "description": "true when this run created the project, false when it reused an existing one."
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "appName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "stage": {
+      "type": "object",
+      "required": [
+        "present",
+        "values",
+        "missing"
+      ],
+      "additionalProperties": false,
+      "description": "The `Stage` state field. Values the planner creates on a new project: Plan, Develop, Review, Staging, Done.",
+      "properties": {
+        "present": {
+          "type": "boolean"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "Plan",
+              "Develop",
+              "Review",
+              "Staging"
+            ]
+          }
+        }
+      }
+    },
+    "stateFields": {
+      "type": "object",
+      "required": [
+        "fields",
+        "readField",
+        "note",
+        "hint"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "State-type field names of the project, in its order."
+        },
+        "readField": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "epics": {
+      "type": "object",
+      "required": [
+        "created",
+        "alreadyPresent",
+        "failed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "title",
+              "id",
+              "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string",
+                "description": "Readable issue id, e.g. TUT-1."
+              },
+              "url": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "alreadyPresent": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "title",
+              "id",
+              "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string",
+                "description": "Readable issue id, e.g. TUT-1."
+              },
+              "url": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "failed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "title",
+              "code",
+              "reason"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "code": {
+                "enum": [
+                  "tracker_rejected",
+                  "tracker_unavailable",
+                  "tracker_auth_rejected",
+                  "tracker_not_configured",
+                  "field_conflict",
+                  "not_attempted"
+                ],
+                "description": "The planner error code of the failed write, or `not_attempted`."
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ownerSteps": {
+      "type": "array",
+      "description": "What the owner still has to do; the planner never edits its own environment.",
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "what",
+          "setting",
+          "value",
+          "command"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "add_project_key",
+              "set_state_field",
+              "add_stage_field",
+              "complete_stage_values"
+            ]
+          },
+          "what": {
+            "type": "string"
+          },
+          "setting": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "command": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Command text the owner runs (`cd youtrack && docker compose up -d backlog-planner`), or null when the step is done in YouTrack."
+          }
+        }
+      }
+    },
+    "plannerEditsEnv": {
+      "const": false,
+      "description": "Always false: the planner never edits its environment."
+    },
+    "note": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "replayed": {
+      "type": "boolean",
+      "description": "true when this is the stored first result of the same brief hash and project key; this call wrote nothing."
+    }
+  }
+}

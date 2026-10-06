@@ -95,3 +95,6 @@ export type { CommandError } from "./command-error";
 
 // app.descriptor (app.yaml) — distinct from app.manifest.
 export type { AppDescriptor } from "./app-descriptor";
+export type { PlannerBriefProjectRequest } from "./planner-brief-project-request";
+export type { PlannerBriefProjectResponse } from "./planner-brief-project-response";
+export type { PlannerBriefProjectError } from "./planner-brief-project-error";

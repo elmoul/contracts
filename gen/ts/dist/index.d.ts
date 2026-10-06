@@ -54,3 +54,6 @@ export type { CommandRequest } from "./command-request";
 export type { CommandResult } from "./command-result";
 export type { CommandError } from "./command-error";
 export type { AppDescriptor } from "./app-descriptor";
+export type { PlannerBriefProjectRequest } from "./planner-brief-project-request";
+export type { PlannerBriefProjectResponse } from "./planner-brief-project-response";
+export type { PlannerBriefProjectError } from "./planner-brief-project-error";

@@ -33,6 +33,7 @@ VALIDATORS = [
     "validate_command.py",
     "validate_delivery.py",
     "validate_app_descriptor.py",
+    "validate_planner_brief.py",
     "check_state_event_sync.py",
 ]
 

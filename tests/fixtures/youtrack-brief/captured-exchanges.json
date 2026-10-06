@@ -1,0 +1,1476 @@
+[
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": true,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "State",
+     "note": "the project has several state fields (State, Stage); using 'State', the first in the project's order. Set STATE_FIELD to choose one",
+     "hint": "The planner and Factory read 'State', not 'Stage'. Set STATE_FIELD=Stage in youtrack/.env and recreate the planner. No field was detached or changed."
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-1",
+       "url": "http://localhost:8096/issue/TUT-1"
+      },
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-3",
+       "url": "http://localhost:8096/issue/TUT-3"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUT",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     },
+     {
+      "code": "set_state_field",
+      "what": "Set STATE_FIELD=Stage in youtrack/.env so the delivery surface reads 'Stage', then recreate the planner.",
+      "setting": "STATE_FIELD",
+      "value": "Stage",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": false
+   }
+  }
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": true,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "Stage",
+     "note": null,
+     "hint": null
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-1",
+       "url": "http://localhost:8096/issue/TUT-1"
+      },
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-3",
+       "url": "http://localhost:8096/issue/TUT-3"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUT",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": false
+   }
+  }
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": true,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "State",
+     "note": "the project has several state fields (State, Stage); using 'State', the first in the project's order. Set STATE_FIELD to choose one",
+     "hint": "The planner and Factory read 'State', not 'Stage'. Set STATE_FIELD=Stage in youtrack/.env and recreate the planner. No field was detached or changed."
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-1",
+       "url": "http://localhost:8096/issue/TUT-1"
+      },
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-3",
+       "url": "http://localhost:8096/issue/TUT-3"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "set_state_field",
+      "what": "Set STATE_FIELD=Stage in youtrack/.env so the delivery surface reads 'Stage', then recreate the planner.",
+      "setting": "STATE_FIELD",
+      "value": "Stage",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": false
+   }
+  }
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": true,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "State",
+     "note": "the project has several state fields (State, Stage); using 'State', the first in the project's order. Set STATE_FIELD to choose one",
+     "hint": "The planner and Factory read 'State', not 'Stage'. Set STATE_FIELD=Stage in youtrack/.env and recreate the planner. No field was detached or changed."
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-1",
+       "url": "http://localhost:8096/issue/TUT-1"
+      },
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-3",
+       "url": "http://localhost:8096/issue/TUT-3"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUT",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     },
+     {
+      "code": "set_state_field",
+      "what": "Set STATE_FIELD=Stage in youtrack/.env so the delivery surface reads 'Stage', then recreate the planner.",
+      "setting": "STATE_FIELD",
+      "value": "Stage",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": true
+   }
+  }
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "data": {
+    "status": "partial",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": true,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "State",
+     "note": "the project has several state fields (State, Stage); using 'State', the first in the project's order. Set STATE_FIELD to choose one",
+     "hint": "The planner and Factory read 'State', not 'Stage'. Set STATE_FIELD=Stage in youtrack/.env and recreate the planner. No field was detached or changed."
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-1",
+       "url": "http://localhost:8096/issue/TUT-1"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": [
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "code": "tracker_unavailable",
+       "reason": "YouTrack answered 503"
+      }
+     ]
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUT",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     },
+     {
+      "code": "set_state_field",
+      "what": "Set STATE_FIELD=Stage in youtrack/.env so the delivery surface reads 'Stage', then recreate the planner.",
+      "setting": "STATE_FIELD",
+      "value": "Stage",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": false
+   }
+  }
+ },
+ {
+  "status": 503,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "error": {
+    "code": "tracker_unavailable",
+    "message": "YouTrack answered 503"
+   }
+  }
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": false,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "State",
+     "note": "the project has several state fields (State, Stage); using 'State', the first in the project's order. Set STATE_FIELD to choose one",
+     "hint": "The planner and Factory read 'State', not 'Stage'. Set STATE_FIELD=Stage in youtrack/.env and recreate the planner. No field was detached or changed."
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-3",
+       "url": "http://localhost:8096/issue/TUT-3"
+      }
+     ],
+     "alreadyPresent": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-1",
+       "url": "http://localhost:8096/issue/TUT-1"
+      }
+     ],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUT",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     },
+     {
+      "code": "set_state_field",
+      "what": "Set STATE_FIELD=Stage in youtrack/.env so the delivery surface reads 'Stage', then recreate the planner.",
+      "setting": "STATE_FIELD",
+      "value": "Stage",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": false
+   }
+  }
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": false,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": false,
+     "values": [],
+     "missing": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging"
+     ]
+    },
+    "stateFields": {
+     "fields": [
+      "State"
+     ],
+     "readField": "State",
+     "note": null,
+     "hint": "This project has no 'Stage' state field."
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-1",
+       "url": "http://localhost:8096/issue/TUT-1"
+      },
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-3",
+       "url": "http://localhost:8096/issue/TUT-3"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUT",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     },
+     {
+      "code": "add_stage_field",
+      "what": "The project has no 'Stage' state field and the planner does not change an existing project's configuration: add it in YouTrack with the values Plan, Develop, Review, Staging, Done.",
+      "setting": null,
+      "value": null,
+      "command": null
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": false
+   }
+  }
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": false,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "State",
+     "note": "the project has several state fields (State, Stage); using 'State', the first in the project's order. Set STATE_FIELD to choose one",
+     "hint": "The planner and Factory read 'State', not 'Stage'. Set STATE_FIELD=Stage in youtrack/.env and recreate the planner. No field was detached or changed."
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      },
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUT-3",
+       "url": "http://localhost:8096/issue/TUT-3"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-4",
+       "url": "http://localhost:8096/issue/TUT-4"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUT",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     },
+     {
+      "code": "set_state_field",
+      "what": "Set STATE_FIELD=Stage in youtrack/.env so the delivery surface reads 'Stage', then recreate the planner.",
+      "setting": "STATE_FIELD",
+      "value": "Stage",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": false
+   }
+  }
+ },
+ {
+  "status": 502,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "error": {
+    "code": "epics_invalid",
+    "message": "the model's epic list failed validation twice; nothing was created",
+    "details": [
+     "the answer contains no JSON object (the answer may have been cut off)"
+    ]
+   }
+  }
+ },
+ {
+  "status": 422,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "nope",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "error": {
+    "code": "unknown_model",
+    "message": "'nope' is not in the ai-gateway model catalog"
+   }
+  }
+ },
+ {
+  "status": 422,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   }
+  },
+  "response": {
+   "error": {
+    "code": "approval_invalid",
+    "message": "the approval record is missing: {revision, hash, inputHash, at, actor}"
+   }
+  }
+ },
+ {
+  "status": 422,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "agent"
+   }
+  },
+  "response": {
+   "error": {
+    "code": "actor_not_owner",
+    "message": "only the owner's approval is accepted; this one is by 'agent'"
+   }
+  }
+ },
+ {
+  "status": 422,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "Changed after approval, so it is not the approved text.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "error": {
+    "code": "brief_hash_mismatch",
+    "message": "the brief does not hash to the approval's hash; it is not the approved revision"
+   }
+  }
+ },
+ {
+  "status": 422,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "5c7d7b349a0d3d00c623fa32989f55ed105cd3500942053ac157c6a05baae222"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "5c7d7b349a0d3d00c623fa32989f55ed105cd3500942053ac157c6a05baae222",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "error": {
+    "code": "brief_invalid",
+    "message": "the brief needs exactly the ten sections (purpose, users, journeys, requirements, quality, scope, constraints, research, acceptance, assumptions), each 5-12000 characters"
+   }
+  }
+ },
+ {
+  "status": 422,
+  "request": {
+   "projectKey": "",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "error": {
+    "code": "project_key_invalid",
+    "message": "the project key must be 2-10 characters: a letter, then letters, digits or '_'"
+   }
+  }
+ },
+ {
+  "status": 422,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "error": {
+    "code": "invalid_request",
+    "message": "'model' is required: the ai-gateway model that derives the epics"
+   }
+  }
+ }
+]

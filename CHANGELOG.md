@@ -16,6 +16,17 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.49.0 - 2026-10-06
+
+**Additive** (tag `v0.49.0`, local; the owner pushes). Python and TypeScript bindings regenerated (Java unchanged in output; `gen/java/pom.xml` stays at 0.48.0). Fulfils demand
+`youtrack-20261006-contracts-planner-from-brief-schema`. New schemas under `schemas/youtrack/` for `POST /plans/from-brief`, written from the shipped planner (`brief_project.py`, commits a558177 and 8cdcd3a); no existing schema changed.
+
+- **`planner.brief-project-request`**: `projectKey`, `projectName`, optional `appName`, required `model`, optional `briefId`, `brief` (the approved Harvest revision record whole: `sections` with exactly the ten keys purpose, users, journeys, requirements, quality, scope, constraints, research, acceptance, assumptions each 5 to 12000 characters; `number`, `author`, `at`, `inputHash`, `metadata`, `inputs`, `questionsChanged`, `changed`, `blockers`, `sourceIds`, `hash`) and `approval` `{revision, hash, inputHash, at, actor}`. Closed everywhere (`additionalProperties: false`); `metadata` is bounded to 20 scalar values with identifier-style keys. The brief hash rule (sha256 of the record minus `hash`, sorted-key compact JSON, as Factory's `digest`) is stated in the descriptions, not implemented.
+- **`planner.brief-project-response`**: `idempotencyKey`, `status` (`complete`|`partial`), `briefId`, `briefHash`, `project` (`isNew` says created or reused), `appName`, `stage`, `stateFields {fields, readField, note, hint}`, `epics {created, alreadyPresent, failed}` (`failed.code` closed), `ownerSteps` (closed `code`: `add_project_key`, `set_state_field`, `add_stage_field`, `complete_stage_values`, each with `what`, `setting`, `value`, `command`), `plannerEditsEnv` (always false), `note`, `replayed`.
+- **`planner.brief-project-error`**: `{code, message, details?}` with a closed `code` enum of the 19 codes the planner can answer this route with (statuses in the description). `planner.error` keeps its open `code`.
+- Tests: `tests/validate_planner_brief.py` (in `run_all.py`) validates 17 exchanges captured from the planner's own test suite (`tests/fixtures/youtrack-brief/captured-exchanges.json`) plus negative cases (extra property, section outside the ten, missing or short or over-long section).
+- No consumer is re-pinned by this release (D031); the planner and Factory adopt it through their own later demands.
+
 ## v0.48.0 - 2026-10-04
 
 **Additive** (tag `v0.48.0`, local; the owner pushes). Python and TypeScript bindings regenerated (Java unchanged in output). Fulfils demand

@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.brief-project-request",
+  "title": "PlannerBriefProjectRequest",
+  "description": "Body of `POST /plans/from-brief` on `backlog-planner`, from `youtrack/planner/src/backlog_planner/domain/brief_project.py` (`parse_request`). Creates a tracker project and one epic per outcome from a Harvest brief the owner approved; the approval record stands in for the confirm step on this one call. Brief hash rule: the hash is sha256 over the revision record minus its own `hash` key, serialised as JSON with keys sorted at every level, compact separators (`,` and `:`) and non-ASCII characters left unescaped (Factory's `domain.digest`). The planner rehashes the record it receives that way and refuses the call (`brief_hash_mismatch`) when the result is not `approval.hash`; the schema states the rule and does not compute it. The planner also checks `approval.revision` equals `brief.number` and `approval.inputHash` equals `brief.inputHash`. No property carries a credential; the planner's tracker token never travels in this body.",
+  "type": "object",
+  "required": [
+    "projectKey",
+    "projectName",
+    "model",
+    "brief",
+    "approval"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "projectKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]{1,9}$",
+      "description": "2 to 10 characters: a letter, then letters, digits or `_`. The planner upper-cases it (stored form `^[A-Z][A-Z0-9_]{1,9}$`)."
+    },
+    "projectName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Whitespace is collapsed by the planner."
+    },
+    "appName": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 100
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The ai-gateway model id that derives the epics; must be in the gateway catalog (else `unknown_model`)."
+    },
+    "briefId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Optional; defaults to the first 12 characters of the approval hash."
+    },
+    "brief": {
+      "$ref": "#/$defs/revision"
+    },
+    "approval": {
+      "$ref": "#/$defs/approval"
+    }
+  },
+  "$defs": {
+    "revision": {
+      "type": "object",
+      "title": "BriefRevisionRecord",
+      "description": "The approved Harvest revision record, sent WHOLE (Factory `harvest.py` `revision`). Every key beside `sections` is part of what was hashed, so none may be dropped or added. Brief hash rule: the hash is sha256 over the revision record minus its own `hash` key, serialised as JSON with keys sorted at every level, compact separators (`,` and `:`) and non-ASCII characters left unescaped (Factory's `domain.digest`). The planner rehashes the record it receives that way and refuses the call (`brief_hash_mismatch`) when the result is not `approval.hash`; the schema states the rule and does not compute it.",
+      "required": [
+        "sections",
+        "blockers",
+        "sourceIds",
+        "number",
+        "author",
+        "at",
+        "inputHash",
+        "metadata",
+        "inputs",
+        "questionsChanged",
+        "changed",
+        "hash"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sections": {
+          "type": "object",
+          "required": [
+            "purpose",
+            "users",
+            "journeys",
+            "requirements",
+            "quality",
+            "scope",
+            "constraints",
+            "research",
+            "acceptance",
+            "assumptions"
+          ],
+          "additionalProperties": false,
+          "description": "Exactly the ten Harvest section keys, each 5 to 12000 characters (the planner also refuses a value shorter than 5 characters once trimmed).",
+          "properties": {
+            "purpose": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            },
+            "users": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            },
+            "journeys": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            },
+            "requirements": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            },
+            "quality": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            },
+            "scope": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            },
+            "constraints": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            },
+            "research": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            },
+            "acceptance": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            },
+            "assumptions": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 12000
+            }
+          }
+        },
+        "blockers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1500
+          }
+        },
+        "sourceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "at": {
+          "type": "string",
+          "description": "ISO-8601 time the revision was made."
+        },
+        "inputHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "metadata": {
+          "type": "object",
+          "maxProperties": 20,
+          "propertyNames": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_]{0,39}$"
+          },
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "description": "Draft provenance Factory records (requested model, model, provider, research note; `{}` for an owner-written revision). Bounded: at most 20 scalar values, no nested objects."
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sourceIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              }
+            },
+            "feedbackCount": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "questionsChanged": {
+          "type": "boolean"
+        },
+        "changed": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "purpose",
+              "users",
+              "journeys",
+              "requirements",
+              "quality",
+              "scope",
+              "constraints",
+              "research",
+              "acceptance",
+              "assumptions"
+            ]
+          }
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "The record's own digest. It is excluded when the planner rehashes."
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "title": "BriefApprovalRecord",
+      "required": [
+        "revision",
+        "hash",
+        "inputHash",
+        "at",
+        "actor"
+      ],
+      "additionalProperties": false,
+      "description": "The owner's approval as Factory holds it. `actor` must be `owner`, otherwise the planner refuses with `actor_not_owner`.",
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "inputHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "at": {
+          "type": "string",
+          "description": "ISO-8601 time of the approval."
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      }
+    }
+  }
+}
