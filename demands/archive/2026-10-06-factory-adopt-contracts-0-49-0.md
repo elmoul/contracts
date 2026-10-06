@@ -9,7 +9,7 @@ acceptance-criteria:
   - "The hand-over request Factory builds (the whole approved revision record, the approval record, projectKey, projectName, appName, model, briefId) and the planner answer it stores and shows (created, alreadyPresent, failed with codes, stateFields, ownerSteps, plannerEditsEnv, replayed) and the closed error shape are validated against the generated models for planner.brief-project-request, -response and -error (gen/python in contracts v0.49.0): a request that does not validate is refused before it is sent, an answer that does not validate is recorded as planner_invalid_response exactly as an unreadable answer is today. The skipped-if-missing test that compared Factory's request with the planner repository's own builder is kept or replaced by a conformance test against the contracts models and the captured exchanges contracts ships (tests/fixtures/youtrack-brief), whichever the repository's rules allow"
   - "No change on the wire for a valid exchange and no change to any other route; the existing suite (factory/.run/venv048 only, never another interpreter) passes with added conformance tests; CHANGELOG.md and HEXAGON.md record the pin; the worker rebuilds and restarts nothing and says plainly that the running Factory keeps its image until the owner rebuilds and recreates it (a runtime step)"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand - factory: adopt contracts v0.49.0 for the Harvest hand-over
