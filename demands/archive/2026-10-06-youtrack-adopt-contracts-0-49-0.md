@@ -9,7 +9,7 @@ acceptance-criteria:
   - "The planner's from-brief request model and response builder are checked against the new generated bindings (schemas/youtrack/planner.brief-project-request.json, planner.brief-project-response.json, planner.brief-project-error.json, bindings under gen/python): a conformance test builds the planner's real request body and real response and error payloads (the ones its own tests already produce) and validates them against the contracts models; the hand-written duplicate shapes are removed where the contracts models can replace them without changing behaviour, and kept (with a one-line reason) where they cannot. No behaviour change on the wire: the 374-test planner suite passes unchanged apart from added conformance tests, and the response of every existing route is byte-identical"
   - "CHANGELOG.md and HEXAGON.md record the pin and the conformance; the worker rebuilds and restarts nothing and says plainly that the running planner keeps its current image until the owner rebuilds and recreates it (a runtime step)"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand - youtrack: adopt contracts v0.49.0 for the from-brief call
