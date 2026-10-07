@@ -168,6 +168,47 @@ GOOD_FULFILLMENT_SHIPPED_DATE_NO_SUMMARY_REF = {
     "date": "2026-07-10",
 }
 
+# v0.51.0: optional typed blockers, valid only when status is blocked.
+GOOD_FULFILLMENT_BLOCKED_WITH_BLOCKERS = {
+    "demandId": "demand-coordinator-20261007-contracts-fulfillment-blockers",
+    "worker": "contracts",
+    "status": "blocked",
+    "blockers": [
+        {"kind": "demand", "text": "needs the ai-gateway schema first", "demandId": "ai-gateway-20261007-contracts-ai-request-correlation-id"},
+        {"kind": "runtime-step", "text": "needs a service restart the worker may not perform"},
+        {"kind": "owner-decision", "text": "which of two shapes to ship"},
+        {"kind": "other", "text": "something else"},
+    ],
+}
+BAD_FULFILLMENT_DONE_WITH_BLOCKERS = {
+    **GOOD_FULFILLMENT_BLOCKED_WITH_BLOCKERS,
+    "status": "done",
+}
+BAD_FULFILLMENT_BLOCKER_DEMAND_NO_ID = {
+    **GOOD_FULFILLMENT_BLOCKED_WITH_BLOCKERS,
+    "blockers": [{"kind": "demand", "text": "no id given"}],
+}
+BAD_FULFILLMENT_BLOCKER_ID_ON_NON_DEMAND = {
+    **GOOD_FULFILLMENT_BLOCKED_WITH_BLOCKERS,
+    "blockers": [{"kind": "other", "text": "x", "demandId": "ai-gateway-20261007-contracts-ai-request-correlation-id"}],
+}
+BAD_FULFILLMENT_BLOCKER_BAD_KIND = {
+    **GOOD_FULFILLMENT_BLOCKED_WITH_BLOCKERS,
+    "blockers": [{"kind": "weather", "text": "x"}],
+}
+BAD_FULFILLMENT_BLOCKER_EMPTY_TEXT = {
+    **GOOD_FULFILLMENT_BLOCKED_WITH_BLOCKERS,
+    "blockers": [{"kind": "other", "text": ""}],
+}
+BAD_FULFILLMENT_BLOCKER_BAD_DEMAND_ID = {
+    **GOOD_FULFILLMENT_BLOCKED_WITH_BLOCKERS,
+    "blockers": [{"kind": "demand", "text": "x", "demandId": "Not A Demand"}],
+}
+BAD_FULFILLMENT_BLOCKER_EXTRA_PROP = {
+    **GOOD_FULFILLMENT_BLOCKED_WITH_BLOCKERS,
+    "blockers": [{"kind": "other", "text": "x", "why": "y"}],
+}
+
 BAD_FULFILLMENT = {
     "demandId": "demand-coordinator-20260709-demand-schema",
     "worker": "contracts",
@@ -408,6 +449,21 @@ def main() -> int:
         GOOD_FULFILLMENT_SHIPPED_DATE_NO_SUMMARY_REF,
         "demand.fulfillment: shipped+date, no summaryRef (known-good, proves v0.11.0 optionality)",
     )
+    expect_valid(
+        fulfillment_schema,
+        GOOD_FULFILLMENT_BLOCKED_WITH_BLOCKERS,
+        "demand.fulfillment: blocked report with blockers (known-good)",
+    )
+    for bad, label in [
+        (BAD_FULFILLMENT_DONE_WITH_BLOCKERS, "done report carrying blockers"),
+        (BAD_FULFILLMENT_BLOCKER_DEMAND_NO_ID, "demand blocker without demandId"),
+        (BAD_FULFILLMENT_BLOCKER_ID_ON_NON_DEMAND, "demandId on a non-demand blocker"),
+        (BAD_FULFILLMENT_BLOCKER_BAD_KIND, "unknown blocker kind"),
+        (BAD_FULFILLMENT_BLOCKER_EMPTY_TEXT, "empty blocker text"),
+        (BAD_FULFILLMENT_BLOCKER_BAD_DEMAND_ID, "malformed blocker demandId"),
+        (BAD_FULFILLMENT_BLOCKER_EXTRA_PROP, "extra blocker property"),
+    ]:
+        expect_invalid(fulfillment_schema, bad, f"demand.fulfillment: {label} (known-bad)")
     expect_invalid(
         fulfillment_schema,
         BAD_FULFILLMENT,

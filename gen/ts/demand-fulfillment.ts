@@ -8,7 +8,7 @@
 /**
  * The machine-readable envelope for the YAML frontmatter every repo's demands/fulfilled/<demand-id>-report.md carries (DEMAND_SYSTEM.md §5) — a worker's report back on a demand it was dispatched. The markdown body beneath stays free-form, written for the origin's next session to read. Field casing here is camelCase (demandId, subDemand), matching the interim convention spec-demand-coordinator.md §7 already established for this specific envelope — deliberately not the kebab-case used by the sibling `demand` schema, which instead matches already-committed demand-file frontmatter. `done` is a claim, not a verdict: the coordinator marks it pending-approval and only the owner's approval (never self-certification) makes it real. `shipped`/`date`/`summaryRef` are all optional by design (v0.11.0 reconciliation, demand-coordinator-20260710-contracts-fulfillment-envelope-drift): DEMAND_SYSTEM.md §5 documents `shipped`/`date` as the real convention and the fleet writes them, not `summaryRef` — a report file's own path conventionally *is* the summary.
  */
-export interface DemandFulfillment {
+export type DemandFulfillment = {
   /**
    * The id of the demand this report fulfills (matches `demand.id`'s shape).
    */
@@ -22,7 +22,7 @@ export interface DemandFulfillment {
    */
   worker: string;
   /**
-   * The worker's own claim. `done` is not a verdict — see schema description. `blocked` reports an explicit stall (D023: never a silent one); the reason belongs in the report's markdown body, not this field.
+   * The worker's own claim. `done` is not a verdict — see schema description. `blocked` reports an explicit stall (D023: never a silent one); say what blocks it in the optional `blockers` list (valid only when status is `blocked`) and elaborate in the report's markdown body.
    */
   status: "done" | "blocked";
   /**
@@ -34,7 +34,24 @@ export interface DemandFulfillment {
    */
   shipped?: string[];
   /**
+   * What blocks this report, stated as typed entries so the coordinator can reason about them. Optional, and valid only when `status` is `blocked` (a `done` report carrying `blockers` is invalid; enforced by the `allOf` conditional below, which jsonschema2pojo, datamodel-codegen and json-schema-to-typescript do not generate, so the bindings accept it and the schema-level fixtures in tests/validate_demand.py are the guard).
+   */
+  blockers?: {
+    /**
+     * What sort of blocker this is: another `demand` (then `demandId` is required), a `runtime-step` the worker may not perform, an `owner-decision`, or `other`.
+     */
+    kind: "demand" | "runtime-step" | "owner-decision" | "other";
+    /**
+     * Plain-language statement of the blocker.
+     */
+    text: string;
+    /**
+     * The blocking demand's id, same shape as the report's own `demandId`. Required when `kind` is `demand`, and not allowed for any other kind.
+     */
+    demandId?: string;
+  }[];
+  /**
    * The date this fulfillment report was written, YYYY-MM-DD. Optional.
    */
   date?: string;
-}
+};

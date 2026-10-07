@@ -25,7 +25,7 @@
     },
     "status": {
       "type": "string",
-      "description": "The worker's own claim. `done` is not a verdict — see schema description. `blocked` reports an explicit stall (D023: never a silent one); the reason belongs in the report's markdown body, not this field.",
+      "description": "The worker's own claim. `done` is not a verdict — see schema description. `blocked` reports an explicit stall (D023: never a silent one); say what blocks it in the optional `blockers` list (valid only when status is `blocked`) and elaborate in the report's markdown body.",
       "enum": ["done", "blocked"]
     },
     "summaryRef": {
@@ -39,6 +39,40 @@
       "items": { "type": "string" },
       "examples": [["v0.10.0"], ["demand/observability-telemetry-schema@9eb777c"]]
     },
+    "blockers": {
+      "type": "array",
+      "description": "What blocks this report, stated as typed entries so the coordinator can reason about them. Optional, and valid only when `status` is `blocked` (a `done` report carrying `blockers` is invalid; enforced by the `allOf` conditional below, which jsonschema2pojo, datamodel-codegen and json-schema-to-typescript do not generate, so the bindings accept it and the schema-level fixtures in tests/validate_demand.py are the guard).",
+      "items": {
+        "type": "object",
+        "required": ["kind", "text"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "What sort of blocker this is: another `demand` (then `demandId` is required), a `runtime-step` the worker may not perform, an `owner-decision`, or `other`.",
+            "enum": ["demand", "runtime-step", "owner-decision", "other"]
+          },
+          "text": {
+            "type": "string",
+            "description": "Plain-language statement of the blocker.",
+            "minLength": 1
+          },
+          "demandId": {
+            "type": "string",
+            "description": "The blocking demand's id, same shape as the report's own `demandId`. Required when `kind` is `demand`, and not allowed for any other kind.",
+            "pattern": "^[a-z][a-z0-9-]+-\\d{8}-[a-z0-9-]+$"
+          }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "kind": { "const": "demand" } }, "required": ["kind"] },
+            "then": { "required": ["demandId"] },
+            "else": { "not": { "required": ["demandId"] } }
+          }
+        ],
+        "additionalProperties": false
+      },
+      "examples": [[{ "kind": "demand", "text": "Waiting on the ai-gateway schema", "demandId": "ai-gateway-20261007-contracts-ai-request-correlation-id" }]]
+    },
     "date": {
       "type": "string",
       "format": "date",
@@ -46,5 +80,11 @@
       "examples": ["2026-07-10"]
     }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "blocked" } }, "required": ["status"] },
+      "else": { "not": { "required": ["blockers"] } }
+    }
+  ],
   "additionalProperties": false
 }
