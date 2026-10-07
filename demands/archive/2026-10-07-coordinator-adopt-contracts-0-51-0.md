@@ -8,7 +8,7 @@ acceptance-criteria:
   - "The coordinator's contracts pin moves to v0.51.0 in EVERY place the repository records it (pom.xml, the Dockerfile contracts-m2 COPY destination, HEXAGON.md and any other found by searching the repository for the old version string): the repository's own comment says 'a pom repin is only half a repin'. contracts v0.51.0 is a local tag only and is NOT pushed to GitHub by anyone but the owner: tests resolve the artifact from the local ~/.m2 (the way earlier pin bumps did), and the report states plainly which compose line in runtime/docker-compose.local.yml (service demand-coordinator) must also move to 0.51.0 and that it is runtime's (a demand to runtime is raised from the report, the worker edits no other repository)"
   - "A blocked report whose blockers validate against the schema keeps working exactly as shipped; a blocked report whose blockers do NOT validate is shown as blocked with cause 'blockers invalid' and the validation reason (never silently dropped, never an error that hides the demand); a report with blockers on a non-blocked status is refused as the schema says; an old blocked report without blockers still reads as 'blocked, cause not recorded'. No change to any route or response shape, and the existing suite (mvn -q -o test) passes with the added conformance tests; CHANGELOG.md and HEXAGON.md record the pin; nothing is rebuilt or restarted, and the report says the running coordinator keeps the old behaviour until the owner rebuilds and recreates it (a runtime step, which also needs the compose pin above)"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand - demand-coordinator: adopt contracts v0.51.0 for blockers
