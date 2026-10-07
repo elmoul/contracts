@@ -16,6 +16,16 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.51.0 - 2026-10-07
+
+**Additive** (tag `v0.51.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.51.0; the Python and TypeScript bindings for `demand.fulfillment` regenerated (Java regenerates from the schema at build). Fulfils demand `demand-coordinator-20261007-contracts-fulfillment-blockers`.
+
+- **`demand.fulfillment` `blockers`**: optional array of `{kind, text, demandId}` (`additionalProperties: false`). `kind` is the closed enum `demand`, `runtime-step`, `owner-decision`, `other`; `text` is non-empty; `demandId` uses the report's own demandId pattern, is required when `kind` is `demand` and rejected for any other kind.
+- `blockers` is valid only when `status` is `blocked` (a `done` report carrying it fails). The `status` description no longer says the reason belongs only in the body.
+- **Binding caveat**: both rules are `if/then/else` conditionals, which no generator here emits, so the bindings accept a `done` report with `blockers` or a `demand` blocker without `demandId`; the schema-level fixtures in `tests/validate_demand.py` are the guard. The TypeScript `DemandFulfillment` is now a `type` alias rather than an `interface` (same shape).
+- Tests: `tests/validate_demand.py` covers a blocked report with all four kinds, the existing blocked report without blockers, and seven known-bad cases.
+- No consumer is re-pinned (D031); demand-coordinator re-pins on its own demand.
+
 ## v0.50.0 - 2026-10-07
 
 **Additive** (tag `v0.50.0`, local; the owner pushes). Java, TypeScript and Python bindings regenerated and all three version files at 0.50.0. Fulfils demand `ai-gateway-20261007-contracts-ai-request-correlation-id`.
