@@ -1472,5 +1472,136 @@
     "message": "'model' is required: the ai-gateway model that derives the epics"
    }
   }
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUR",
+   "projectName": "Tutor Booking Risks",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "a47f66c0a9ae47c0acdad1e0ad29e4e08b5d2b8f7651c995f582632677daec3c",
+    "risks": [
+     "Tutor vetting is offline, so a booking may reach an unvetted tutor.",
+     "Payment provider fees are not yet confirmed."
+    ]
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "a47f66c0a9ae47c0acdad1e0ad29e4e08b5d2b8f7651c995f582632677daec3c",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   }
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "a47f66c0a9ae",
+    "briefHash": "a47f66c0a9ae47c0acdad1e0ad29e4e08b5d2b8f7651c995f582632677daec3c",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUR",
+     "name": "Tutor Booking",
+     "isNew": true,
+     "url": "http://localhost:8096/projects/TUR"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "State",
+     "note": "the project has several state fields (State, Stage); using 'State', the first in the project's order. Set STATE_FIELD to choose one",
+     "hint": "The planner and Factory read 'State', not 'Stage'. Set STATE_FIELD=Stage in youtrack/.env and recreate the planner. No field was detached or changed."
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUR-1",
+       "url": "http://localhost:8096/issue/TUR-1"
+      },
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUR-2",
+       "url": "http://localhost:8096/issue/TUR-2"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUR-3",
+       "url": "http://localhost:8096/issue/TUR-3"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUR",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     },
+     {
+      "code": "set_state_field",
+      "what": "Set STATE_FIELD=Stage in youtrack/.env so the delivery surface reads 'Stage', then recreate the planner.",
+      "setting": "STATE_FIELD",
+      "value": "Stage",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": false
+   }
+  },
+  "synthetic": "Built from exchange #0 by hand, not captured from the planner: 'risks' added to the request brief, hash recomputed by the documented rule, project key changed. The response shape is the planner's real one."
  }
 ]

@@ -16,6 +16,15 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.52.0 - 2026-10-07
+
+**Additive** (tag `v0.52.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.52.0; the Python and TypeScript bindings for `planner.brief-project-request` regenerated (Java regenerates from the schema at build). Fulfils demand `factory-20261007-contracts-brief-risks`.
+
+- **`planner.brief-project-request` brief `risks`**: optional array of strings, each 1 to 1500 characters, no maximum count (same as `blockers`). Absent stays valid, so every existing payload and the captured exchanges validate unchanged and a brief without it hashes as before. The description states that the planner rehashes the record as sent, so `risks` is part of the hash when present. `additionalProperties` stays false on the brief, the ten section keys are unchanged, no secret-capable property is added.
+- Tests: `tests/fixtures/youtrack-brief/captured-exchanges.json` gains one **synthetic** accepted exchange (built from captured exchange #0 with `risks` added and the hash recomputed by the documented rule; not captured from the planner). `tests/validate_planner_brief.py` checks it validates, an old payload without `risks` validates, an unknown brief property is still refused, bad `risks` values are refused, and that every accepted brief hashes to its own `hash`.
+- Binding note: datamodel-codegen emitted a bare `Enum` for `ChangedEnum`; restored to `StrEnum` by hand per DEPLOYMENT.md.
+- No consumer is re-pinned (D031); youtrack (planner) and Factory adopt on their own demands.
+
 ## v0.51.0 - 2026-10-07
 
 **Additive** (tag `v0.51.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.51.0; the Python and TypeScript bindings for `demand.fulfillment` regenerated (Java regenerates from the schema at build). Fulfils demand `demand-coordinator-20261007-contracts-fulfillment-blockers`.

@@ -50,7 +50,7 @@ def errors(v, doc):
 exchanges = json.loads(FIX.read_text(encoding="utf-8"))
 accepted = [x for x in exchanges if x["status"] == 200]
 refused = [x for x in exchanges if x["status"] != 200]
-expect(len(accepted) >= 5 and len(refused) >= 8, "fixture holds the captured exchanges")
+expect(len(accepted) >= 6 and len(refused) >= 8, "fixture holds the captured exchanges")
 
 for x in accepted:
     # The stored copies omit idempotencyKey (a sha256 that secret scanners mistake for a key); it is
@@ -125,6 +125,41 @@ for label, mut in [
     expect(errors(RESP, d), f"{label} refused")
 for bad in ({"code": "not_a_code", "message": "m"}, {"code": "approval_invalid", "message": "m", "extra": 1}, {"code": "approval_invalid"}):
     expect(errors(ERR, bad), f"bad error {bad} refused")
+
+# risks (v0.52.0): optional, validated on the synthetic exchange (the one marked "synthetic")
+synthetic = [x for x in accepted if "synthetic" in x]
+expect(len(synthetic) == 1 and synthetic[0]["request"]["brief"].get("risks"), "fixture holds one synthetic exchange whose brief carries risks")
+with_risks = synthetic[0]["request"]
+expect(not errors(REQ, with_risks), "a brief with risks validates")
+expect("risks" not in good["brief"] and not errors(REQ, good), "an old payload without risks still validates")
+body = copy.deepcopy(with_risks)
+body["brief"]["extra"] = 1
+expect(errors(REQ, body), "a brief with risks and an unknown property still refused")
+body = copy.deepcopy(good)
+body["brief"]["unknownList"] = ["x"]
+expect(errors(REQ, body), "a brief with an unknown property (no risks) still refused")
+for label, value in [("empty risk string", [""]), ("risk over 1500 characters", ["x" * 1501]), ("risks not an array", "text"), ("non-string risk", [1])]:
+    body = copy.deepcopy(with_risks)
+    body["brief"]["risks"] = value
+    expect(errors(REQ, body), f"{label} refused")
+body = copy.deepcopy(with_risks)
+body["brief"]["risks"] = ["x" * 1500, "y"]
+expect(not errors(REQ, body), "a 1500-character risk accepted")
+body = copy.deepcopy(with_risks)
+body["brief"]["risks"] = []
+expect(not errors(REQ, body), "an empty risks list accepted")
+
+
+def digest(record):
+    rest = {k: v for k, v in record.items() if k != "hash"}
+    return hashlib.sha256(json.dumps(rest, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+
+
+expect(digest(with_risks["brief"]) == with_risks["brief"]["hash"] == with_risks["approval"]["hash"], "the risks brief hash follows the documented rule, risks included")
+stripped = copy.deepcopy(with_risks["brief"])
+del stripped["risks"]
+expect(digest(stripped) != with_risks["brief"]["hash"], "risks is part of the hash when present")
+expect(all(digest(x["request"]["brief"]) == x["request"]["brief"]["hash"] for x in accepted), "every accepted brief hashes to its own hash by the documented rule")
 
 if failures:
     print(f"{len(failures)} failure(s)")

@@ -49,6 +49,10 @@ export interface BriefRevisionRecord {
     assumptions: string;
   };
   blockers: string[];
+  /**
+   * Optional. Risks the owner accepted when approving; unlike `blockers` they do not block approval. Absent is valid and such a brief hashes exactly as before. The planner rehashes the record as sent, so when `risks` is present it is part of the hash and must be sent unchanged.
+   */
+  risks?: string[];
   sourceIds: string[];
   number: number;
   author: string;
