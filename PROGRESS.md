@@ -1698,3 +1698,18 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-07_2119_fulfill-demand-factory-20261007-contract
+
+## Session 124 (2026-10-07)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-07_2219_fulfill-demand-factory-20261007-contract.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+agent-runner's dispatch supervisor from an auto-drafted, unconfirmed close --
+not a second hand-written account, and not yet reviewed by a human or the
+worker agent itself).
+
+- State: Fulfill demand factory-20261007-contracts-brief-risks (capability: The published planner.brief-project-request schema accepts an optional 'risks' list inside the approved brief revision record, so a Harvest brief that carries risks can be handed to the planner, from: factory, target: contracts). Bef... -- status: done (close: auto-drafted, unconfirmed).
+- Next step: Review this session's auto-drafted close (`.brain/sessions/2026-10-07_2219_fulfill-demand-factory-20261007-contract.md`) and confirm or correct it.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-07_2219_fulfill-demand-factory-20261007-contract
