@@ -1672,3 +1672,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-07_1854_close-the-loop-on-demand-contracts-20261
+
+## Session 122 (2026-10-07)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-07_1912_close-the-loop-on-demand-contracts-20261.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Close the loop on demand contracts-20261007-coordinator-adopt-contracts-0-51-0. The owner approved it on 2026-10-04; the only thing left is this repo's own archive bookkeeping. 1. GET http://localhost:8082/satisfied/contracts -- find contracts-20261007-coordinator-adopt-contracts-0-51-0 in the assem... -- status: partial.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-07_1912_close-the-loop-on-demand-contracts-20261
