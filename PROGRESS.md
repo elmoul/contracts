@@ -1685,3 +1685,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-07_1912_close-the-loop-on-demand-contracts-20261
+
+## Session 123 (2026-10-07)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-07_2119_fulfill-demand-factory-20261007-contract.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: fulfill demand factory-20261007-contracts-brief-risks -- status: done.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-07_2119_fulfill-demand-factory-20261007-contract
