@@ -16,6 +16,15 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.50.0 - 2026-10-07
+
+**Additive** (tag `v0.50.0`, local; the owner pushes). Java, TypeScript and Python bindings regenerated and all three version files at 0.50.0. Fulfils demand `ai-gateway-20261007-contracts-ai-request-correlation-id`.
+
+- **`ai.request` `AiRequest.correlationId`**: optional string, 1 to 128 characters, pattern `^[A-Za-z0-9._:/-]+$`. Documented as an opaque identifier, never user content, safe to store and display; the gateway may echo it into its call ledger. Not required, so every existing request still validates.
+- Same optional field, same rules, on `ai.job.request` (`AiJobRequest`) and the research request (`ResearchJobRequest`). It is distinct from `jobId`.
+- Tests: `tests/validate_ai_request.py` covers absent, valid, 128 and 129 characters, empty, and free-text values for all three request shapes.
+- No consumer is re-pinned by this release (D031); ai-gateway re-pins through its own change.
+
 ## v0.49.0 - 2026-10-06
 
 **Additive** (tag `v0.49.0`, local; the owner pushes). Python and TypeScript bindings regenerated (Java unchanged in output; `gen/java/pom.xml` stays at 0.48.0). Fulfils demand
