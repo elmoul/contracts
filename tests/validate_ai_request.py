@@ -119,6 +119,24 @@ def main() -> int:
     expect_valid(request_schema, GOOD_WITHOUT_MEDIA, "ai.request: AiRequest without media (known-good, proves optional)")
     expect_invalid(request_schema, BAD_MEDIA_MISSING_MIMETYPE, "ai.request: media item missing mimeType (known-bad)")
 
+    expect_valid(request_schema, {**GOOD_WITHOUT_MEDIA, "correlationId": "dash-20261007/req:42_a.b-c"}, "ai.request: optional correlationId (known-good)")
+    expect_valid(request_schema, {**GOOD_WITHOUT_MEDIA, "correlationId": "x" * 128}, "ai.request: correlationId at 128 chars (known-good)")
+    expect_invalid(request_schema, {**GOOD_WITHOUT_MEDIA, "correlationId": "x" * 129}, "ai.request: correlationId over 128 chars (known-bad)")
+    expect_invalid(request_schema, {**GOOD_WITHOUT_MEDIA, "correlationId": ""}, "ai.request: empty correlationId (known-bad)")
+    expect_invalid(request_schema, {**GOOD_WITHOUT_MEDIA, "correlationId": "has space and user@example.com"}, "ai.request: correlationId with free text (known-bad)")
+
+    for name, base in (
+        ("ai.job.request", {"jobId": "8b1f6a5e-1c2d-4e3f-9a4b-5c6d7e8f9a0b", "appId": "plantpal", "capability": "text-to-image", "input": {"prompt": "a fern"}, "params": {}, "jobClass": "interactive"}),
+        ("research.request", {"jobId": "8b1f6a5e-1c2d-4e3f-9a4b-5c6d7e8f9a0b", "appId": "plantpal", "sources": [{"url": "https://example.com/a", "maxDurationMs": 5000, "maxBytesPerSource": 100000}]}),
+    ):
+        spec_path = "job.yaml" if name == "ai.job.request" else "research.yaml"
+        schema_name = "AiJobRequest" if name == "ai.job.request" else "ResearchJobRequest"
+        spec = yaml.safe_load((ROOT / "schemas" / "ai-gateway" / spec_path).read_text(encoding="utf-8"))
+        job_schema = {**spec["components"]["schemas"][schema_name], "components": spec["components"]}
+        expect_valid(job_schema, base, f"{name}: without correlationId (known-good, proves optional)")
+        expect_valid(job_schema, {**base, "correlationId": "trace-1"}, f"{name}: with correlationId (known-good)")
+        expect_invalid(job_schema, {**base, "correlationId": "bad id"}, f"{name}: malformed correlationId (known-bad)")
+
     response_schema = load_ai_response_schema()
 
     expect_valid(response_schema, GOOD_COMPLETED_RESPONSE, "ai.response: completed call (known-good, proves pre-existing shape unaffected)")

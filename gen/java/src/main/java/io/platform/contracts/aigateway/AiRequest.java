@@ -39,9 +39,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
   AiRequest.JSON_PROPERTY_APP_ID,
   AiRequest.JSON_PROPERTY_USER_ID,
   AiRequest.JSON_PROPERTY_CONTEXT,
+  AiRequest.JSON_PROPERTY_CORRELATION_ID,
   AiRequest.JSON_PROPERTY_MEDIA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-14T05:52:58.887587400+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-10-07T14:51:21.479464400+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AiRequest {
   public static final String JSON_PROPERTY_PROMPT = "prompt";
   @jakarta.annotation.Nonnull
@@ -62,6 +63,10 @@ public class AiRequest {
   public static final String JSON_PROPERTY_CONTEXT = "context";
   @jakarta.annotation.Nullable
   private Map<String, Object> context = new HashMap<>();
+
+  public static final String JSON_PROPERTY_CORRELATION_ID = "correlationId";
+  @jakarta.annotation.Nullable
+  private String correlationId;
 
   public static final String JSON_PROPERTY_MEDIA = "media";
   @jakarta.annotation.Nullable
@@ -203,6 +208,31 @@ public class AiRequest {
     this.context = context;
   }
 
+  public AiRequest correlationId(@jakarta.annotation.Nullable String correlationId) {
+    
+    this.correlationId = correlationId;
+    return this;
+  }
+
+  /**
+   * Optional caller-set correlation identifier (1 to 128 characters from letters, digits and . _ : / -). An opaque identifier for tying this AI call to the action that caused it, never user content: no prompt text, names, email addresses or other personal data. Safe to store and to display. The gateway does not interpret it; it may echo it into its call ledger. Absent means the caller supplied none. Additive and optional, so existing callers and consumers are unaffected. 
+   * @return correlationId
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_CORRELATION_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCorrelationId() {
+    return correlationId;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_CORRELATION_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCorrelationId(@jakarta.annotation.Nullable String correlationId) {
+    this.correlationId = correlationId;
+  }
+
   public AiRequest media(@jakarta.annotation.Nullable List<AiRequestMediaInner> media) {
     
     this.media = media;
@@ -251,12 +281,13 @@ public class AiRequest {
         Objects.equals(this.appId, aiRequest.appId) &&
         Objects.equals(this.userId, aiRequest.userId) &&
         Objects.equals(this.context, aiRequest.context) &&
+        Objects.equals(this.correlationId, aiRequest.correlationId) &&
         Objects.equals(this.media, aiRequest.media);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(prompt, modelHint, appId, userId, context, media);
+    return Objects.hash(prompt, modelHint, appId, userId, context, correlationId, media);
   }
 
   @Override
@@ -268,6 +299,7 @@ public class AiRequest {
     sb.append("    appId: ").append(toIndentedString(appId)).append("\n");
     sb.append("    userId: ").append(toIndentedString(userId)).append("\n");
     sb.append("    context: ").append(toIndentedString(context)).append("\n");
+    sb.append("    correlationId: ").append(toIndentedString(correlationId)).append("\n");
     sb.append("    media: ").append(toIndentedString(media)).append("\n");
     sb.append("}");
     return sb.toString();

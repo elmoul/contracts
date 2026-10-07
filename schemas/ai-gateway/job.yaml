@@ -91,6 +91,18 @@ components:
           examples:
             - "plantpal"
             - "design-studio"
+        correlationId:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: "^[A-Za-z0-9._:/-]+$"
+          description: >
+            Optional caller-set correlation identifier, same rules as
+            ai.request's correlationId (1 to 128 characters from letters,
+            digits and . _ : / -; an opaque identifier, never user content;
+            safe to store and display). Ties this job to the action that
+            caused it; distinct from jobId, which identifies the job itself.
+            The gateway may echo it into its call ledger.
         capability:
           type: string
           enum: ["text-to-image", "image-to-3d"]

@@ -44,6 +44,8 @@ export interface components {
             context?: {
                 [key: string]: unknown;
             };
+            /** @description Optional caller-set correlation identifier (1 to 128 characters from letters, digits and . _ : / -). An opaque identifier for tying this AI call to the action that caused it, never user content: no prompt text, names, email addresses or other personal data. Safe to store and to display. The gateway does not interpret it; it may echo it into its call ledger. Absent means the caller supplied none. Additive and optional, so existing callers and consumers are unaffected. */
+            correlationId?: string;
             /** @description Optional media attachments for multimodal requests (e.g. photo-based identification). Passed through by the gateway to providers that support vision input; ignored by text-only providers. */
             media?: {
                 /**

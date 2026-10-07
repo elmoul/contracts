@@ -35,9 +35,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @JsonPropertyOrder({
   ResearchJobRequest.JSON_PROPERTY_JOB_ID,
   ResearchJobRequest.JSON_PROPERTY_APP_ID,
+  ResearchJobRequest.JSON_PROPERTY_CORRELATION_ID,
   ResearchJobRequest.JSON_PROPERTY_SOURCES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-09-19T02:54:26.978486300+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-10-07T14:51:25.701990700+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class ResearchJobRequest {
   public static final String JSON_PROPERTY_JOB_ID = "jobId";
   @jakarta.annotation.Nonnull
@@ -46,6 +47,10 @@ public class ResearchJobRequest {
   public static final String JSON_PROPERTY_APP_ID = "appId";
   @jakarta.annotation.Nonnull
   private String appId;
+
+  public static final String JSON_PROPERTY_CORRELATION_ID = "correlationId";
+  @jakarta.annotation.Nullable
+  private String correlationId;
 
   public static final String JSON_PROPERTY_SOURCES = "sources";
   @jakarta.annotation.Nonnull
@@ -104,6 +109,31 @@ public class ResearchJobRequest {
     this.appId = appId;
   }
 
+  public ResearchJobRequest correlationId(@jakarta.annotation.Nullable String correlationId) {
+    
+    this.correlationId = correlationId;
+    return this;
+  }
+
+  /**
+   * Optional caller-set correlation identifier, same rules as ai.request&#39;s correlationId (1 to 128 characters from letters, digits and . _ : / -; an opaque identifier, never user content; safe to store and display). Ties this research job to the action that caused it; distinct from jobId, which identifies the job itself. The gateway may echo it into its call ledger. 
+   * @return correlationId
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_CORRELATION_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCorrelationId() {
+    return correlationId;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_CORRELATION_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCorrelationId(@jakarta.annotation.Nullable String correlationId) {
+    this.correlationId = correlationId;
+  }
+
   public ResearchJobRequest sources(@jakarta.annotation.Nonnull List<SourceRequest> sources) {
     
     this.sources = sources;
@@ -149,12 +179,13 @@ public class ResearchJobRequest {
     ResearchJobRequest researchJobRequest = (ResearchJobRequest) o;
     return Objects.equals(this.jobId, researchJobRequest.jobId) &&
         Objects.equals(this.appId, researchJobRequest.appId) &&
+        Objects.equals(this.correlationId, researchJobRequest.correlationId) &&
         Objects.equals(this.sources, researchJobRequest.sources);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(jobId, appId, sources);
+    return Objects.hash(jobId, appId, correlationId, sources);
   }
 
   @Override
@@ -163,6 +194,7 @@ public class ResearchJobRequest {
     sb.append("class ResearchJobRequest {\n");
     sb.append("    jobId: ").append(toIndentedString(jobId)).append("\n");
     sb.append("    appId: ").append(toIndentedString(appId)).append("\n");
+    sb.append("    correlationId: ").append(toIndentedString(correlationId)).append("\n");
     sb.append("    sources: ").append(toIndentedString(sources)).append("\n");
     sb.append("}");
     return sb.toString();

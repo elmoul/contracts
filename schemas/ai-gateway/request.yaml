@@ -69,6 +69,19 @@ components:
             Provider-agnostic call context: system prompt, conversation history,
             temperature, max tokens, etc. Passed through by the gateway.
           additionalProperties: true
+        correlationId:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: "^[A-Za-z0-9._:/-]+$"
+          description: >
+            Optional caller-set correlation identifier (1 to 128 characters from
+            letters, digits and . _ : / -). An opaque identifier for tying this
+            AI call to the action that caused it, never user content: no prompt text,
+            names, email addresses or other personal data. Safe to store and to
+            display. The gateway does not interpret it; it may echo it into its
+            call ledger. Absent means the caller supplied none. Additive and optional,
+            so existing callers and consumers are unaffected.
         media:
           type: array
           description: >

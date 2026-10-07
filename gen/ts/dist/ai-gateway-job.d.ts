@@ -57,6 +57,8 @@ export interface components {
              * @example design-studio
              */
             appId: string;
+            /** @description Optional caller-set correlation identifier, same rules as ai.request's correlationId (1 to 128 characters from letters, digits and . _ : / -; an opaque identifier, never user content; safe to store and display). Ties this job to the action that caused it; distinct from jobId, which identifies the job itself. The gateway may echo it into its call ledger. */
+            correlationId?: string;
             /**
              * @description The generation capability this job requests. Matches one of media-generation's registered CapabilityPort adapters. Video is a reserved capability slot (spec-media-generation.md §8) with no model/spec commitment yet, so it is deliberately not in this enum.
              * @enum {string}

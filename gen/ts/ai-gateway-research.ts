@@ -61,6 +61,8 @@ export interface components {
              * @example design-studio
              */
             appId: string;
+            /** @description Optional caller-set correlation identifier, same rules as ai.request's correlationId (1 to 128 characters from letters, digits and . _ : / -; an opaque identifier, never user content; safe to store and display). Ties this research job to the action that caused it; distinct from jobId, which identifies the job itself. The gateway may echo it into its call ledger. */
+            correlationId?: string;
             /** @description The URLs to retrieve, each with its own retrieval bounds. The gateway fetches each independently -- one source failing does not fail the others. */
             sources: components["schemas"]["SourceRequest"][];
         };

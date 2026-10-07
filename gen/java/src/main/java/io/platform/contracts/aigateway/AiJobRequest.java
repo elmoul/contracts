@@ -34,12 +34,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @JsonPropertyOrder({
   AiJobRequest.JSON_PROPERTY_JOB_ID,
   AiJobRequest.JSON_PROPERTY_APP_ID,
+  AiJobRequest.JSON_PROPERTY_CORRELATION_ID,
   AiJobRequest.JSON_PROPERTY_CAPABILITY,
   AiJobRequest.JSON_PROPERTY_INPUT,
   AiJobRequest.JSON_PROPERTY_PARAMS,
   AiJobRequest.JSON_PROPERTY_JOB_CLASS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-07-16T11:06:05.735315800+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2026-10-07T14:51:23.607276200+01:00[Africa/Casablanca]", comments = "Generator version: 7.23.0")
 public class AiJobRequest {
   public static final String JSON_PROPERTY_JOB_ID = "jobId";
   @jakarta.annotation.Nonnull
@@ -48,6 +49,10 @@ public class AiJobRequest {
   public static final String JSON_PROPERTY_APP_ID = "appId";
   @jakarta.annotation.Nonnull
   private String appId;
+
+  public static final String JSON_PROPERTY_CORRELATION_ID = "correlationId";
+  @jakarta.annotation.Nullable
+  private String correlationId;
 
   /**
    * The generation capability this job requests. Matches one of media-generation&#39;s registered CapabilityPort adapters. Video is a reserved capability slot (spec-media-generation.md §8) with no model/spec commitment yet, so it is deliberately not in this enum. 
@@ -188,6 +193,31 @@ public class AiJobRequest {
     this.appId = appId;
   }
 
+  public AiJobRequest correlationId(@jakarta.annotation.Nullable String correlationId) {
+    
+    this.correlationId = correlationId;
+    return this;
+  }
+
+  /**
+   * Optional caller-set correlation identifier, same rules as ai.request&#39;s correlationId (1 to 128 characters from letters, digits and . _ : / -; an opaque identifier, never user content; safe to store and display). Ties this job to the action that caused it; distinct from jobId, which identifies the job itself. The gateway may echo it into its call ledger. 
+   * @return correlationId
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(value = JSON_PROPERTY_CORRELATION_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCorrelationId() {
+    return correlationId;
+  }
+
+
+  @JsonProperty(value = JSON_PROPERTY_CORRELATION_ID, required = false)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCorrelationId(@jakarta.annotation.Nullable String correlationId) {
+    this.correlationId = correlationId;
+  }
+
   public AiJobRequest capability(@jakarta.annotation.Nonnull CapabilityEnum capability) {
     
     this.capability = capability;
@@ -305,6 +335,7 @@ public class AiJobRequest {
     AiJobRequest aiJobRequest = (AiJobRequest) o;
     return Objects.equals(this.jobId, aiJobRequest.jobId) &&
         Objects.equals(this.appId, aiJobRequest.appId) &&
+        Objects.equals(this.correlationId, aiJobRequest.correlationId) &&
         Objects.equals(this.capability, aiJobRequest.capability) &&
         Objects.equals(this.input, aiJobRequest.input) &&
         Objects.equals(this.params, aiJobRequest.params) &&
@@ -313,7 +344,7 @@ public class AiJobRequest {
 
   @Override
   public int hashCode() {
-    return Objects.hash(jobId, appId, capability, input, params, jobClass);
+    return Objects.hash(jobId, appId, correlationId, capability, input, params, jobClass);
   }
 
   @Override
@@ -322,6 +353,7 @@ public class AiJobRequest {
     sb.append("class AiJobRequest {\n");
     sb.append("    jobId: ").append(toIndentedString(jobId)).append("\n");
     sb.append("    appId: ").append(toIndentedString(appId)).append("\n");
+    sb.append("    correlationId: ").append(toIndentedString(correlationId)).append("\n");
     sb.append("    capability: ").append(toIndentedString(capability)).append("\n");
     sb.append("    input: ").append(toIndentedString(input)).append("\n");
     sb.append("    params: ").append(toIndentedString(params)).append("\n");
