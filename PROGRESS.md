@@ -1644,3 +1644,16 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-07_1605_fulfill-demand-demand-coordinator-202610
+
+## Session 120 (2026-10-07)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-07_1633_raise-1-prepared-demand-s-from-this-repo.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Raise 1 prepared demand(s) from this repository (origin: contracts). This is a coordination task only: no code changes. Staged files (read-only source, in the platform root repo): ../docs/demands-ready/<name> - 2026-10-07-coordinator-adopt-contracts-0-51-0.md For each file, in the order listed: 1. C... -- status: partial.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-07_1633_raise-1-prepared-demand-s-from-this-repo
