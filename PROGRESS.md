@@ -1631,3 +1631,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-07_1450_fulfill-demand-ai-gateway-20261007-contr
+
+## Session 119 (2026-10-07)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-07_1605_fulfill-demand-demand-coordinator-202610.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand demand-coordinator-20261007-contracts-fulfillment-blockers (capability: demand.fulfillment gains an optional blockers list (kind, text, demandId) valid only when status is blocked, so a blocked report can state what blocks it, from: demand-coordinator, target: contracts). Before worki... -- status: partial.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-07_1605_fulfill-demand-demand-coordinator-202610
