@@ -56,7 +56,9 @@ for x in accepted:
     # The stored copies omit idempotencyKey (a sha256 that secret scanners mistake for a key); it is
     # rebuilt from the documented rule, which the planner's real answers were checked against.
     d = x["response"]["data"]
-    d["idempotencyKey"] = hashlib.sha256(f"{d['briefHash']}:{d['project']['shortName']}".encode()).hexdigest()
+    scope = x["request"].get("scope", "epics")
+    suffix = "" if scope == "epics" else f":{scope}"
+    d["idempotencyKey"] = hashlib.sha256(f"{d['briefHash']}:{d['project']['shortName']}{suffix}".encode()).hexdigest()
 
 for i, x in enumerate(accepted):
     expect(not errors(REQ, x["request"]), f"captured request #{i} validates: {[e.message for e in errors(REQ, x['request'])][:2]}")
@@ -127,8 +129,8 @@ for bad in ({"code": "not_a_code", "message": "m"}, {"code": "approval_invalid",
     expect(errors(ERR, bad), f"bad error {bad} refused")
 
 # risks (v0.52.0): optional, validated on the synthetic exchange (the one marked "synthetic")
-synthetic = [x for x in accepted if "synthetic" in x]
-expect(len(synthetic) == 1 and synthetic[0]["request"]["brief"].get("risks"), "fixture holds one synthetic exchange whose brief carries risks")
+synthetic = [x for x in accepted if "synthetic" in x and x["request"]["brief"].get("risks")]
+expect(len(synthetic) == 1, "fixture holds one synthetic exchange whose brief carries risks")
 with_risks = synthetic[0]["request"]
 expect(not errors(REQ, with_risks), "a brief with risks validates")
 expect("risks" not in good["brief"] and not errors(REQ, good), "an old payload without risks still validates")
@@ -160,6 +162,69 @@ stripped = copy.deepcopy(with_risks["brief"])
 del stripped["risks"]
 expect(digest(stripped) != with_risks["brief"]["hash"], "risks is part of the hash when present")
 expect(all(digest(x["request"]["brief"]) == x["request"]["brief"]["hash"] for x in accepted), "every accepted brief hashes to its own hash by the documented rule")
+
+# scope and tasks (v0.53.0): the two synthetic exchanges carry scope all and scope tasks (replayed)
+scoped = {x["request"]["scope"]: x for x in accepted if "scope" in x["request"]}
+expect(set(scoped) == {"all", "tasks"}, f"fixture holds one scope all and one scope tasks exchange (got {sorted(scoped)})")
+expect(all("synthetic" in x for x in scoped.values()), "the scoped exchanges are marked synthetic")
+for sc, x in scoped.items():
+    expect(not errors(REQ, x["request"]), f"scope {sc} request validates")
+    expect(not errors(RESP, x["response"]["data"]), f"scope {sc} answer validates: {[e.message for e in errors(RESP, x['response']['data'])][:2]}")
+    expect(x["response"]["data"]["scope"] == sc, f"scope {sc} answer states the scope it ran")
+all_ans = scoped["all"]["response"]["data"]
+expect(len(all_ans["tasks"]["created"]) >= 2 and len({t["epicKey"] for t in all_ans["tasks"]["created"]}) == 2, "scope all answer has tasks under two epics")
+expect({t["epicKey"] for t in all_ans["tasks"]["created"]} <= {e["key"] for e in all_ans["epics"]["created"]}, "every task names an epic of the same answer")
+rep = scoped["tasks"]["response"]["data"]
+expect(rep["replayed"] and rep["tasks"]["alreadyPresent"] and not rep["tasks"]["created"], "scope tasks replay lists tasks as alreadyPresent")
+expect(all_ans["idempotencyKey"] != rep["idempotencyKey"] != accepted[0]["response"]["data"]["idempotencyKey"], "scope is part of the idempotency key rule")
+
+# old requests and answers (no scope, no tasks) still validate; omitted scope = epics
+expect("scope" not in good and not errors(REQ, good), "a request without scope validates")
+expect("scope" not in resp and "tasks" not in resp and not errors(RESP, resp), "an old answer without scope and tasks validates")
+body = copy.deepcopy(good)
+body["scope"] = "epics"
+expect(not errors(REQ, body), "scope epics validates")
+for bad_scope in ("everything", "", "EPICS", None, 1, ["epics"]):
+    body = copy.deepcopy(good)
+    body["scope"] = bad_scope
+    expect(errors(REQ, body), f"unknown scope {bad_scope!r} refused")
+d = copy.deepcopy(resp)
+d["scope"] = "epics"
+d["tasks"] = {"created": [], "alreadyPresent": [], "failed": []}
+expect(not errors(RESP, d), "scope epics with an empty tasks object validates")
+d["scope"] = "weird"
+expect(errors(RESP, d), "unknown response scope refused")
+task = copy.deepcopy(all_ans["tasks"]["created"][0])
+for label, mut in [
+    ("task without its parent epic key", lambda t: t.pop("epicKey")),
+    ("task without its own key", lambda t: t.pop("key")),
+    ("created task without id", lambda t: t.pop("id")),
+    ("created task with an extra property", lambda t: t.update(token="x")),
+]:
+    d = copy.deepcopy(all_ans)
+    t = copy.deepcopy(task)
+    mut(t)
+    d["tasks"]["created"] = [t]
+    expect(errors(RESP, d), f"{label} refused")
+    d = copy.deepcopy(all_ans)
+    d["tasks"]["created"] = []
+    d["tasks"]["alreadyPresent"] = [t]
+    if "id" not in t or "epicKey" not in t or "key" not in t or "token" in t:
+        expect(errors(RESP, d), f"{label} refused in alreadyPresent")
+failed_task = {"key": "k", "epicKey": "e", "title": "t", "code": "not_attempted", "reason": "its epic failed"}
+d = copy.deepcopy(all_ans)
+d["status"] = "partial"
+d["tasks"]["failed"] = [failed_task]
+expect(not errors(RESP, d), "a failed task with parent epic key and closed code validates")
+for label, mut in [("without epicKey", lambda t: t.pop("epicKey")), ("with unknown code", lambda t: t.update(code="weird")), ("without reason", lambda t: t.pop("reason"))]:
+    d = copy.deepcopy(all_ans)
+    t = copy.deepcopy(failed_task)
+    mut(t)
+    d["tasks"]["failed"] = [t]
+    expect(errors(RESP, d), f"a failed task {label} refused")
+d = copy.deepcopy(all_ans)
+d["tasks"]["extra"] = []
+expect(errors(RESP, d), "extra property on tasks refused")
 
 if failures:
     print(f"{len(failures)} failure(s)")

@@ -4,11 +4,11 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 /**
- * The `data` payload of a 200 answer from `POST /plans/from-brief` (`{"data": ...}`), built by `BriefProjectService._result` in `brief_project.py`. `status` is `partial` when any epic failed (a retry creates only the missing epics) and `complete` otherwise; only a complete result is stored and replayed. Nothing here carries a credential or a raw upstream body.
+ * The `data` payload of a 200 answer from `POST /plans/from-brief` (`{"data": ...}`), built by `BriefProjectService._result` in `brief_project.py`. `status` is `partial` when any epic or task failed (a retry creates only the missing ones) and `complete` otherwise; only a complete result is stored and replayed. Nothing here carries a credential or a raw upstream body.
  */
 export interface PlannerBriefProjectResponse {
     /**
-     * sha256 of `<brief hash>:<project key>`.
+     * sha256 of `<brief hash>:<project key>` when the scope is `epics`; for scope `tasks` or `all` the scope is part of the input (`<brief hash>:<project key>:<scope>`).
      */
     idempotencyKey: string;
     status: "complete" | "partial";
@@ -93,4 +93,48 @@ export interface PlannerBriefProjectResponse {
      * true when this is the stored first result of the same brief hash and project key; this call wrote nothing.
      */
     replayed: boolean;
+    /**
+     * The scope the planner ran (the request's `scope`, `epics` when it was omitted). Absent in answers produced before this property existed; a reader treats absent as `epics`.
+     */
+    scope?: "epics" | "tasks" | "all";
+    /**
+     * The child tasks, with the same three lists as `epics`; each item names its own outcome key and its parent epic's key. When the scope is `epics` this object is ABSENT (the planner omits it); an empty object with three empty lists is also valid, so old answers and a reader that tolerates either form both validate. A `partial` status also covers failed tasks (a retry creates only the missing ones).
+     */
+    tasks?: {
+        created: TaskCreated[];
+        alreadyPresent: TaskCreated[];
+        failed: TaskFailed[];
+    };
+}
+export interface TaskCreated {
+    /**
+     * The task's own outcome key.
+     */
+    key: string;
+    /**
+     * The outcome key of the parent epic (the `key` of an item in `epics`).
+     */
+    epicKey: string;
+    title: string;
+    /**
+     * Readable issue id, e.g. TUT-7.
+     */
+    id: string;
+    url: string;
+}
+export interface TaskFailed {
+    /**
+     * The task's own outcome key.
+     */
+    key: string;
+    /**
+     * The outcome key of the parent epic (the `key` of an item in `epics`).
+     */
+    epicKey: string;
+    title: string;
+    /**
+     * The planner error code of the failed write, or `not_attempted` (for example a task whose parent epic failed).
+     */
+    code: "tracker_rejected" | "tracker_unavailable" | "tracker_auth_rejected" | "tracker_not_configured" | "field_conflict" | "not_attempted";
+    reason: string;
 }

@@ -16,6 +16,16 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.53.0 - 2026-10-08
+
+**Additive** (tag `v0.53.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.53.0; the Python and TypeScript bindings for `planner.brief-project-request` and `-response` regenerated (Java regenerates from the schema at build). Fulfils demand `factory-20261008-contracts-from-brief-tasks`.
+
+- **`planner.brief-project-request` `scope`**: optional enum `epics`, `tasks`, `all`. Omitted means `epics`, exactly today's behaviour, so every existing payload and captured exchange validates unchanged. `tasks`: the epics for the brief already exist (found by their stored outcome markers), create only the missing child tasks. `all`: epics and tasks together. The description states the idempotency key derives from brief hash, project key and scope: unchanged `sha256(<hash>:<key>)` for `epics`, `<hash>:<key>:<scope>` for `tasks` and `all` (a reading of the demand, for the planner to confirm).
+- **`planner.brief-project-response` `scope` and `tasks`**: both optional (old answers validate). `scope` is the scope the planner ran. `tasks` has the same `created` / `alreadyPresent` / `failed` lists as `epics`; every item carries its own `key`, the parent `epicKey` and `title`, created and alreadyPresent items also `id` and `url`, failed items a closed `code` (the existing six, no new code) and `reason`. When the scope is `epics` the planner omits `tasks`; an empty object with three empty lists is also valid. `status` `partial` now also covers failed tasks. `additionalProperties` stays false, the ten section keys and every limit are unchanged, no secret-capable property is added.
+- Tests: `captured-exchanges.json` gains two **synthetic** accepted exchanges built from captured exchange #0 (scope `all` with four tasks under two epics; scope `tasks` replayed, all `alreadyPresent`). `tests/validate_planner_brief.py` checks old payloads still validate, scope `all` and `tasks` validate, unknown scope values are refused, a task item without its parent epic key is refused, and the idempotency-key rule per scope.
+- Binding note: datamodel-codegen again emitted bare `Enum`; restored to `StrEnum` by hand per DEPLOYMENT.md.
+- No consumer is re-pinned (D031); youtrack (planner) and Factory adopt on their own demands.
+
 ## v0.52.0 - 2026-10-07
 
 **Additive** (tag `v0.52.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.52.0; the Python and TypeScript bindings for `planner.brief-project-request` regenerated (Java regenerates from the schema at build). Fulfils demand `factory-20261007-contracts-brief-risks`.

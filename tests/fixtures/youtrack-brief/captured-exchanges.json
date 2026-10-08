@@ -1603,5 +1603,331 @@
    }
   },
   "synthetic": "Built from exchange #0 by hand, not captured from the planner: 'risks' added to the request brief, hash recomputed by the documented rule, project key changed. The response shape is the planner's real one."
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   },
+   "scope": "all"
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": true,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "State",
+     "note": "the project has several state fields (State, Stage); using 'State', the first in the project's order. Set STATE_FIELD to choose one",
+     "hint": "The planner and Factory read 'State', not 'Stage'. Set STATE_FIELD=Stage in youtrack/.env and recreate the planner. No field was detached or changed."
+    },
+    "epics": {
+     "created": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-1",
+       "url": "http://localhost:8096/issue/TUT-1"
+      },
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-3",
+       "url": "http://localhost:8096/issue/TUT-3"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUT",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     },
+     {
+      "code": "set_state_field",
+      "what": "Set STATE_FIELD=Stage in youtrack/.env so the delivery surface reads 'Stage', then recreate the planner.",
+      "setting": "STATE_FIELD",
+      "value": "Stage",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": false,
+    "scope": "all",
+    "tasks": {
+     "created": [
+      {
+       "key": "tutor-search-filters",
+       "epicKey": "tutor-search",
+       "title": "Filter tutors by subject and level",
+       "id": "TUT-4",
+       "url": "http://localhost:8096/issue/TUT-4"
+      },
+      {
+       "key": "tutor-search-results",
+       "epicKey": "tutor-search",
+       "title": "Show tutor results with prices",
+       "id": "TUT-5",
+       "url": "http://localhost:8096/issue/TUT-5"
+      },
+      {
+       "key": "booking-payment-checkout",
+       "epicKey": "booking-payment",
+       "title": "Pay for a lesson online",
+       "id": "TUT-6",
+       "url": "http://localhost:8096/issue/TUT-6"
+      },
+      {
+       "key": "booking-payment-reminder",
+       "epicKey": "booking-payment",
+       "title": "Email a reminder before the lesson",
+       "id": "TUT-7",
+       "url": "http://localhost:8096/issue/TUT-7"
+      }
+     ],
+     "alreadyPresent": [],
+     "failed": []
+    }
+   }
+  },
+  "synthetic": "Built from exchange #0 by hand, not captured from the planner: request scope 'all' added, response gets scope 'all' and a tasks object with four created tasks under two of the three epics. The rest of the response is the planner's real shape."
+ },
+ {
+  "status": 200,
+  "request": {
+   "projectKey": "TUT",
+   "projectName": "Tutor Booking",
+   "appName": "tutor-booking",
+   "model": "claude-code",
+   "brief": {
+    "sections": {
+     "purpose": "Help parents book tutors without phone calls.",
+     "users": "Parents, tutors, one admin.",
+     "journeys": "A parent searches tutors, books a lesson, pays, and gets a reminder. A tutor sets weekly availability.",
+     "requirements": "Search by subject and level. Online payment. Reminders by email. Availability calendar.",
+     "quality": "GDPR compliant; pages load in under 2 seconds.",
+     "scope": "First release: search, booking, payment, availability. Excluded: video lessons, mobile apps.",
+     "constraints": "Runs on the platform's standard stack.",
+     "research": "Two competitors reviewed; payment provider feasible.",
+     "acceptance": "A parent can book and pay for a lesson in under three minutes. A tutor's availability blocks double booking.",
+     "assumptions": "Tutors are vetted offline."
+    },
+    "blockers": [],
+    "sourceIds": [
+     "s-1"
+    ],
+    "number": 3,
+    "author": "owner",
+    "at": "2026-10-06T09:00:00+00:00",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "metadata": {},
+    "inputs": {
+     "sourceIds": [
+      "s-1"
+     ],
+     "feedbackCount": 0
+    },
+    "questionsChanged": false,
+    "changed": [],
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4"
+   },
+   "approval": {
+    "revision": 3,
+    "hash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "at": "2026-10-06T10:00:00+00:00",
+    "actor": "owner"
+   },
+   "scope": "tasks"
+  },
+  "response": {
+   "data": {
+    "status": "complete",
+    "briefId": "17d329d716c4",
+    "briefHash": "17d329d716c4e42f81f383eb4f0e9523e876608b6e9d70f5c43ef68f20bfcfd4",
+    "project": {
+     "id": "0-1",
+     "shortName": "TUT",
+     "name": "Tutor Booking",
+     "isNew": false,
+     "url": "http://localhost:8096/projects/TUT"
+    },
+    "appName": "tutor-booking",
+    "stage": {
+     "present": true,
+     "values": [
+      "Plan",
+      "Develop",
+      "Review",
+      "Staging",
+      "Done"
+     ],
+     "missing": []
+    },
+    "stateFields": {
+     "fields": [
+      "State",
+      "Stage"
+     ],
+     "readField": "State",
+     "note": "the project has several state fields (State, Stage); using 'State', the first in the project's order. Set STATE_FIELD to choose one",
+     "hint": "The planner and Factory read 'State', not 'Stage'. Set STATE_FIELD=Stage in youtrack/.env and recreate the planner. No field was detached or changed."
+    },
+    "epics": {
+     "created": [],
+     "alreadyPresent": [
+      {
+       "key": "tutor-search",
+       "title": "Parents find a tutor",
+       "id": "TUT-1",
+       "url": "http://localhost:8096/issue/TUT-1"
+      },
+      {
+       "key": "booking-payment",
+       "title": "Parents book and pay for a lesson",
+       "id": "TUT-2",
+       "url": "http://localhost:8096/issue/TUT-2"
+      },
+      {
+       "key": "tutor-availability",
+       "title": "Tutors publish availability",
+       "id": "TUT-3",
+       "url": "http://localhost:8096/issue/TUT-3"
+      }
+     ],
+     "failed": []
+    },
+    "ownerSteps": [
+     {
+      "code": "add_project_key",
+      "what": "Add TUT to DELIVERY_PROJECTS (or READ_ONLY_PROJECTS) in youtrack/.env, then recreate the planner.",
+      "setting": "DELIVERY_PROJECTS",
+      "value": "TUT",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     },
+     {
+      "code": "set_state_field",
+      "what": "Set STATE_FIELD=Stage in youtrack/.env so the delivery surface reads 'Stage', then recreate the planner.",
+      "setting": "STATE_FIELD",
+      "value": "Stage",
+      "command": "cd youtrack && docker compose up -d backlog-planner"
+     }
+    ],
+    "plannerEditsEnv": false,
+    "note": null,
+    "replayed": true,
+    "scope": "tasks",
+    "tasks": {
+     "created": [],
+     "alreadyPresent": [
+      {
+       "key": "tutor-search-filters",
+       "epicKey": "tutor-search",
+       "title": "Filter tutors by subject and level",
+       "id": "TUT-4",
+       "url": "http://localhost:8096/issue/TUT-4"
+      },
+      {
+       "key": "tutor-search-results",
+       "epicKey": "tutor-search",
+       "title": "Show tutor results with prices",
+       "id": "TUT-5",
+       "url": "http://localhost:8096/issue/TUT-5"
+      },
+      {
+       "key": "booking-payment-checkout",
+       "epicKey": "booking-payment",
+       "title": "Pay for a lesson online",
+       "id": "TUT-6",
+       "url": "http://localhost:8096/issue/TUT-6"
+      },
+      {
+       "key": "booking-payment-reminder",
+       "epicKey": "booking-payment",
+       "title": "Email a reminder before the lesson",
+       "id": "TUT-7",
+       "url": "http://localhost:8096/issue/TUT-7"
+      }
+     ],
+     "failed": []
+    }
+   }
+  },
+  "synthetic": "Built from exchange #0 by hand, not captured from the planner: request scope 'tasks', the stored result replayed (replayed true, project not new, epics and tasks all alreadyPresent). The rest of the response is the planner's real shape."
  }
 ]

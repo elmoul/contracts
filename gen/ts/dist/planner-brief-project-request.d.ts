@@ -4,7 +4,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 /**
- * Body of `POST /plans/from-brief` on `backlog-planner`, from `youtrack/planner/src/backlog_planner/domain/brief_project.py` (`parse_request`). Creates a tracker project and one epic per outcome from a Harvest brief the owner approved; the approval record stands in for the confirm step on this one call. Brief hash rule: the hash is sha256 over the revision record minus its own `hash` key, serialised as JSON with keys sorted at every level, compact separators (`,` and `:`) and non-ASCII characters left unescaped (Factory's `domain.digest`). The planner rehashes the record it receives that way and refuses the call (`brief_hash_mismatch`) when the result is not `approval.hash`; the schema states the rule and does not compute it. The planner also checks `approval.revision` equals `brief.number` and `approval.inputHash` equals `brief.inputHash`. No property carries a credential; the planner's tracker token never travels in this body.
+ * Body of `POST /plans/from-brief` on `backlog-planner`, from `youtrack/planner/src/backlog_planner/domain/brief_project.py` (`parse_request`). Creates a tracker project and one epic per outcome (and, per `scope`, the child tasks under each epic) from a Harvest brief the owner approved; the approval record stands in for the confirm step on this one call. Brief hash rule: the hash is sha256 over the revision record minus its own `hash` key, serialised as JSON with keys sorted at every level, compact separators (`,` and `:`) and non-ASCII characters left unescaped (Factory's `domain.digest`). The planner rehashes the record it receives that way and refuses the call (`brief_hash_mismatch`) when the result is not `approval.hash`; the schema states the rule and does not compute it. The planner also checks `approval.revision` equals `brief.number` and `approval.inputHash` equals `brief.inputHash`. No property carries a credential; the planner's tracker token never travels in this body.
  */
 export interface PlannerBriefProjectRequest {
     /**
@@ -26,6 +26,10 @@ export interface PlannerBriefProjectRequest {
     briefId?: string;
     brief: BriefRevisionRecord;
     approval: BriefApprovalRecord;
+    /**
+     * Optional; omitted means `epics`, exactly the behaviour before this property existed, so no caller changes behaviour by upgrading. `epics`: create the project (if new) and one epic per outcome. `tasks`: the epics for this brief already exist in the project (the planner finds them by their stored outcome markers); create only the missing child tasks under them. `all`: epics and tasks together. The planner's idempotency key is derived from the brief hash, the project key and the scope: for `epics` (or omitted) it is unchanged, `sha256(<brief hash>:<project key>)`; for `tasks` and `all` the scope is part of the input, so a replay of one scope is never mistaken for another.
+     */
+    scope?: "epics" | "tasks" | "all";
 }
 /**
  * The approved Harvest revision record, sent WHOLE (Factory `harvest.py` `revision`). Every key beside `sections` is part of what was hashed, so none may be dropped or added. Brief hash rule: the hash is sha256 over the revision record minus its own `hash` key, serialised as JSON with keys sorted at every level, compact separators (`,` and `:`) and non-ASCII characters left unescaped (Factory's `domain.digest`). The planner rehashes the record it receives that way and refuses the call (`brief_hash_mismatch`) when the result is not `approval.hash`; the schema states the rule and does not compute it.
