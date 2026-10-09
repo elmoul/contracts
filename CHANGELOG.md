@@ -16,6 +16,17 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.54.0 - 2026-10-09
+
+**Additive** (tag `v0.54.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.54.0; Python and TypeScript bindings regenerated for `planner.brief-project-request`, `-response` and the new `factory.handover-setup` (Java regenerates from the schemas at build). Fulfils demand `factory-20261009-contracts-from-brief-setup`. Shapes only, no behaviour.
+
+- **`planner.brief-project-request` `localOnly`**: optional boolean, default false. True is the owner's 'Local only' choice: no remote is created and nothing is published. Every existing payload validates unchanged.
+- **`setup` object** (task 0): optional `setup` on `planner.brief-project-response`, and the new standalone `schemas/factory/factory.handover-setup.json` for Factory's hand-over status (identical definition, embedded in the response's `$defs`; a test keeps them equal). Fields: `name` (constant `Set up repositories`), `state` (`pending`, `running`, `done`, `failed`), `localOnly` (echoed), ordered `steps` (at most 5), optional `updatedAt`. Each step: `id` (closed: `app-repo`, `hexagon-repo`, `onboard`, `register-project`, `verify-discovery`), `state` (`pending`, `running`, `done`, `failed`, `skipped`), optional `at`, and on failure a closed `reason` (`remote_unavailable`, `name_taken`, `auth_failed`, `onboard_failed`, `register_failed`, `discovery_failed`, `timeout`, `internal_error`) plus free-text `detail`. `skipped` is the state of the two repository steps when `localOnly` is true. The reason codes are a reading of the demand (it left the list open); consumers may ask for more.
+- **Binding caveat**: `reason` is required when a step is `failed` through `if/then`, which the TS and Python generators do not emit (see DEPLOYMENT.md); the schema-level tests cover it. `date-time` formats are not enforced by the test validator (no format library), as elsewhere.
+- Tests: `tests/validate_planner_brief.py` covers localOnly true/false/absent/invalid, every step and setup state, and refusal of unknown step id/state, wrong name, missing localOnly, bad reason, failed-without-reason, extra properties and a sixth step.
+- Binding note: datamodel-codegen again emitted bare `Enum`; restored to `StrEnum` by hand.
+- No consumer is re-pinned (D031). Consumers wait for tag `v0.54.0`.
+
 ## v0.53.0 - 2026-10-08
 
 **Additive** (tag `v0.53.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.53.0; the Python and TypeScript bindings for `planner.brief-project-request` and `-response` regenerated (Java regenerates from the schema at build). Fulfils demand `factory-20261008-contracts-from-brief-tasks`.
