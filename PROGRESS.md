@@ -1741,3 +1741,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-08_2022_you-are-an-independent-verifier-for-dema
+
+## Session 127 (2026-10-09)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-09_0116_fulfill-demand-factory-20261009-contract.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand factory-20261009-contracts-from-brief-setup (capability: The hand-over contracts carry the choice 'local only' and the project's setup step (task 0): its fixed name, its steps and their states, so Factory, the planner and the dashboard share one shape, from: factory, target: contracts... -- status: partial.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-09_0116_fulfill-demand-factory-20261009-contract
