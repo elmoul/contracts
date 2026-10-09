@@ -98,3 +98,4 @@ export type { AppDescriptor } from "./app-descriptor";
 export type { PlannerBriefProjectRequest } from "./planner-brief-project-request";
 export type { PlannerBriefProjectResponse } from "./planner-brief-project-response";
 export type { PlannerBriefProjectError } from "./planner-brief-project-error";
+export type { FactoryHandoverSetup } from "./factory-handover-setup";

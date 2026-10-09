@@ -226,6 +226,68 @@ d = copy.deepcopy(all_ans)
 d["tasks"]["extra"] = []
 expect(errors(RESP, d), "extra property on tasks refused")
 
+# ---- v0.54.0: localOnly and the setup step (task 0) ----
+SETUP = Draft202012Validator(json.loads((ROOT / "schemas" / "factory" / "factory.handover-setup.json").read_text(encoding="utf-8")), format_checker=FormatChecker())
+base_req = copy.deepcopy(accepted[0]["request"])
+base_req.pop("localOnly", None)
+expect(not errors(REQ, base_req), "request without localOnly validates")
+for val in (True, False):
+    r = copy.deepcopy(base_req)
+    r["localOnly"] = val
+    expect(not errors(REQ, r), f"localOnly {val} validates")
+for bad in ("yes", 1, None):
+    r = copy.deepcopy(base_req)
+    r["localOnly"] = bad
+    expect(errors(REQ, r), f"localOnly {bad!r} refused")
+
+IDS = ["app-repo", "hexagon-repo", "onboard", "register-project", "verify-discovery"]
+T = "2026-10-09T10:00:00Z"
+
+
+def make_setup(local_only=False, states=None):
+    states = states or ["done"] * 5
+    steps = []
+    for i, st in zip(IDS, states):
+        step = {"id": i, "state": st, "at": T}
+        if st == "failed":
+            step.update(reason="remote_unavailable", detail="remote said no")
+        steps.append(step)
+    return {"name": "Set up repositories", "state": "running", "localOnly": local_only, "steps": steps, "updatedAt": T}
+
+
+def both(setup):
+    ans = copy.deepcopy(accepted[0]["response"]["data"])
+    ans["setup"] = setup
+    return errors(SETUP, setup) + errors(RESP, ans)
+
+
+expect(not errors(RESP, accepted[0]["response"]["data"]), "answer without setup validates")
+expect(not both(make_setup()), "a complete setup validates in both schemas")
+expect(not both(make_setup(True, ["skipped", "skipped", "done", "done", "done"])), "localOnly setup with skipped repo steps validates")
+for st in ("pending", "running", "done", "failed", "skipped"):
+    expect(not both(make_setup(False, [st] * 5)), f"every step in state {st} validates")
+for st in ("pending", "running", "done", "failed"):
+    s = make_setup()
+    s["state"] = st
+    expect(not both(s), f"setup state {st} validates")
+for label, mut in [
+    ("an unknown step id", lambda s: s["steps"][0].update(id="publish")),
+    ("an unknown step state", lambda s: s["steps"][0].update(state="paused")),
+    ("an unknown setup state", lambda s: s.update(state="skipped")),
+    ("a different name", lambda s: s.update(name="Set up repos")),
+    ("a missing localOnly", lambda s: s.pop("localOnly")),
+    ("an unknown failure reason", lambda s: s["steps"][0].update(state="failed", reason="weird")),
+    ("a failed step without a reason", lambda s: s["steps"][0].update(state="failed")),
+    ("an extra step property", lambda s: s["steps"][0].update(token="x")),
+    ("an extra setup property", lambda s: s.update(extra=1)),
+    ("six steps", lambda s: s["steps"].append({"id": "onboard", "state": "pending"})),
+]:
+    s = make_setup()
+    mut(s)
+    expect(both(s), f"setup with {label} refused (in both schemas)")
+expect(RESP.schema["$defs"]["setup"] == {k: v for k, v in SETUP.schema.items() if k not in ("$schema", "$id", "title", "$defs")} | {"description": RESP.schema["$defs"]["setup"]["description"]}
+       and RESP.schema["$defs"]["setupStep"] == SETUP.schema["$defs"]["setupStep"], "embedded setup definition equals the standalone factory schema")
+
 if failures:
     print(f"{len(failures)} failure(s)")
     sys.exit(1)
