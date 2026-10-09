@@ -22,6 +22,7 @@ export interface DeliveryWorkflow {
      * Whether the project is open to delivery. `delivery`: the service accepts delivery writes for the project. `read-only`: issues, workflow and detail can be read, but comments, transitions and operations are refused with `project_not_enabled`. Absent: the producer does not say, and a consumer must not infer either value. Additive and optional (D043). Rollout order: consumers pin the release that introduces this property BEFORE any producer starts sending `access`, because the closed shape (`additionalProperties: false`) makes an older pin reject a document that carries it.
      */
     access?: "delivery" | "read-only";
+    startable?: DeliveryStartable;
 }
 export interface DeliveryWorkflowState {
     id: string;
@@ -32,4 +33,11 @@ export interface DeliveryWorkflowState {
     resolved: boolean;
     ordinal: number;
     archived: boolean;
+}
+/**
+ * Whether Factory may start this issue (on the workflow answer: a task of the project). `reason` is `null` when `value` is true; otherwise `setup-not-done` (the project's setup task is not done, so every task is closed) or `setup-task` (the issue is the setup task itself, never startable by an agent). Additive and optional (D043): absent means the producer does not say, and a consumer must not infer either value. Rollout order: consumers pin the release that introduces this property BEFORE any producer starts sending `startable`, because the closed shape (`additionalProperties: false`) makes an older pin reject a document that carries it.
+ */
+export interface DeliveryStartable {
+    value: boolean;
+    reason: null | "setup-not-done" | "setup-task";
 }

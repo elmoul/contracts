@@ -54,6 +54,10 @@ from platform_contracts.youtrack import (
     planner_brief_project_request,
     planner_brief_project_response,
     planner_brief_project_error,
+    planner_setup_progress_request,
+    planner_setup_progress_response,
+    planner_setup_gate,
+    planner_setup_error,
 )
 from platform_contracts.delivery import (
     delivery_issue_ref,
@@ -121,6 +125,10 @@ __all__ = [
     "planner_brief_project_request",
     "planner_brief_project_response",
     "planner_brief_project_error",
+    "planner_setup_progress_request",
+    "planner_setup_progress_response",
+    "planner_setup_gate",
+    "planner_setup_error",
     "delivery_issue_ref",
     "delivery_issue",
     "delivery_issue_page",

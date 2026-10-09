@@ -34,6 +34,7 @@ VALIDATORS = [
     "validate_delivery.py",
     "validate_app_descriptor.py",
     "validate_planner_brief.py",
+    "validate_setup_gate.py",
     "check_state_event_sync.py",
 ]
 

@@ -59,7 +59,18 @@
       "items": { "$ref": "#/$defs/deliveryLink" },
       "description": "Factory delivery links this service previously wrote to the issue and can still read back (sync operation kind `link`). Lets Factory find and reopen its existing active delivery for the issue instead of creating a second one."
     },
-    "readAt": { "type": "string", "format": "date-time" }
+    "readAt": { "type": "string", "format": "date-time" },
+    "startable": {
+      "title": "DeliveryStartable",
+      "type": "object",
+      "required": ["value", "reason"],
+      "additionalProperties": false,
+      "description": "Whether Factory may start this issue (on the workflow answer: a task of the project). `reason` is `null` when `value` is true; otherwise `setup-not-done` (the project's setup task is not done, so every task is closed) or `setup-task` (the issue is the setup task itself, never startable by an agent). Additive and optional (D043): absent means the producer does not say, and a consumer must not infer either value. Rollout order: consumers pin the release that introduces this property BEFORE any producer starts sending `startable`, because the closed shape (`additionalProperties: false`) makes an older pin reject a document that carries it.",
+      "properties": {
+        "value": { "type": "boolean" },
+        "reason": { "type": ["string", "null"], "enum": [null, "setup-not-done", "setup-task"] }
+      }
+    }
   },
   "$defs": {
     "issueState": {

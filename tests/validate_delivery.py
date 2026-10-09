@@ -759,6 +759,8 @@ BAD_ERROR_NO_RETRYABLE = {"code": "scope_changed", "message": "changed"}
 CASES = [
     ("delivery.issue-ref.json", ISSUE_REF, True),
     ("delivery.issue.json", GOOD_ISSUE, True),
+    ("delivery.issue.json", {**GOOD_ISSUE, "startable": {"value": False, "reason": "setup-task"}}, True),
+    ("delivery.issue.json", {**GOOD_ISSUE, "startable": {"value": False, "reason": "nope"}}, False),
     ("delivery.issue.json", GOOD_ISSUE_UNKNOWN_DEPENDENCY, True),
     ("delivery.issue.json", BAD_ISSUE_DEPENDENCY_SATISFIED_BY_OMISSION, False),
     ("delivery.issue.json", BAD_ISSUE_CARRIES_TOKEN, False),

@@ -56,6 +56,14 @@ export interface DeliveryIssue {
    */
   deliveryLinks: DeliveryIssueLink[];
   readAt: string;
+  startable?: DeliveryStartable;
+}
+/**
+ * Whether Factory may start this issue (on the workflow answer: a task of the project). `reason` is `null` when `value` is true; otherwise `setup-not-done` (the project's setup task is not done, so every task is closed) or `setup-task` (the issue is the setup task itself, never startable by an agent). Additive and optional (D043): absent means the producer does not say, and a consumer must not infer either value. Rollout order: consumers pin the release that introduces this property BEFORE any producer starts sending `startable`, because the closed shape (`additionalProperties: false`) makes an older pin reject a document that carries it.
+ */
+export interface DeliveryStartable {
+  value: boolean;
+  reason: null | "setup-not-done" | "setup-task";
 }
 /**
  * Stable identity of one YouTrack issue on the D113 task-delivery surface. `vendorId` is YouTrack's internal database id and never changes; `idReadable` (e.g. `PLA-12`) is what humans see and CAN change if an issue moves project, so correlation (operation keys, delivery records, evidence) binds to `vendorId` and carries `idReadable` for display and read-back only.

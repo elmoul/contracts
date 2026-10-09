@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.setup-progress-response",
+  "title": "PlannerSetupProgressResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "state",
+    "localOnly",
+    "steps"
+  ],
+  "description": "The `data` payload of the success answer of `POST /setup/{projectKey}/progress` (`{\"data\": <this>}`): the project's whole `setup` object after the report, identical to `factory.handover-setup` (a test keeps the two equal). Failures are `{\"error\": <planner.setup-error>}`.",
+  "properties": {
+    "name": {
+      "const": "Set up repositories",
+      "description": "Fixed task name; a constant so Factory, the planner and the dashboard agree on it."
+    },
+    "state": {
+      "enum": [
+        "pending",
+        "running",
+        "done",
+        "failed"
+      ]
+    },
+    "localOnly": {
+      "type": "boolean",
+      "description": "The owner's 'Local only' choice from the hand-over request, echoed."
+    },
+    "steps": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/setupStep"
+      },
+      "description": "Ordered; at most one entry per step id."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the setup object last changed."
+    }
+  },
+  "$defs": {
+    "setupStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "state"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "app-repo",
+            "hexagon-repo",
+            "onboard",
+            "register-project",
+            "verify-discovery"
+          ],
+          "description": "Closed set: `app-repo` creates the app repository, `hexagon-repo` the hexagon repository, `onboard` onboards the app, `register-project` registers the project, `verify-discovery` checks the platform discovers it."
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "running",
+            "done",
+            "failed",
+            "skipped"
+          ],
+          "description": "`skipped` is the state of `app-repo` and `hexagon-repo` when `localOnly` is true."
+        },
+        "reason": {
+          "enum": [
+            "remote_unavailable",
+            "name_taken",
+            "auth_failed",
+            "onboard_failed",
+            "register_failed",
+            "discovery_failed",
+            "timeout",
+            "internal_error"
+          ],
+          "description": "Closed short code, present when `state` is `failed`."
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Free text for the reason; never a secret."
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this step last changed state."
+        }
+      },
+      "if": {
+        "properties": {
+          "state": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    }
+  }
+}

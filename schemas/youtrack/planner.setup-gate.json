@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/youtrack/planner.setup-gate",
+  "title": "PlannerSetupGate",
+  "description": "The `data` payload of `GET /setup/{projectKey}[?issue=KEY-n]` on the backlog-planner: the gate Factory reads before starting a task. `open` is true once the setup task is done; until then `reason` is `setup-not-done`. A project with no setup task (handed over before the setup task existed) is never gated: `open` true, `reason`, `setupIssue` and `setup` null. `startable` is present only when `?issue=` was given: `{value:false, reason:setup-task}` for the setup task itself (never startable by an agent), `{value:false, reason:setup-not-done}` for any other issue while the gate is closed, otherwise `{value:true, reason:null}`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "projectKey",
+    "open",
+    "reason",
+    "setupIssue",
+    "setup"
+  ],
+  "properties": {
+    "projectKey": {
+      "type": "string",
+      "description": "The project key asked about, upper-cased."
+    },
+    "open": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "setup-not-done"
+      ],
+      "description": "`null` when open."
+    },
+    "setupIssue": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Readable id of the setup task, e.g. `APP-1`; null when no setup task is held."
+    },
+    "setup": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/setup"
+        }
+      ],
+      "description": "The `factory.handover-setup` object; null when no setup task is held."
+    },
+    "startable": {
+      "$ref": "#/$defs/startable"
+    }
+  },
+  "$defs": {
+    "startable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "reason"
+      ],
+      "properties": {
+        "value": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": ["string", "null"],
+          "enum": [
+            null,
+            "setup-not-done",
+            "setup-task"
+          ]
+        }
+      },
+      "description": "Whether the asked issue can start. `reason` is null when `value` is true, otherwise `setup-not-done` or `setup-task`."
+    },
+    "setup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "state",
+        "localOnly",
+        "steps"
+      ],
+      "description": "Identical to `factory.handover-setup` (a test keeps them equal).",
+      "properties": {
+        "name": {
+          "const": "Set up repositories",
+          "description": "Fixed task name; a constant so Factory, the planner and the dashboard agree on it."
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "running",
+            "done",
+            "failed"
+          ]
+        },
+        "localOnly": {
+          "type": "boolean",
+          "description": "The owner's 'Local only' choice from the hand-over request, echoed."
+        },
+        "steps": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/setupStep"
+          },
+          "description": "Ordered; at most one entry per step id."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the setup object last changed."
+        }
+      }
+    },
+    "setupStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "state"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "app-repo",
+            "hexagon-repo",
+            "onboard",
+            "register-project",
+            "verify-discovery"
+          ],
+          "description": "Closed set: `app-repo` creates the app repository, `hexagon-repo` the hexagon repository, `onboard` onboards the app, `register-project` registers the project, `verify-discovery` checks the platform discovers it."
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "running",
+            "done",
+            "failed",
+            "skipped"
+          ],
+          "description": "`skipped` is the state of `app-repo` and `hexagon-repo` when `localOnly` is true."
+        },
+        "reason": {
+          "enum": [
+            "remote_unavailable",
+            "name_taken",
+            "auth_failed",
+            "onboard_failed",
+            "register_failed",
+            "discovery_failed",
+            "timeout",
+            "internal_error"
+          ],
+          "description": "Closed short code, present when `state` is `failed`."
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Free text for the reason; never a secret."
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this step last changed state."
+        }
+      },
+      "if": {
+        "properties": {
+          "state": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    }
+  }
+}
