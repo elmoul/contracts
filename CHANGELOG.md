@@ -16,6 +16,19 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.55.0 - 2026-10-09
+
+**Additive** (tag `v0.55.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.55.0; Python and TypeScript bindings regenerated for `delivery.issue`, `delivery.workflow` and four new planner schemas (Java regenerates from schemas at build; the `youtrack` directory is not mapped in the Java pom, as before). Fulfils demand `youtrack-20261009-contracts-setup-gate-schemas`. Shapes only, written from planner commit 111a727 (`domain/setup.py`, the `/setup/...` routes).
+
+- **`planner.setup-progress-request`**: body of `POST /setup/{projectKey}/progress`: `step` (the five ids), `state` (pending, running, done, failed, skipped), `reason` (closed, required when failed, refused otherwise), `detail` (max 500, failed only). Closed.
+- **`planner.setup-progress-response`**: the `data` payload of the success answer: the `setup` object, identical to `factory.handover-setup` (a test keeps them equal).
+- **`planner.setup-gate`**: the `data` payload of `GET /setup/{projectKey}[?issue=]`: `projectKey`, `open`, `reason` (null or `setup-not-done`), `setupIssue`, `setup` (null when no setup task is held), optional `startable {value, reason}` with `reason` null, `setup-not-done` or `setup-task`.
+- **`planner.setup-error`**: closed `code` `setup_project_unknown` (404), `setup_step_unknown` and `setup_progress_invalid` (422) plus `message`. The planner's `domain/errors.py` at 111a727 declares `unknown_project`, `unknown_step`, `invalid_progress` instead while its CHANGELOG and DEPLOYMENT name the `setup_*` forms; the schema follows the demand, so the planner must emit the `setup_*` codes.
+- **`delivery.workflow` and `delivery.issue`**: optional closed `startable {value, reason}` (`reason`: null, `setup-not-done`, `setup-task`). The same rollout caution as `access` applies: consumers pin v0.55.0 before any producer sends it. The planner adds it in a follow-up demand.
+- Binding caveats: `if/then/else` on the request (reason required on failed) is not generated into TS/Python; `tests/validate_setup_gate.py` covers it. datamodel-codegen emitted bare `Enum`; restored to `StrEnum` by hand, and the generated `NoneType_None` enum members removed (null is expressed by the optional type).
+- Tests: new `tests/validate_setup_gate.py` (in `run_all.py`), two `startable` cases in `validate_delivery.py`.
+- No consumer is re-pinned (D031).
+
 ## v0.54.0 - 2026-10-09
 
 **Additive** (tag `v0.54.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.54.0; Python and TypeScript bindings regenerated for `planner.brief-project-request`, `-response` and the new `factory.handover-setup` (Java regenerates from the schemas at build). Fulfils demand `factory-20261009-contracts-from-brief-setup`. Shapes only, no behaviour.
