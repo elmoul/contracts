@@ -16,6 +16,18 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.56.0 - 2026-10-15
+
+**Additive** (tag `v0.56.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.56.0; Python and TypeScript bindings updated for `delivery.issue` (and so the element of `delivery.issue-page`). Fulfils demand `youtrack-20261015-contracts-delivery-issue-tags`.
+
+- **`delivery.issue`**: optional `tags`, an array of strings: the names of the YouTrack tags on the issue, verbatim. Absent means the producer does not say; an empty array means the issue has no tags. Not in `required`.
+- Rollout: the same caution as `startable`. Consumers pin v0.56.0 BEFORE any producer sends `tags`, because the shape is closed (`additionalProperties: false`) and an older pin rejects a document that carries it.
+- `youtrack-delivery.openapi.yaml` references `delivery.issue` and `delivery.issue-page` by `$ref`, so it follows with no edit.
+- Tests: three `tags` cases in `validate_delivery.py`.
+- No consumer is re-pinned (D031).
+
+---
+
 ## v0.55.0 - 2026-10-09
 
 **Additive** (tag `v0.55.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.55.0; Python and TypeScript bindings regenerated for `delivery.issue`, `delivery.workflow` and four new planner schemas (Java regenerates from schemas at build; the `youtrack` directory is not mapped in the Java pom, as before). Fulfils demand `youtrack-20261009-contracts-setup-gate-schemas`. Shapes only, written from planner commit 111a727 (`domain/setup.py`, the `/setup/...` routes).

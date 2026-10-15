@@ -154,3 +154,7 @@ class DeliveryIssue(BaseModel):
         description="Whether Factory may start this issue (on the workflow answer: a task of the project). `reason` is `null` when `value` is true; otherwise `setup-not-done` (the project's setup task is not done, so every task is closed) or `setup-task` (the issue is the setup task itself, never startable by an agent). Additive and optional (D043): absent means the producer does not say, and a consumer must not infer either value. Rollout order: consumers pin the release that introduces this property BEFORE any producer starts sending `startable`, because the closed shape (`additionalProperties: false`) makes an older pin reject a document that carries it.",
         title='DeliveryStartable',
     )
+    tags: list[str] | None = Field(
+        None,
+        description='Names of the YouTrack tags on the issue, verbatim. Additive and optional (D043): absent means the producer does not say, and an empty array means the issue has no tags. A consumer must not infer either from absence. Rollout order: consumers pin the release that introduces this property BEFORE any producer starts sending `tags`, because the closed shape (`additionalProperties: false`) makes an older pin reject a document that carries it.',
+    )

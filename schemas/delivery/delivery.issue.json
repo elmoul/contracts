@@ -70,6 +70,11 @@
         "value": { "type": "boolean" },
         "reason": { "type": ["string", "null"], "enum": [null, "setup-not-done", "setup-task"] }
       }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Names of the YouTrack tags on the issue, verbatim. Additive and optional (D043): absent means the producer does not say, and an empty array means the issue has no tags. A consumer must not infer either from absence. Rollout order: consumers pin the release that introduces this property BEFORE any producer starts sending `tags`, because the closed shape (`additionalProperties: false`) makes an older pin reject a document that carries it."
     }
   },
   "$defs": {
