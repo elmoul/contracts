@@ -16,6 +16,19 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.57.0 - 2026-10-16
+
+**Additive** (tag `v0.57.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.57.0; Python and TypeScript bindings updated for the `ci-run` outcome of `parked.condition-event` (and so its copy inside `parked.resume-request`). Fulfils demand `factory-20261016-contracts-ci-outcome-checks`.
+
+- **`ci-run` outcome `check`**: optional string, 1 to 200 characters: the name of the job or check the event reports, for example `sonar-gate`. Absent means the producer does not say.
+- **`ci-run` outcome `pendingChecks`**: optional integer, 0 or more: how many OTHER checks or workflow runs of the same commit the producer currently knows to be queued or running. `0` means none outstanding (the picture for the commit is complete); a positive number means the result is partial. **Absent means the producer does not know: a consumer must treat absence as unknown, never as zero.**
+- Every existing payload stays valid; neither field is in `required`.
+- Rollout: the shape is closed (`additionalProperties: false`), so consumers pin v0.57.0 BEFORE any producer sends `check` or `pendingChecks`; an older pin rejects an event that carries them.
+- Tests: eleven cases in `validate_parked.py` (check and pendingChecks present and absent, `pendingChecks` 0 and 3, negative, non-integer and string refused, empty, over-long and non-string `check` refused, and a resume request carrying both).
+- No consumer is re-pinned (D031). Consumers wait for tag `v0.57.0`.
+
+---
+
 ## v0.56.0 - 2026-10-15
 
 **Additive** (tag `v0.56.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.56.0; Python and TypeScript bindings updated for `delivery.issue` (and so the element of `delivery.issue-page`). Fulfils demand `youtrack-20261015-contracts-delivery-issue-tags`.

@@ -52,6 +52,14 @@ export interface CiRunOutcome {
      * Names of the failed checks, when `result` is `failure`.
      */
     failedChecks?: string[];
+    /**
+     * The name of the job or check this event reports, for example `sonar-gate`. Absent means the producer does not say which check the event is about.
+     */
+    check?: string;
+    /**
+     * How many OTHER checks or workflow runs of the same commit the producer currently knows to be queued or running. `0` means the producer knows none is outstanding, so this event completes the commit's CI picture. A positive number means the result is partial. ABSENT MEANS THE PRODUCER DOES NOT KNOW: a consumer must treat absence as unknown, never as zero.
+     */
+    pendingChecks?: number;
 }
 /**
  * A pull request was merged or closed.

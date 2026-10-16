@@ -149,6 +149,19 @@ def main():
     expect_invalid(event_s, event(OUTCOMES["pr-merged"], key="short"), "condition-event: eventKey too short (known-bad)")
     expect_invalid(event_s, event(OUTCOMES["pr-merged"], source="agent-runner"), "condition-event: agent-runner is not a producer (known-bad)")
     expect_invalid(event_s, event({**OUTCOMES["ci-run-failure"], "result": "flaky"}), "condition-event: unknown CI result (known-bad)")
+    ci = OUTCOMES["ci-run-success"]
+    expect_valid(event_s, event({**ci, "check": "sonar-gate", "pendingChecks": 3}), "condition-event: check + 3 pending (known-good)")
+    expect_valid(event_s, event({**ci, "check": "sonar-gate", "pendingChecks": 0}), "condition-event: pendingChecks 0 (known-good)")
+    expect_valid(event_s, event({**ci, "check": "x" * 200}), "condition-event: check at 200 chars, pendingChecks absent (known-good)")
+    expect_valid(event_s, event({**ci, "pendingChecks": 2}), "condition-event: pendingChecks without check (known-good)")
+    expect_invalid(event_s, event({**ci, "pendingChecks": -1}), "condition-event: negative pendingChecks (known-bad)")
+    expect_invalid(event_s, event({**ci, "pendingChecks": 1.5}), "condition-event: non-integer pendingChecks (known-bad)")
+    expect_invalid(event_s, event({**ci, "pendingChecks": "3"}), "condition-event: string pendingChecks (known-bad)")
+    expect_invalid(event_s, event({**ci, "check": ""}), "condition-event: empty check (known-bad)")
+    expect_invalid(event_s, event({**ci, "check": "x" * 201}), "condition-event: check over 200 chars (known-bad)")
+    expect_invalid(event_s, event({**ci, "check": 7}), "condition-event: non-string check (known-bad)")
+    expect_valid(resume_s, resume_request(event({**ci, "check": "sonar-gate", "pendingChecks": 2}), "continue"),
+                 "resume-request: carries check + pendingChecks (known-good)")
     no_outcome = event(OUTCOMES["pr-merged"])
     del no_outcome["outcome"]
     expect_invalid(event_s, no_outcome, "condition-event: no observed outcome (known-bad)")
