@@ -1853,3 +1853,18 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-16_1219_you-are-an-independent-verifier-for-dema
+
+## Session 135 (2026-10-18)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-18_1745_fulfill-demand-factory-20261018-contract.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+agent-runner's dispatch supervisor from an auto-drafted, unconfirmed close --
+not a second hand-written account, and not yet reviewed by a human or the
+worker agent itself).
+
+- State: Fulfill demand factory-20261018-contracts-runner-workspace (capability: The runner contracts describe task workspaces: an optional workspace member on the dispatch request (and in its hash field list) and an optional taskWorkspace member on the run record, from: factory, target: contracts). Acceptan... -- status: done (close: auto-drafted, unconfirmed).
+- Next step: Review this session's auto-drafted close (`.brain/sessions/2026-10-18_1745_fulfill-demand-factory-20261018-contract.md`) and confirm or correct it.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-18_1745_fulfill-demand-factory-20261018-contract
