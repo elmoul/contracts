@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from enum import StrEnum
 
+from typing import Literal
+
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, conint, constr
 
 
@@ -43,6 +45,60 @@ class Workspace(BaseModel):
     observedAt: AwareDatetime | None = Field(
         ...,
         description='When the observation behind `branch`/`revision`/`dirty` was taken. `null` only when nothing at all was observed (`workspace` itself would normally just be `null` in that case; both spellings mean the same absence).',
+    )
+
+
+class TaskWorkspaceState(StrEnum):
+    active = 'active'
+    parked = 'parked'
+    releasable = 'releasable'
+    orphan = 'orphan'
+    released = 'released'
+
+
+class TaskWorkspace(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    id: constr(min_length=1) = Field(
+        ...,
+        description="The workspace id (`<repo>:<task>`).",
+    )
+    kind: Literal['task-worktree'] = Field(
+        ...,
+        description="Same value as the dispatch `workspace.kind`.",
+    )
+    repo: str | None = Field(
+        None,
+        description="The repository the workspace belongs to.",
+    )
+    task: str | None = Field(
+        None,
+        description="The task key the workspace was opened for.",
+    )
+    branch: constr(min_length=1) = Field(
+        ...,
+        description="The task branch the run worked on.",
+    )
+    base: constr(min_length=1) = Field(
+        ...,
+        description="The base the branch was cut from: a branch name or a 40-hex commit, as requested.",
+    )
+    baseRevision: constr(pattern=r'^[0-9a-f]{40}$') | None = Field(
+        None,
+        description="Full 40-hex commit `base` resolved to when the worktree was created; `null` when unobservable.",
+    )
+    path: str | None = Field(
+        None,
+        description="Label of the workspace root (the agent's cwd). A label only; see this member's description.",
+    )
+    appPath: str | None = Field(
+        None,
+        description="Label of where the product code is checked out (equals `path` for an in-repo layout). A label only.",
+    )
+    state: TaskWorkspaceState | None = Field(
+        None,
+        description="The workspace's presented state, as `GET /workspaces` reports it. Optional: the runner does not put it on run answers today.",
     )
 
 
@@ -113,4 +169,8 @@ class RunnerRunRecord(BaseModel):
     error: str | None = Field(
         None,
         description='Present when `state` is `failed` — a short description of the failure.',
+    )
+    taskWorkspace: TaskWorkspace | None = Field(
+        None,
+        description="OPTIONAL: the task workspace this run executed in (demand `factory-20261018-contracts-runner-workspace`). Present only for a run dispatched with `workspace` (see `runner.dispatch-request.json`); ABSENT for a plain run. Not to be confused with `workspace` above, which is the runner's git observation of the repo. `path` and `appPath` are LABELS for display and correlation: a consumer must never treat them as an address it can open, and a producer should send a path relative to the runner's workspace root rather than an absolute path. (Today's agent-runner still answers its absolute temp path; the schema does not refuse that, so no real answer is rejected.)",
     )

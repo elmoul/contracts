@@ -16,6 +16,17 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.58.0 - 2026-10-18
+
+**Additive** (tag `v0.58.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.58.0; Python and TypeScript bindings updated for `runner.dispatch-request` (and so the `dispatch` inside `parked.resume-request`) and `runner.run-record`. Fulfils demand `factory-20261018-contracts-runner-workspace` (agent-runner demand `factory-20261017-agent-runner-task-workspaces`).
+
+- **`workspace`** on `runner.dispatch-request` and on the parked resume `dispatch`: optional object `{kind: "task-worktree", taskId | key (exactly one), branch (feature/<KEY>-<slug>), base (branch name or 40-hex commit), reuse (boolean)}`, closed. Absent means a plain run.
+- **`taskWorkspace`** on `runner.run-record`: optional object, closed. Required `id`, `kind`, `branch`, `base`; optional `repo`, `task`, `baseRevision` (40-hex or null), `path`, `appPath` (labels only), `state` (`active|parked|releasable|orphan|released`). The optional members include what agent-runner answers today (`repo`, `task`, `appPath`, `baseRevision`), so a real answer validates.
+- **`requestHash`** (`runner.dispatch-reservation`): `workspace` is the seventh named field, **included only when present**, folded in as `{base, branch, kind, reuse, task}` (`task` = `taskId` else `key`), keys sorted. Published hashes and the worked example are unchanged; a second worked example covers a workspace request.
+- Every existing payload stays valid; neither member is in `required`.
+- Binding caveat: the exactly-one-of `taskId`/`key` rule (`oneOf`) is enforced by the schema only; `json-schema-to-typescript` and `datamodel-codegen` generate both as optional (same class of gap as `if/then`, see DEPLOYMENT.md).
+- Rollout: the dispatch request and run record are closed, so a consumer must pin v0.58.0 BEFORE a producer sends or answers either member; an older pin rejects it.
+
 ## v0.57.0 - 2026-10-16
 
 **Additive** (tag `v0.57.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.57.0; Python and TypeScript bindings updated for the `ci-run` outcome of `parked.condition-event` (and so its copy inside `parked.resume-request`). Fulfils demand `factory-20261016-contracts-ci-outcome-checks`.

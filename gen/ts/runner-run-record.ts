@@ -114,4 +114,49 @@ export interface RunnerRunRecord {
    * Present when `state` is `failed` — a short description of the failure.
    */
   error?: string;
+  /**
+   * OPTIONAL: the task workspace this run executed in (demand `factory-20261018-contracts-runner-workspace`). Present only for a run dispatched with `workspace` (see `runner.dispatch-request.json`); ABSENT for a plain run. Not to be confused with `workspace` above, which is the runner's git observation of the repo. `path` and `appPath` are LABELS for display and correlation: a consumer must never treat them as an address it can open, and a producer should send a path relative to the runner's workspace root rather than an absolute path. (Today's agent-runner still answers its absolute temp path; the schema does not refuse that, so no real answer is rejected.)
+   */
+  taskWorkspace?: {
+    /**
+     * The workspace id (`<repo>:<task>`).
+     */
+    id: string;
+    /**
+     * Same value as the dispatch `workspace.kind`.
+     */
+    kind: "task-worktree";
+    /**
+     * The repository the workspace belongs to.
+     */
+    repo?: string;
+    /**
+     * The task key the workspace was opened for.
+     */
+    task?: string;
+    /**
+     * The task branch the run worked on.
+     */
+    branch: string;
+    /**
+     * The base the branch was cut from: a branch name or a 40-hex commit, as requested.
+     */
+    base: string;
+    /**
+     * Full 40-hex commit `base` resolved to when the worktree was created; `null` when unobservable.
+     */
+    baseRevision?: string | null;
+    /**
+     * Label of the workspace root (the agent's cwd). A label only; see this member's description.
+     */
+    path?: string;
+    /**
+     * Label of where the product code is checked out (equals `path` for an in-repo layout). A label only.
+     */
+    appPath?: string;
+    /**
+     * The workspace's presented state, as `GET /workspaces` reports it. Optional: the runner does not put it on run answers today.
+     */
+    state?: "active" | "parked" | "releasable" | "orphan" | "released";
+  };
 }

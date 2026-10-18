@@ -174,6 +174,16 @@ def main():
                  "resume-request: PR merged -> continue (known-good)")
     expect_valid(resume_s, resume_request(event(OUTCOMES["pr-closed"], key="pull-request:plantpal:92:closed"), "reassess"),
                  "resume-request: PR closed -> reassess (known-good)")
+    # v0.58.0: the resume dispatch may carry a task workspace (it is the dispatch-request shape).
+    ws = {"kind": "task-worktree", "key": "PLA-73", "branch": "feature/PLA-73-slug", "base": "dev", "reuse": True}
+    with_ws = copy.deepcopy(req)
+    with_ws["dispatch"]["workspace"] = ws
+    expect_valid(resume_s, with_ws, "resume-request: dispatch with a task workspace, reuse (known-good)")
+    for label, bad in (("kind clone", {**ws, "kind": "clone"}), ("branch main", {**ws, "branch": "main"}),
+                       ("no taskId or key", {k: v for k, v in ws.items() if k != "key"})):
+        bad_ws = copy.deepcopy(req)
+        bad_ws["dispatch"]["workspace"] = bad
+        expect_invalid(resume_s, bad_ws, f"resume-request: dispatch workspace {label} (known-bad)")
     no_key = copy.deepcopy(req)
     del no_key["dispatch"]["dispatchKey"]
     expect_invalid(resume_s, no_key, "resume-request: dispatch without a dispatchKey (known-bad)")

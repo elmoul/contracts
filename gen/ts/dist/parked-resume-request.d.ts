@@ -154,4 +154,33 @@ export interface RunnerDispatchRequest {
      * Which configured inference backend/runtime profile to dispatch on. Omitted resolves from `model` if a profile claims it, else the configured default. An unrecognized name is rejected before any run starts, never silently defaulted.
      */
     runtime?: string;
+    /**
+     * OPTIONAL task workspace (demand `factory-20261018-contracts-runner-workspace`; agent-runner demand `factory-20261017-agent-runner-task-workspaces`). Asks the runner to run this dispatch in a temporary git worktree on its own task branch instead of the repository's main checkout, so two tasks of one app can run at once. Only an app repository (one whose `app.yaml` says it is an app) accepts it; a hexagon or platform repository is refused and keeps the single-session rule. ABSENT means a plain run, exactly as before: every existing request stays valid, and an absent `workspace` is left out of the `requestHash` field list (see `runner.dispatch-reservation.json`). The task is named by exactly one of `taskId` or `key` (the runner treats both as the same thing).
+     */
+    workspace?: {
+        /**
+         * The only workspace kind that exists: a git worktree for one task.
+         */
+        kind: "task-worktree";
+        /**
+         * The task's id, for example `PLA-73`. Exactly one of `taskId` / `key`.
+         */
+        taskId?: string;
+        /**
+         * The task's key, for example `PLA-73`. Exactly one of `taskId` / `key`.
+         */
+        key?: string;
+        /**
+         * The task branch, `feature/<KEY>-<slug>`: one `feature/` segment, then a conservative ref-safe tail. The runner additionally refuses `..`, a trailing `.`, `.lock` or `/`, and `//`.
+         */
+        branch: string;
+        /**
+         * What the branch is cut from: an integration branch name (for example `dev`) or a full 40-hex lowercase commit SHA (which this pattern also admits). Runner-side the same ref-safety refusals as `branch` apply.
+         */
+        base: string;
+        /**
+         * `true`: reuse this task's existing worktree (a resume). `false`: refuse if one already exists.
+         */
+        reuse: boolean;
+    };
 }

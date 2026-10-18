@@ -122,6 +122,73 @@
     "error": {
       "type": "string",
       "description": "Present when `state` is `failed` — a short description of the failure."
+    },
+    "taskWorkspace": {
+      "type": "object",
+      "description": "OPTIONAL: the task workspace this run executed in (demand `factory-20261018-contracts-runner-workspace`). Present only for a run dispatched with `workspace` (see `runner.dispatch-request.json`); ABSENT for a plain run. Not to be confused with `workspace` above, which is the runner's git observation of the repo. `path` and `appPath` are LABELS for display and correlation: a consumer must never treat them as an address it can open, and a producer should send a path relative to the runner's workspace root rather than an absolute path. (Today's agent-runner still answers its absolute temp path; the schema does not refuse that, so no real answer is rejected.)",
+      "required": [
+        "id",
+        "kind",
+        "branch",
+        "base"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The workspace id (`<repo>:<task>`)."
+        },
+        "kind": {
+          "const": "task-worktree",
+          "description": "Same value as the dispatch `workspace.kind`."
+        },
+        "repo": {
+          "type": "string",
+          "description": "The repository the workspace belongs to."
+        },
+        "task": {
+          "type": "string",
+          "description": "The task key the workspace was opened for."
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The task branch the run worked on."
+        },
+        "base": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The base the branch was cut from: a branch name or a 40-hex commit, as requested."
+        },
+        "baseRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Full 40-hex commit `base` resolved to when the worktree was created; `null` when unobservable."
+        },
+        "path": {
+          "type": "string",
+          "description": "Label of the workspace root (the agent's cwd). A label only; see this member's description."
+        },
+        "appPath": {
+          "type": "string",
+          "description": "Label of where the product code is checked out (equals `path` for an in-repo layout). A label only."
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "active",
+            "parked",
+            "releasable",
+            "orphan",
+            "released"
+          ],
+          "description": "The workspace's presented state, as `GET /workspaces` reports it. Optional: the runner does not put it on run answers today."
+        }
+      }
     }
   }
 }

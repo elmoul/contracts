@@ -4,7 +4,39 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, constr
+
+
+class Workspace(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    kind: Literal['task-worktree'] = Field(
+        ...,
+        description="The only workspace kind that exists: a git worktree for one task.",
+    )
+    taskId: constr(pattern=r'^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$') | None = Field(
+        None,
+        description="The task's id, for example `PLA-73`. Exactly one of `taskId` / `key`.",
+    )
+    key: constr(pattern=r'^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$') | None = Field(
+        None,
+        description="The task's key, for example `PLA-73`. Exactly one of `taskId` / `key`.",
+    )
+    branch: constr(pattern=r'^feature/[A-Za-z0-9][A-Za-z0-9._-]{0,127}$') = Field(
+        ...,
+        description="The task branch, `feature/<KEY>-<slug>`: one `feature/` segment, then a conservative ref-safe tail. The runner additionally refuses `..`, a trailing `.`, `.lock` or `/`, and `//`.",
+    )
+    base: constr(pattern=r'^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$') = Field(
+        ...,
+        description="What the branch is cut from: an integration branch name (for example `dev`) or a full 40-hex lowercase commit SHA (which this pattern also admits). Runner-side the same ref-safety refusals as `branch` apply.",
+    )
+    reuse: bool = Field(
+        ...,
+        description="`true`: reuse this task's existing worktree (a resume). `false`: refuse if one already exists.",
+    )
 
 
 class RunnerDispatchRequest(BaseModel):
@@ -39,4 +71,8 @@ class RunnerDispatchRequest(BaseModel):
     runtime: str | None = Field(
         None,
         description='Which configured inference backend/runtime profile to dispatch on. Omitted resolves from `model` if a profile claims it, else the configured default. An unrecognized name is rejected before any run starts, never silently defaulted.',
+    )
+    workspace: Workspace | None = Field(
+        None,
+        description="OPTIONAL task workspace (demand `factory-20261018-contracts-runner-workspace`; agent-runner demand `factory-20261017-agent-runner-task-workspaces`). Asks the runner to run this dispatch in a temporary git worktree on its own task branch instead of the repository's main checkout, so two tasks of one app can run at once. Only an app repository (one whose `app.yaml` says it is an app) accepts it; a hexagon or platform repository is refused and keeps the single-session rule. ABSENT means a plain run, exactly as before: every existing request stays valid, and an absent `workspace` is left out of the `requestHash` field list (see `runner.dispatch-reservation.json`). The task is named by exactly one of `taskId` or `key` (the runner treats both as the same thing).",
     )

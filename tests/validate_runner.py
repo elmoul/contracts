@@ -277,6 +277,60 @@ def canonical_request_json(request: dict) -> str:
     return json.dumps(subset, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
+# --- task workspaces (v0.58.0) ------------------------------------------------------
+# Demand factory-20261018-contracts-runner-workspace.
+
+GOOD_WORKSPACE_KEY = {
+    "kind": "task-worktree", "key": "PLA-73", "branch": "feature/PLA-73-slug", "base": "dev", "reuse": False,
+}
+GOOD_WORKSPACE_TASKID = {
+    "kind": "task-worktree", "taskId": "PLA-73", "branch": "feature/PLA-73-slug", "base": "a" * 40, "reuse": True,
+}
+GOOD_DISPATCH_REQUEST_WORKSPACE = {**GOOD_DISPATCH_REQUEST, "workspace": GOOD_WORKSPACE_KEY}
+
+def _ws(**kw):
+    return {**GOOD_DISPATCH_REQUEST, "workspace": {**GOOD_WORKSPACE_KEY, **kw}}
+
+def _ws_without(*drop):
+    return {**GOOD_DISPATCH_REQUEST, "workspace": {k: v for k, v in GOOD_WORKSPACE_KEY.items() if k not in drop}}
+
+BAD_WORKSPACE_FIXTURES = [
+    ("kind other than task-worktree", _ws(kind="clone")),
+    ("kind missing", _ws_without("kind")),
+    ("branch not feature/<KEY>-<slug>", _ws(branch="main")),
+    ("branch with a space", _ws(branch="feature/has space")),
+    ("branch missing", _ws_without("branch")),
+    ("neither taskId nor key", _ws_without("key")),
+    ("both taskId and key", _ws(taskId="PLA-73")),
+    ("key not a task key", _ws(key="x")),
+    ("base missing", _ws_without("base")),
+    ("base not a ref", _ws(base="/leading-slash")),
+    ("reuse not a boolean", _ws(reuse="yes")),
+    ("reuse missing", _ws_without("reuse")),
+    ("extra member", _ws(path="/tmp/x")),
+]
+
+GOOD_TASK_WORKSPACE = {
+    "id": "plantpal:PLA-73", "kind": "task-worktree", "repo": "plantpal", "task": "PLA-73",
+    "branch": "feature/PLA-73-slug", "base": "dev", "baseRevision": BASE_SHA,
+    "path": "plantpal/PLA-73", "appPath": "plantpal/PLA-73", "state": "active",
+}
+GOOD_TASK_WORKSPACE_MINIMAL = {"id": "plantpal:PLA-73", "kind": "task-worktree", "branch": "feature/PLA-73-slug", "base": "dev"}
+GOOD_RUN_RECORD_TASK_WORKSPACE = {**GOOD_RUN_RECORD_FINISHED, "taskWorkspace": GOOD_TASK_WORKSPACE}
+BAD_RUN_RECORD_TASK_WORKSPACE = [
+    ("taskWorkspace kind other than task-worktree", {**GOOD_TASK_WORKSPACE, "kind": "clone"}),
+    ("taskWorkspace missing branch", {k: v for k, v in GOOD_TASK_WORKSPACE.items() if k != "branch"}),
+    ("taskWorkspace missing id", {k: v for k, v in GOOD_TASK_WORKSPACE.items() if k != "id"}),
+    ("taskWorkspace state outside the enum", {**GOOD_TASK_WORKSPACE, "state": "ready"}),
+    ("taskWorkspace baseRevision not 40-hex", {**GOOD_TASK_WORKSPACE, "baseRevision": "abc123"}),
+    ("taskWorkspace extra member", {**GOOD_TASK_WORKSPACE, "size": 12}),
+]
+
+# requestHash: the published worked examples (absent workspace unchanged; present workspace folded in).
+def _canon(o):
+    return hashlib.sha256(json.dumps(o, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
 def main() -> int:
     reg = registry()
     dispatch_schema = load("runner.dispatch-request.json")
@@ -316,6 +370,26 @@ def main() -> int:
     expect_invalid(run_record_schema, BAD_RUN_RECORD_WORKSPACE_MISSING_FIELD, "runner.run-record: workspace missing dirty (known-bad)")
     expect_invalid(run_record_schema, BAD_RUN_RECORD_WORKSPACE_BRANCH_NUMBER, "runner.run-record: workspace branch not a string (known-bad)")
     expect_invalid(run_record_schema, BAD_RUN_RECORD_WORKSPACE_EXTRA_FIELD, "runner.run-record: workspace carries an unobserved extra field (known-bad)")
+
+    # Task workspaces are additive: absent stays valid, present is checked member by member.
+    expect_valid(dispatch_schema, GOOD_DISPATCH_REQUEST_WORKSPACE, "runner.dispatch-request: workspace by key (known-good)")
+    expect_valid(dispatch_schema, {**GOOD_DISPATCH_REQUEST, "workspace": GOOD_WORKSPACE_TASKID}, "runner.dispatch-request: workspace by taskId, base a 40-hex commit (known-good)")
+    expect_valid(dispatch_schema, GOOD_DISPATCH_REQUEST, "runner.dispatch-request: workspace absent (known-good)")
+    for label, doc in BAD_WORKSPACE_FIXTURES:
+        expect_invalid(dispatch_schema, doc, f"runner.dispatch-request: workspace {label} (known-bad)")
+    expect_valid(run_record_schema, GOOD_RUN_RECORD_TASK_WORKSPACE, "runner.run-record: taskWorkspace present (known-good)")
+    expect_valid(run_record_schema, {**GOOD_RUN_RECORD_FINISHED, "taskWorkspace": GOOD_TASK_WORKSPACE_MINIMAL}, "runner.run-record: taskWorkspace minimal (known-good)")
+    expect_valid(run_record_schema, GOOD_RUN_RECORD_FINISHED, "runner.run-record: taskWorkspace absent (known-good)")
+    for label, tw in BAD_RUN_RECORD_TASK_WORKSPACE:
+        expect_invalid(run_record_schema, {**GOOD_RUN_RECORD_FINISHED, "taskWorkspace": tw}, f"runner.run-record: {label} (known-bad)")
+    expect_valid(reservation_schema, {**GOOD_DISPATCH_RESERVATION, "run": {**GOOD_RUN_RECORD_WITH_WORKSPACE, "taskWorkspace": GOOD_TASK_WORKSPACE}}, "runner.dispatch-reservation: run with taskWorkspace (known-good)", reg)
+    base_req = {"repo": "plantpal", "prompt": "do the thing", "model": "claude-sonnet-5"}
+    if _canon(base_req) != "ebaba25539396d2af99d3ff6e410f8f295d8e956380bf1818a18d65a8a98a671":
+        raise AssertionError("requestHash worked example changed -- an absent workspace must leave published hashes unchanged")
+    ws_req = {"repo": "plantpal", "prompt": "do the thing",
+              "workspace": {"base": "dev", "branch": "feature/PLA-73-slug", "kind": "task-worktree", "reuse": False, "task": "PLA-73"}}
+    if _canon(ws_req) != "b7ed1475f32c5c179bd64242fa698edd715c4167de91125e02602a2ed944db9f":
+        raise AssertionError("requestHash workspace worked example does not match runner.dispatch-reservation.json")
 
     expect_valid(reservation_schema, GOOD_DISPATCH_RESERVATION, "runner.dispatch-reservation: key/reservation/run lookup body (known-good)", reg)
     expect_invalid(reservation_schema, BAD_RESERVATION_SHORT_HASH, "runner.dispatch-reservation: requestHash not 64 hex (known-bad)", reg)
