@@ -61,6 +61,8 @@ export type { DeliveryProducerResult, DeliveryProducerCorrelation, DeliveryProdu
 // DeliveryProducerCheck and DeliveryProducerCorrelation (cross-file $refs, same
 // duplication as noted below). The canonical exports are the owning modules.
 export type { DeliveryDeploymentReceipt, DeliveryImageDigests, DeliveryDeploymentEnvironment, DeliveryRollbackIdentity } from "./delivery-deployment-receipt";
+export type { DeliveryDefectTaskRequest } from "./delivery-defect-task-request";
+export type { DeliveryDefectTask } from "./delivery-defect-task";
 export type { AppDeploymentIdentity } from "./deployment-identity";
 export type { RunnerDispatchRequest } from "./runner-dispatch-request";
 export type { RunnerRunRecord, RunnerRunWorkspace } from "./runner-run-record";

@@ -223,6 +223,35 @@ paths:
                         items: { $ref: "../delivery/delivery.sync-operation.json" }
                       nextCursor: { type: [string, "null"] }
         default: { $ref: "#/components/responses/Error" }
+  /delivery/v1/defect-tasks:
+    post:
+      operationId: createDeliveryDefectTask
+      summary: Create one defect task under an epic after an epic-level test (v0.59.0).
+      description: >
+        Creates a task in the epic's project, linked as a child of the epic, from the
+        findings of an epic test. Idempotent on `operationKey`: `201` = new key, the body
+        reports the status reached (`confirmed`, `failed`, or `uncertain` if the vendor
+        outcome is unknown); `200` = same key and same canonical body, the stored record is
+        returned and no second issue is created; `409 operation_key_conflict` = same key,
+        different body. An `uncertain` record is never resent under a new key; reconcile by
+        read-back (`docs/task-delivery.md`).
+
+        Refusals before anything is written use the error envelope with `422
+        invalid_request` and a closed `details.reason`: `epic_mismatch` (the `epic` pair
+        does not name one live issue), `not_an_epic` (the issue has no children),
+        `task_unreadable` (a child could not be read). Also `caller_not_authorized`,
+        `project_not_enabled`, `issue_not_found`. The same `epic_children_unfinished`
+        reason is returned when an epic is moved to Done (see the transition payload) while
+        a child is not in Staging or Done.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "../delivery/delivery.defect-task-request.json" }
+      responses:
+        "200": { $ref: "#/components/responses/DefectTask" }
+        "201": { $ref: "#/components/responses/DefectTask" }
+        default: { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     factoryCaller:
@@ -311,6 +340,14 @@ components:
             type: object
             required: [data]
             properties: { data: { $ref: "../delivery/delivery.sync-operation.json" } }
+    DefectTask:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "../delivery/delivery.defect-task.json" } }
     Error:
       description: Error envelope; HTTP status per `delivery.error` code table.
       content:

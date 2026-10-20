@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/delivery/delivery.defect-task",
+  "title": "DeliveryDefectTask",
+  "description": "The `data` of the answer to `POST /delivery/v1/defect-tasks` (v0.59.0): the durable record of one defect-task creation. `201` for a new `operationKey`, `200` for a replay of the same key and body. `confirmed`: the issue exists and `issue` names it, `error` is `null`. `failed`: the service definitively did not create it, `issue` is `null` and `error` says why. `uncertain`: the create was sent and its outcome is unknown, `issue` is `null` and `error` is `tracker_outcome_unknown` (never retryable; reconcile, do not resend under a new key). Failures a caller can act on before anything is written (`invalid_request` with the closed `details.reason` values, `caller_not_authorized`, `project_not_enabled`) are returned as the `{\"error\": ...}` envelope, not as this record.",
+  "type": "object",
+  "required": ["operationKey", "status", "epic", "issue", "error", "createdAt", "updatedAt"],
+  "additionalProperties": false,
+  "properties": {
+    "operationKey": { "type": "string" },
+    "status": { "type": "string", "enum": ["confirmed", "uncertain", "failed"] },
+    "epic": { "$ref": "delivery.issue-ref.json" },
+    "issue": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["id", "key", "project", "url"],
+          "additionalProperties": false,
+          "description": "The created issue.",
+          "properties": {
+            "id": { "type": "string", "pattern": "^[0-9]+-[0-9]+$", "description": "YouTrack's immutable internal issue id." },
+            "key": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*-[0-9]+$", "description": "Readable id, e.g. `PLA-31`." },
+            "project": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+            "url": { "type": "string", "minLength": 1, "description": "Link to the issue in the tracker." }
+          }
+        },
+        { "type": "null" }
+      ],
+      "description": "The created issue; `null` unless `status` is `confirmed`."
+    },
+    "error": {
+      "oneOf": [{ "$ref": "delivery.error.json" }, { "type": "null" }],
+      "description": "Set for `failed` and `uncertain`; `null` for `confirmed`."
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "confirmed" } }, "required": ["status"] },
+      "then": { "properties": { "issue": { "type": "object" }, "error": { "type": "null" } } },
+      "else": { "properties": { "issue": { "type": "null" }, "error": { "type": "object" } } }
+    }
+  ]
+}

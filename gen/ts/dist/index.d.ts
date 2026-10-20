@@ -42,6 +42,8 @@ export type { DeliveryEvidence, DeliveryCriterionCoverage, DeliveryScopeBinding,
 export type { DeliveryDecision, DeliveryPolicyRef } from "./delivery-decision";
 export type { DeliveryProducerResult, DeliveryProducerCorrelation, DeliveryProducerCheck } from "./delivery-producer-result";
 export type { DeliveryDeploymentReceipt, DeliveryImageDigests, DeliveryDeploymentEnvironment, DeliveryRollbackIdentity } from "./delivery-deployment-receipt";
+export type { DeliveryDefectTaskRequest } from "./delivery-defect-task-request";
+export type { DeliveryDefectTask } from "./delivery-defect-task";
 export type { AppDeploymentIdentity } from "./deployment-identity";
 export type { RunnerDispatchRequest } from "./runner-dispatch-request";
 export type { RunnerRunRecord, RunnerRunWorkspace } from "./runner-run-record";

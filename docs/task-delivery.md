@@ -64,6 +64,7 @@ is unchanged from v0.31.0.
 | `schemas/delivery/delivery.sync-request.json` | JSON Schema | One issue write: `link` / `comment` / `transition` / `resolve`; v0.35.0 adds optional `reservedAt` |
 | `schemas/delivery/delivery.sync-operation.json` | JSON Schema | Durable operation record + read-back; v0.35.0 adds the absence window (`absentSince`/`absenceQuietUntil`), `absenceProvenAt`, `vendorInFlightBoundSeconds` |
 | `schemas/delivery/delivery.operation-coverage.json` | JSON Schema | Lookup coverage floor + quiet-window bound; what a miss can and cannot prove (v0.35.0) |
+| `schemas/delivery/delivery.defect-task-request.json` / `delivery.defect-task.json` | JSON Schema | `POST /delivery/v1/defect-tasks` request and answer (v0.59.0) |
 | `schemas/delivery/delivery.error.json` | JSON Schema | Error payload + code/status table; v0.35.0 adds `operation_lookup_out_of_coverage` and `tracker_outcome_unknown` |
 | `schemas/delivery/delivery.evidence.json` | JSON Schema | Stage-aware observation (successor to `factory.evidence-receipt` for new deliveries) |
 | `schemas/delivery/delivery.decision.json` | JSON Schema | Plan approval / policy authorization / owner acceptance / request changes / abandon |
@@ -778,6 +779,65 @@ not enforce the new `if/then` rules (a `review` receipt without `review`, a task
 dev receipt, a `ready` environment whose receipt is not `passed`). Validate emitted
 documents against the JSON Schema.
 
+## Epics and the defect-task operation (v0.59.0)
+
+Additive. Nothing validates differently for an existing document (D043).
+
+### What an epic accepts
+
+An epic (an issue with non-empty `subtasks`) accepts the same `comment` and
+`transition` payloads of `delivery.sync-request` as any task; the `epic` it carries on
+the other side of those payloads is unchanged. Two rules apply to it:
+
+- **A move of an epic to Done is refused while a child is not in Staging or Done.** The
+  service answers `422 invalid_request` with `details.reason: epic_children_unfinished`
+  and `details.unfinished: [{idReadable, state}]` listing every child that is neither,
+  and writes nothing. If a child cannot be read, the rule cannot be evaluated and the
+  answer is `details.reason: task_unreadable` (the move is also refused). Reaching Done
+  by `resolve` still needs the owner-acceptance reference of §Resolve enforcement; this
+  rule is in addition to it, not instead.
+- The children of the epic are exactly its `subtasks`; `Staging` and `Done` are the
+  project's own state names as `delivery.workflow` reports them.
+
+### `POST /delivery/v1/defect-tasks`
+
+Creates one task under an epic after an epic-level test found a defect. It is a
+separate route because the `delivery.sync-request` payload kinds stay closed at
+`link`, `comment`, `transition`, `resolve`; creating an issue is not one of them.
+
+- Request: `delivery.defect-task-request` (`operationKey`, `epic` as a
+  `delivery.issue-ref`, `summary` 1-120, `outcome` 1-700 and at most three sentences,
+  `scope` 1-10 strings, `acceptance` 1-8 strings, `source: "epic-test"`, `note`
+  1-2000). Closed (`additionalProperties: false`).
+- Answer: `{"data": delivery.defect-task}` with `operationKey`, `status`
+  (`confirmed` | `uncertain` | `failed`), `epic`, `issue` (`{id, key, project, url}`,
+  `null` unless `confirmed`), `error` (`delivery.error`, `null` when `confirmed`),
+  `createdAt`, `updatedAt`. `201` for a new key, `200` for a replay of the same key
+  and body, `409 operation_key_conflict` for the same key with another body.
+- Recovery is the one of §Recovery: an `uncertain` record is never resent under a new
+  key and is settled by read-back, because the create may still have taken effect.
+- Refusals that write nothing, as `{"error": ...}` with `422 invalid_request` and a
+  closed `details.reason`: `epic_mismatch` (`epic.vendorId` and `epic.idReadable`
+  are not one live issue), `not_an_epic` (the issue has no children).
+
+### Closed `invalid_request` reasons
+
+`delivery.error` documents `details.reason` on `invalid_request` as the closed set
+`epic_children_unfinished` (with `details.unfinished: [{idReadable, state}]`),
+`task_unreadable`, `epic_mismatch`, `not_an_epic`. `details.reason` stays optional on
+`invalid_request`; when present it is one of these and the schema rejects any other
+value, and `epic_children_unfinished` without a non-empty `unfinished` list does not
+validate. A new reason is an additive release.
+
+**Rollout.** The request, the record and the error are closed shapes, so a consumer
+pins v0.59.0 BEFORE a producer serves the route or sends a `reason`; an older pin
+rejects the document. No consumer is obligated to move (D031).
+
+**Binding caveat.** As with the other rules in this document, the `if/then` that ties
+the reasons to `invalid_request` and the `confirmed` / `issue` / `error` coupling in
+`delivery.defect-task` are enforced by the schema only; the generated Python and
+TypeScript models emit those members as optional/open.
+
 ## Handoff matrix
 
 | Interface | Producer | Consumer | Reference | Operation identity / recovery | Status at v0.37.0 |
@@ -796,6 +856,7 @@ documents against the JSON Schema.
 | Dev deploy result | `plantpal` (+ `runtime`/`gateway`/`launcher`) | `factory` | `delivery.producer-result` ← `delivery.deployment-receipt`; CLI `dev_delivery.py lookup <id>` / `receipt <id>` | `deploymentId`; reserve-first `pending` receipt; `reconcile` re-observes only; rollback identity in the receipt | Contract published in v0.36.0. plantpal emits producer-result (v0.31.0 binding) and a **native** receipt today; repin pending |
 | Running-app identity | `plantpal` (any app) | `runtime`, `factory` | `app/deployment-identity`; plantpal `GET /actuator/info` → `deployment` | `revision` + `deploymentId` as reported; `null` = not reported | Contract published in v0.36.0; plantpal already serves this shape natively |
 | Review environment | `launcher` | `factory`, apps, owner tools | `schemas/launcher/review-environment.openapi.yaml`: `POST /review/v1/environments`, `GET`/`DELETE /review/v1/environments/{idempotencyKey}`; the environment carries a `delivery.deployment-receipt` (`environment.name: review`, `revisionRole: task`) | caller `idempotencyKey`; same key + same body replays, different body `409`; a miss is `unavailable`, never `failed` | Contract published in v0.38.0; **unimplemented** (launcher); Factory evidence recording unimplemented |
+| Defect task under an epic | `youtrack` | `factory` | `delivery.defect-task-request` → `delivery.defect-task`; `POST /delivery/v1/defect-tasks`; closed `invalid_request` reasons in `delivery.error` | `operationKey`; replay `200` / new `201` / conflict `409`; `uncertain` settled by read-back | Contract published in v0.59.0; the planner serves the shape locally (demand `factory-20261020-youtrack-epic-operations`) |
 | Routing/approval | `demand-coordinator` | `factory` | existing `demand` / `demand.fulfillment` | existing | Unchanged; not in this release |
 | App-deploy receipt / result lookup | `app-deploy` (`plantpal`) | `factory` | `delivery.deployment-receipt`, `delivery.producer-result`; CLI `dev_delivery.py receipt` / `lookup` (v0.36.0) and `GET /delivery/v1/app-deploys/{deploymentId}[/receipt]` (v0.37.0) | `deploymentId`; `nativeRef` `<repository>:deployments/<id>`; a miss is `unavailable`, never `failed` | Contract published in v0.36.0, HTTP route in v0.37.0; **route unimplemented** (demand to `plantpal`). The CLI is implemented natively and repinning it to the tagged shape is plantpal's open leg |
 

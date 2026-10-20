@@ -16,6 +16,19 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.59.0 - 2026-10-20
+
+**Additive** (tag `v0.59.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.59.0; Python and TypeScript bindings added for two new schemas and regenerated for `delivery.error` (description only). Fulfils demand `youtrack-20261020-contracts-delivery-defect-task`. Shapes written from the demand text; the planner serves them locally (demand `factory-20261020-youtrack-epic-operations`).
+
+- **`POST /delivery/v1/defect-tasks`** (`createDeliveryDefectTask`) in `youtrack-delivery.openapi.yaml`: `201` new key, `200` replay, `409 operation_key_conflict`, error envelope otherwise.
+- **`delivery.defect-task-request`** (new, closed): `operationKey`, `epic` (`delivery.issue-ref`), `summary` 1-120, `outcome` 1-700 (at most three sentences, a producer rule), `scope` 1-10 strings, `acceptance` 1-8 strings, `source` const `epic-test`, `note` 1-2000.
+- **`delivery.defect-task`** (new, closed): `operationKey`, `status` (`confirmed|uncertain|failed`), `epic`, `issue` (`{id, key, project, url}` or `null`), `error` (`delivery.error` or `null`), `createdAt`, `updatedAt`. The schema couples them: `confirmed` has an issue and no error; the other two have an error and no issue.
+- **`delivery.error`**: `details.reason` on `invalid_request` is documented as the closed set `epic_children_unfinished` (requires non-empty `details.unfinished: [{idReadable, state}]`), `task_unreadable`, `epic_mismatch`, `not_an_epic`. `details.reason` stays optional and `code` stays an open string, so every existing error validates.
+- **`docs/task-delivery.md`**, new section "Epics and the defect-task operation": an epic accepts the `comment` and `transition` payloads, and a move of an epic to Done is refused while a child is not in Staging or Done. Handoff-matrix row and file-table row added.
+- Tests: 31 new cases in `validate_delivery.py` (request bounds and closed `source`, the record's status/issue/error coupling, each reason, unknown reason, `unfinished` missing/empty/malformed, reason under another code) plus the route check.
+- Binding caveat: the `if/then` rules (reason set, `unfinished` requirement, status coupling) are enforced by the schema only; the generated models emit those members as optional/open.
+- Rollout: the new shapes and the `reason` values are closed, so a consumer pins v0.59.0 BEFORE a producer serves the route or sends a `reason`. No consumer is re-pinned (D031).
+
 ## v0.58.0 - 2026-10-18
 
 **Additive** (tag `v0.58.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.58.0; Python and TypeScript bindings updated for `runner.dispatch-request` (and so the `dispatch` inside `parked.resume-request`) and `runner.run-record`. Fulfils demand `factory-20261018-contracts-runner-workspace` (agent-runner demand `factory-20261017-agent-runner-task-workspaces`).

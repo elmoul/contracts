@@ -72,6 +72,8 @@ from platform_contracts.delivery import (
     delivery_decision,
     delivery_producer_result,
     delivery_deployment_receipt,
+    delivery_defect_task_request,
+    delivery_defect_task,
 )
 
 __all__ = [
@@ -141,4 +143,6 @@ __all__ = [
     "delivery_decision",
     "delivery_producer_result",
     "delivery_deployment_receipt",
+    "delivery_defect_task_request",
+    "delivery_defect_task",
 ]

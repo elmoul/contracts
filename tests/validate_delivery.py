@@ -446,6 +446,32 @@ BAD_EVIDENCE_URL_AS_DEPLOYMENT = copy.deepcopy(GOOD_EVIDENCE_LIVE)
 del BAD_EVIDENCE_URL_AS_DEPLOYMENT["environment"]["deploymentId"]
 BAD_EVIDENCE_PRE_DEPLOY_WITH_ENV = {**GOOD_EVIDENCE_CI_TASK, "environment": GOOD_EVIDENCE_LIVE["environment"]}
 
+DEFECT_KEY = "epic-test:PLA-12:defect:1"
+GOOD_DEFECT_REQUEST = {
+    "operationKey": DEFECT_KEY,
+    "epic": ISSUE_REF,
+    "summary": "Reminder card hidden on small screens",
+    "outcome": "The reminder card is visible at 360px. Nothing else moves.",
+    "scope": ["dashboard layout"],
+    "acceptance": ["card visible at 360px width"],
+    "source": "epic-test",
+    "note": "Epic test run 4: the card overflows and is clipped.",
+}
+GOOD_DEFECT_CONFIRMED = {
+    "operationKey": DEFECT_KEY,
+    "status": "confirmed",
+    "epic": ISSUE_REF,
+    "issue": {"id": "2-31", "key": "PLA-31", "project": "PLA", "url": "http://youtrack.local/issue/PLA-31"},
+    "error": None,
+    "createdAt": NOW,
+    "updatedAt": NOW,
+}
+_DEFECT_ERR = {"code": "tracker_outcome_unknown", "message": "timeout", "retryable": False, "ownerAction": None}
+GOOD_DEFECT_UNCERTAIN = {**GOOD_DEFECT_CONFIRMED, "status": "uncertain", "issue": None, "error": _DEFECT_ERR}
+GOOD_DEFECT_FAILED = {**GOOD_DEFECT_UNCERTAIN, "status": "failed", "error": {"code": "tracker_rejected", "message": "refused", "retryable": False, "ownerAction": None}}
+_INVALID = {"code": "invalid_request", "retryable": False, "ownerAction": None}
+ERR_EPIC_UNFINISHED = {**_INVALID, "message": "children unfinished", "details": {"reason": "epic_children_unfinished", "unfinished": [{"idReadable": "PLA-13", "state": "In Progress"}]}}
+
 DECISION_BASE = {
     "id": ACCEPTANCE_REF["decisionId"],
     "deliveryId": DELIVERY,
@@ -757,6 +783,37 @@ GOOD_ERROR = {"code": "operation_key_conflict", "message": "same key, different 
 BAD_ERROR_NO_RETRYABLE = {"code": "scope_changed", "message": "changed"}
 
 CASES = [
+    ("delivery.defect-task-request.json", GOOD_DEFECT_REQUEST, True),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "source": "manual"}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "extra": 1}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "summary": ""}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "summary": "x" * 121}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "outcome": "x" * 701}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "scope": []}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "scope": ["a"] * 11}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "acceptance": []}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "acceptance": ["a"] * 9}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "note": "x" * 2001}, False),
+    ("delivery.defect-task-request.json", {**GOOD_DEFECT_REQUEST, "operationKey": "short"}, False),
+    ("delivery.defect-task-request.json", {k: v for k, v in GOOD_DEFECT_REQUEST.items() if k != "epic"}, False),
+    ("delivery.defect-task.json", GOOD_DEFECT_CONFIRMED, True),
+    ("delivery.defect-task.json", GOOD_DEFECT_UNCERTAIN, True),
+    ("delivery.defect-task.json", GOOD_DEFECT_FAILED, True),
+    ("delivery.defect-task.json", {**GOOD_DEFECT_CONFIRMED, "status": "rejected"}, False),
+    ("delivery.defect-task.json", {**GOOD_DEFECT_CONFIRMED, "issue": None}, False),
+    ("delivery.defect-task.json", {**GOOD_DEFECT_CONFIRMED, "error": _DEFECT_ERR}, False),
+    ("delivery.defect-task.json", {**GOOD_DEFECT_FAILED, "error": None}, False),
+    ("delivery.defect-task.json", {**GOOD_DEFECT_FAILED, "issue": GOOD_DEFECT_CONFIRMED["issue"]}, False),
+    ("delivery.error.json", ERR_EPIC_UNFINISHED, True),
+    ("delivery.error.json", {**_INVALID, "message": "m"}, True),
+    ("delivery.error.json", {**_INVALID, "message": "m", "details": {"reason": "task_unreadable"}}, True),
+    ("delivery.error.json", {**_INVALID, "message": "m", "details": {"reason": "epic_mismatch"}}, True),
+    ("delivery.error.json", {**_INVALID, "message": "m", "details": {"reason": "not_an_epic"}}, True),
+    ("delivery.error.json", {**_INVALID, "message": "m", "details": {"reason": "because"}}, False),
+    ("delivery.error.json", {**_INVALID, "message": "m", "details": {"reason": "epic_children_unfinished"}}, False),
+    ("delivery.error.json", {**_INVALID, "message": "m", "details": {"reason": "epic_children_unfinished", "unfinished": []}}, False),
+    ("delivery.error.json", {**ERR_EPIC_UNFINISHED, "code": "state_changed"}, False),
+    ("delivery.error.json", {**ERR_EPIC_UNFINISHED, "details": {"reason": "epic_children_unfinished", "unfinished": [{"idReadable": "PLA-13"}]}}, False),
     ("delivery.issue-ref.json", ISSUE_REF, True),
     ("delivery.issue.json", GOOD_ISSUE, True),
     ("delivery.issue.json", {**GOOD_ISSUE, "startable": {"value": False, "reason": "setup-task"}}, True),
@@ -1345,6 +1402,7 @@ def main() -> int:
         "/delivery/v1/operations/{operationKey}",
         "/delivery/v1/operations/{operationKey}/reconcile",
         "/delivery/v1/operations",
+        "/delivery/v1/defect-tasks",
     ]:
         if route not in api["paths"]:
             failures.append(f"openapi: missing route {route}")
@@ -1357,6 +1415,11 @@ def main() -> int:
     reserved_at = api["paths"]["/delivery/v1/operations/{operationKey}"]["get"].get("parameters", [])
     if not any(p.get("name") == "reservedAt" for p in reserved_at):
         failures.append("openapi: operation lookup has no reservedAt provenance parameter")
+    defect_post = api["paths"].get("/delivery/v1/defect-tasks", {}).get("post", {})
+    if defect_post.get("operationId") != "createDeliveryDefectTask":
+        failures.append("openapi: defect-tasks route lost its createDeliveryDefectTask operationId")
+    if not all(code in defect_post.get("responses", {}) for code in ("200", "201", "default")):
+        failures.append("openapi: defect-tasks must answer 200 (replay), 201 (new) and the error envelope")
     if "operation_lookup_out_of_coverage" not in API.read_text(encoding="utf-8"):
         failures.append("openapi: the inconclusive-miss code is not documented on the surface")
 
