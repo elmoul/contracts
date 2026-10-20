@@ -808,7 +808,13 @@ separate route because the `delivery.sync-request` payload kinds stay closed at
 - Request: `delivery.defect-task-request` (`operationKey`, `epic` as a
   `delivery.issue-ref`, `summary` 1-120, `outcome` 1-700 and at most three sentences,
   `scope` 1-10 strings, `acceptance` 1-8 strings, `source: "epic-test"`, `note`
-  1-2000). Closed (`additionalProperties: false`).
+  1-2000, and optional `ownerAction`, v0.60.0). Closed (`additionalProperties: false`).
+- `ownerAction` (optional boolean, v0.60.0): `true` asks the service to tag the created
+  Task `owner-action`; absent and `false` are the same request (only `true` enters the
+  request hash, and `true` under a key first used without it is
+  `409 operation_key_conflict`). The tag must already exist in the tracker; the service
+  does not create it. A task whose read-back lacks the tag is reported `uncertain`,
+  never `confirmed`.
 - Answer: `{"data": delivery.defect-task}` with `operationKey`, `status`
   (`confirmed` | `uncertain` | `failed`), `epic`, `issue` (`{id, key, project, url}`,
   `null` unless `confirmed`), `error` (`delivery.error`, `null` when `confirmed`),

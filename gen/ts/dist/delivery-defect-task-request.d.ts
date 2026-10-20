@@ -42,6 +42,10 @@ export interface DeliveryDefectTaskRequest {
      * Free-text finding from the epic test, recorded on the new task.
      */
     note: string;
+    /**
+     * `true` asks the service to tag the created Task `owner-action`; absent and `false` are the same request (only `true` enters the request hash). The tag must already exist in the tracker; a task whose read-back lacks it is reported `uncertain`, never `confirmed`.
+     */
+    ownerAction?: boolean;
 }
 /**
  * The epic the defect task belongs to. The service refuses a reference that is not an epic (`not_an_epic`) or whose live `vendorId`/`idReadable` pair differs (`epic_mismatch`).

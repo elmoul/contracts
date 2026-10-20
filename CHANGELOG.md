@@ -16,6 +16,15 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.60.0 - 2026-10-21
+
+**Additive** (tag `v0.60.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.60.0; Python and TypeScript bindings updated for `delivery.defect-task-request`. Fulfils demand `youtrack-20261021-contracts-defect-task-owner-action`.
+
+- **`delivery.defect-task-request`**: new optional boolean `ownerAction` (not in `required`; `additionalProperties` stays `false`). `true` asks the service to tag the created Task `owner-action`; absent and `false` are the same request. Existing documents validate unchanged.
+- **`docs/task-delivery.md`**: the tag must already exist in the tracker; a task whose read-back lacks it is reported `uncertain`, never `confirmed`.
+- Tests: 4 new cases in `validate_delivery.py` (true, false, non-boolean, null).
+- Rollout: the request is closed, so a producer sending `ownerAction` needs the consumer pinned to v0.60.0 first. No consumer is re-pinned (D031).
+
 ## v0.59.0 - 2026-10-20
 
 **Additive** (tag `v0.59.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.59.0; Python and TypeScript bindings added for two new schemas and regenerated for `delivery.error` (description only). Fulfils demand `youtrack-20261020-contracts-delivery-defect-task`. Shapes written from the demand text; the planner serves them locally (demand `factory-20261020-youtrack-epic-operations`).

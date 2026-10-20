@@ -57,3 +57,7 @@ class DeliveryDefectTaskRequest(BaseModel):
         ...,
         description='Free-text finding from the epic test, recorded on the new task.',
     )
+    ownerAction: bool | None = Field(
+        None,
+        description='`true` asks the service to tag the created Task `owner-action`; absent and `false` are the same request (only `true` enters the request hash). The tag must already exist in the tracker; a task whose read-back lacks it is reported `uncertain`, never `confirmed`.',
+    )
