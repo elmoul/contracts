@@ -1896,3 +1896,18 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-20_2015_fulfill-demand-youtrack-20261020-contrac
+
+## Session 138 (2026-10-20)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-20_2020_you-are-an-independent-verifier-for-dema.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+agent-runner's dispatch supervisor from an auto-drafted, unconfirmed close --
+not a second hand-written account, and not yet reviewed by a human or the
+worker agent itself).
+
+- State: You are an INDEPENDENT VERIFIER for demand youtrack-20261020-contracts-delivery-defect-task in repo contracts. A different session did the work and filed a report claiming it is done. You are not that session and you must not trust its report. Verify exactly commit 6050af60b04cc0afe0f3ea52e315a4e034... -- status: done (close: auto-drafted, unconfirmed).
+- Next step: Review this session's auto-drafted close (`.brain/sessions/2026-10-20_2020_you-are-an-independent-verifier-for-dema.md`) and confirm or correct it.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-20_2020_you-are-an-independent-verifier-for-dema
