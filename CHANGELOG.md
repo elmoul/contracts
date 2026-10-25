@@ -16,6 +16,14 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.61.0 - 2026-10-25
+
+**Additive** (tag `v0.61.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.61.0; Python and TypeScript bindings updated for `delivery.issue`. Fulfils demand `youtrack-20261025-contracts-issue-regression-links`.
+
+- **`delivery.issue`**: new optional arrays `fixesBugIntroducedBy` (issues this one fixes a bug of; inward `Regression` link) and `introducedBugFixedBy` (fix tasks of bugs this issue introduced; outward), each of `delivery.issue-ref` (not in `required`; `additionalProperties` stays `false`). Absent means the producer does not say and a consumer must not infer; an empty array means none. Existing documents validate unchanged.
+- Tests: 4 new cases in `validate_delivery.py` (both lists, empty lists, non-ref element, null).
+- Rollout: the shape is closed, so a consumer pins v0.61.0 BEFORE a producer serves either property. No consumer is re-pinned (D031).
+
 ## v0.60.0 - 2026-10-21
 
 **Additive** (tag `v0.60.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.60.0; Python and TypeScript bindings updated for `delivery.defect-task-request`. Fulfils demand `youtrack-20261021-contracts-defect-task-owner-action`.
