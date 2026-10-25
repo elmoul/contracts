@@ -1939,3 +1939,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-21_0025_you-are-an-independent-verifier-for-dema
+
+## Session 141 (2026-10-25)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-25_0117_fulfill-demand-youtrack-20261025-contrac.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand youtrack-20261025-contracts-issue-regression-links (capability: delivery.issue carries optional fixesBugIntroducedBy and introducedBugFixedBy, additively, from: youtrack, target: contracts). Acceptance criteria: - delivery.issue gains the optional properties fixesBugIntroducedBy and i... -- status: partial.
+- Next step: See the session file's `## Log` for open follow-ups.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-25_0117_fulfill-demand-youtrack-20261025-contrac
