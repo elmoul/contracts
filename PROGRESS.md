@@ -2055,3 +2055,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-26_1737_close-the-loop-on-demand-contracts-20261
+
+## Session 149 (2026-10-26)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-26_1643_close-the-loop-on-demand-contracts-20261.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: close the loop on demand contracts-20261026-agent-runner-repin-run-record-fallback-segments (archive bookkeeping) -- status: done.
+- Next step: None pending for this demand -- archived and verified off the board. The board's single errors entry (app-studio has no HEXAGON.md) is pre-existing and belongs to app-studio's own session.
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-26_1643_close-the-loop-on-demand-contracts-20261
