@@ -65,7 +65,7 @@ export type { DeliveryDefectTaskRequest } from "./delivery-defect-task-request";
 export type { DeliveryDefectTask } from "./delivery-defect-task";
 export type { AppDeploymentIdentity } from "./deployment-identity";
 export type { RunnerDispatchRequest } from "./runner-dispatch-request";
-export type { RunnerRunRecord, RunnerRunWorkspace } from "./runner-run-record";
+export type { RunnerRunRecord, RunnerRunWorkspace, RunnerRunFallback, RunnerUsageSegment } from "./runner-run-record";
 // Only the reservation itself is re-exported here. Its `run` property `$ref`s
 // runner.run-record.json, which json-schema-to-typescript resolves by INLINING a
 // second copy of RunnerRunRecord/RunnerRunWorkspace into this module (the same

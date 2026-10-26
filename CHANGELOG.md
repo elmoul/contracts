@@ -16,6 +16,19 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.62.0 - 2026-10-26
+
+**Additive** (tag `v0.62.0`). Java, TypeScript and Python versions at 0.62.0; TypeScript and Python bindings regenerated for `runner.run-record`. Fulfils demand `agent-runner-20261026-contracts-runner-run-record-fallback-segments` (D142 clauses 3 and 5).
+
+- **`runner.run-record` gains optional `fallback`**, a closed object with required `from`, `to`, `reason`, `sessionId`, `continued`. `from`/`to` are the runtime profile names (`claude` -> `claude-api`); `reason` is the closed enum `session-limit | weekly-limit`; `sessionId` is the CLI session the API segment resumed; `continued: false` means the API segment could not take over. Present ONLY on a run that actually fell back - ABSENT (not `null`) on every ordinary run.
+- **`runner.run-record` gains optional `usageSegments`**, an array (min 1) of closed `{ provider, model?, tokensIn, tokensOut }`. Present ONLY on a fallback run, one entry per provider segment. `dependentRequired` makes `usageSegments` without `fallback` invalid.
+- **Metering semantics (documented on the schema):** on a fallback run `usageSegments` REPLACES the single `usageProvider` dimension as the metering input - one usage fact per entry, none for the combined total; `usageProvider` remains only the dimension the run started on and must not be billed for the whole run. Record-level `tokensIn`/`tokensOut` stay the run's combined totals.
+- **Failure semantics (documented on the schema):** `fallback.continued: false` means the fallback was attempted and the API segment could not take over - that run is `state: "failed"` with an `error`, never a silent restart.
+- Every existing field, the `required` list and `additionalProperties: false` are unchanged, so a pre-D142 run record validates byte-for-byte.
+- Tests: 21 new cases in `validate_runner.py` (2-segment fallback, failed `continued:false` with one segment, optional segment `model`, pre-D142 record; reason outside the enum, missing/empty members, `null` rather than absent, extra members, empty/null segments, missing segment members, negative and non-integer tokens, `usageSegments` without `fallback`) plus structural assertions on `required` and `additionalProperties`.
+- Binding note: TypeScript regenerated with `json-schema-to-typescript` (`RunnerRunFallback`, `RunnerUsageSegment` exported from `index.ts`; `dist/` rebuilt). Python regenerated with `datamodel-codegen` 0.68.1, which again renames the unrelated `TaskWorkspaceState` inline enum (`State1`); restored by hand so this release's Python diff is additive only (same precedent as v0.26.0 / v0.59-0.60). Java has no `runner.run-record` model (only the parked schemas), so only its version moved.
+- Rollout: the shape is closed, so a consumer pins v0.62.0 BEFORE a producer serves either member. This is the first publication of the fallback members; `usageProvider`-only consumers keep working on ordinary runs. No consumer is re-pinned (D031) - the origin (`agent-runner`) gets the re-pin demand per D043.
+
 ## v0.61.0 - 2026-10-25
 
 **Additive** (tag `v0.61.0`, local; the owner pushes). Java, TypeScript and Python versions at 0.61.0; Python and TypeScript bindings updated for `delivery.issue`. Fulfils demand `youtrack-20261025-contracts-issue-regression-links`.

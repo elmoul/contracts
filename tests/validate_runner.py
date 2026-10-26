@@ -326,6 +326,86 @@ BAD_RUN_RECORD_TASK_WORKSPACE = [
     ("taskWorkspace extra member", {**GOOD_TASK_WORKSPACE, "size": 12}),
 ]
 
+# --- D142 automatic subscription-to-API fallback (v0.62.0) ---------------------------
+# Demand agent-runner-20261026-contracts-runner-run-record-fallback-segments.
+# Shape copied from agent-runner's shipped `RunFallback` / `UsageSegment`
+# (`src/domain/run.ts`), not invented ahead of it.
+
+GOOD_FALLBACK = {
+    "from": "claude",
+    "to": "claude-api",
+    "reason": "session-limit",
+    "sessionId": "sess-1",
+    "continued": True,
+}
+
+GOOD_USAGE_SEGMENTS = [
+    {"provider": "claude-code-session", "model": "claude-opus-5-5", "tokensIn": 100, "tokensOut": 10},
+    {"provider": "claude-api-session", "model": "claude-opus-5-5", "tokensIn": 200, "tokensOut": 20},
+]
+
+GOOD_RUN_RECORD_FALLBACK = {
+    **GOOD_RUN_RECORD_FINISHED,
+    "tokensUsed": 330,
+    "tokensIn": 300,
+    "tokensOut": 30,
+    "fallback": GOOD_FALLBACK,
+    "usageSegments": GOOD_USAGE_SEGMENTS,
+}
+
+# The API segment could not take over: visible failed run, one segment, never a restart.
+GOOD_RUN_RECORD_FALLBACK_WEEKLY_FAILED = {
+    **GOOD_RUN_RECORD_LAUNCHED,
+    "state": "failed",
+    "endedAt": "2026-10-26T10:14:00Z",
+    "exitCode": 1,
+    "error": "subscription weekly limit reached; API fallback could not resume the session",
+    "fallback": {**GOOD_FALLBACK, "reason": "weekly-limit", "continued": False},
+    "usageSegments": [GOOD_USAGE_SEGMENTS[0]],
+}
+
+# `model` is optional per segment (agent-runner's `UsageSegment.model?`).
+GOOD_RUN_RECORD_FALLBACK_NO_MODEL_SEGMENT = {
+    **GOOD_RUN_RECORD_FALLBACK,
+    "usageSegments": [{"provider": "claude-code-session", "tokensIn": 1, "tokensOut": 2}],
+}
+
+def _fb(**kw):
+    return {**GOOD_RUN_RECORD_FALLBACK, "fallback": {**GOOD_FALLBACK, **kw}}
+
+def _fb_without(*drop):
+    return {**GOOD_RUN_RECORD_FALLBACK, "fallback": {k: v for k, v in GOOD_FALLBACK.items() if k not in drop}}
+
+def _seg(**kw):
+    return {**GOOD_RUN_RECORD_FALLBACK, "usageSegments": [GOOD_USAGE_SEGMENTS[0], {**GOOD_USAGE_SEGMENTS[1], **kw}]}
+
+def _seg_without(*drop):
+    seg = {k: v for k, v in GOOD_USAGE_SEGMENTS[1].items() if k not in drop}
+    return {**GOOD_RUN_RECORD_FALLBACK, "usageSegments": [seg]}
+
+BAD_RUN_RECORD_FALLBACK = [
+    ("fallback reason not a subscription limit", _fb(reason="rate-limit")),
+    ("fallback missing continued", _fb_without("continued")),
+    ("fallback missing sessionId", _fb_without("sessionId")),
+    ("fallback missing from", _fb_without("from")),
+    ("fallback continued not a boolean", _fb(continued="yes")),
+    ("fallback sessionId empty", _fb(sessionId="")),
+    ("fallback null rather than absent", {**GOOD_RUN_RECORD_FINISHED, "fallback": None}),
+    ("fallback extra member", _fb(restarted=True)),
+    ("usageSegments without a fallback", {**GOOD_RUN_RECORD_FINISHED, "usageSegments": GOOD_USAGE_SEGMENTS}),
+]
+
+BAD_RUN_RECORD_USAGE_SEGMENTS = [
+    ("usageSegments empty", {**GOOD_RUN_RECORD_FALLBACK, "usageSegments": []}),
+    ("usageSegments null rather than absent", {**GOOD_RUN_RECORD_FINISHED, "usageSegments": None}),
+    ("usageSegments segment missing provider", _seg_without("provider")),
+    ("usageSegments segment missing tokensIn", _seg_without("tokensIn")),
+    ("usageSegments segment missing tokensOut", _seg_without("tokensOut")),
+    ("usageSegments negative tokens", _seg(tokensIn=-1)),
+    ("usageSegments non-integer tokens", _seg(tokensIn=1.5)),
+    ("usageSegments extra segment member", _seg(providerTokens=3)),
+]
+
 # requestHash: the published worked examples (absent workspace unchanged; present workspace folded in).
 def _canon(o):
     return hashlib.sha256(json.dumps(o, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
@@ -382,6 +462,21 @@ def main() -> int:
     expect_valid(run_record_schema, GOOD_RUN_RECORD_FINISHED, "runner.run-record: taskWorkspace absent (known-good)")
     for label, tw in BAD_RUN_RECORD_TASK_WORKSPACE:
         expect_invalid(run_record_schema, {**GOOD_RUN_RECORD_FINISHED, "taskWorkspace": tw}, f"runner.run-record: {label} (known-bad)")
+
+    # D142 fallback is additive: the required list is untouched and a pre-D142 record
+    # still validates; each new member is then checked member by member.
+    if run_record_schema["required"] != ["id", "repo", "prompt", "state", "startedAt", "exitCode", "timedOut", "stopped", "transcriptPath"]:
+        raise AssertionError("runner.run-record: the required list changed -- a pre-D142 record must stay valid")
+    if run_record_schema["additionalProperties"] is not False:
+        raise AssertionError("runner.run-record: additionalProperties must stay closed")
+    expect_valid(run_record_schema, GOOD_RUN_RECORD_FINISHED, "runner.run-record: pre-D142 record, fallback/usageSegments absent (known-good)")
+    expect_valid(run_record_schema, GOOD_RUN_RECORD_FALLBACK, "runner.run-record: fallback run, two provider usage segments (known-good)")
+    expect_valid(run_record_schema, GOOD_RUN_RECORD_FALLBACK_WEEKLY_FAILED, "runner.run-record: failed fallback, continued=false, one segment (known-good)")
+    expect_valid(run_record_schema, GOOD_RUN_RECORD_FALLBACK_NO_MODEL_SEGMENT, "runner.run-record: segment model optional (known-good)")
+    for label, doc in BAD_RUN_RECORD_FALLBACK:
+        expect_invalid(run_record_schema, doc, f"runner.run-record: {label} (known-bad)")
+    for label, doc in BAD_RUN_RECORD_USAGE_SEGMENTS:
+        expect_invalid(run_record_schema, doc, f"runner.run-record: {label} (known-bad)")
     expect_valid(reservation_schema, {**GOOD_DISPATCH_RESERVATION, "run": {**GOOD_RUN_RECORD_WITH_WORKSPACE, "taskWorkspace": GOOD_TASK_WORKSPACE}}, "runner.dispatch-reservation: run with taskWorkspace (known-good)", reg)
     base_req = {"repo": "plantpal", "prompt": "do the thing", "model": "claude-sonnet-5"}
     if _canon(base_req) != "ebaba25539396d2af99d3ff6e410f8f295d8e956380bf1818a18d65a8a98a671":

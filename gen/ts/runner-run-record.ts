@@ -50,6 +50,8 @@ export type RunnerRunWorkspace = {
  * - **Unkeyed (fallback).** A caller that embedded its own operation token as the first line of `prompt` at dispatch time (see `runner.dispatch-request.json`) re-identifies its run by finding the single record whose `id` equals the id returned at dispatch, OR whose `prompt` starts with `"<token>\n"`. Zero or ambiguous (>1) matches are both 'still uncertain, do not resend'; only exactly one match is a resolved receipt.
  *
  * **Producer-result lookups.** This record is what `agent-runner` serves a normalized `delivery.producer-result` for, at `GET /runs/{id}/producer-result` and — when the run was keyed — `GET /dispatches/{dispatchKey}/producer-result`. Both return `delivery.producer-result`; `correlation.operationKey` carries this record's `dispatchKey` when it has one, and `null` otherwise. `workspace` is what makes the result revision-bound: see that field.
+ *
+ * **D142 automatic fallback (additive, v0.62.0).** An automatic-mode Claude run whose subscription hits a session or weekly limit may continue on `ai-gateway`-held API auth with the same model and effort. Such a run is no longer single-provider: `fallback` records the one transition (absent on every ordinary run), and `usageSegments` splits the run's tokens per provider (absent on every ordinary run) and replaces `usageProvider` as the metering input. A fallback that could not continue is `state: "failed"` with `fallback.continued: false` — explicit, never a silent restart. Every existing field, the `required` list and `additionalProperties: false` are unchanged, so a pre-D142 record validates byte-for-byte.
  */
 export interface RunnerRunRecord {
   /**
@@ -106,9 +108,18 @@ export interface RunnerRunRecord {
    */
   runtime?: string;
   /**
-   * The `usage.event` provider string denormalized at dispatch time from the resolved runtime profile — describes the dimension in force when the run happened, immune to later config edits.
+   * The `usage.event` provider string denormalized at dispatch time from the resolved runtime profile — describes the dimension in force when the run happened, immune to later config edits. On a D142 fallback run this is only the dimension the run STARTED on; it does not describe the whole run, whose usage crosses two providers. A consumer must meter a fallback run from `usageSegments` and must not bill this single value for the run's total — see `usageSegments`.
    */
   usageProvider?: string;
+  fallback?: RunnerRunFallback;
+  /**
+   * OPTIONAL: this run's token usage split per provider (D142 clause 5). Present ONLY on a fallback run; ABSENT on every ordinary run, including every run recorded before this field existed.
+   *
+   * On a fallback run `usageSegments` REPLACES the single `usageProvider` dimension as the run's metering input: there is one entry per provider segment (the subscription segment, and the API segment when it took over), and each is billed on its own dimension exactly once. A consumer must emit/meter one usage fact per entry and none for the combined total; `usageProvider` remains only the dimension the run started on and must not be applied to the whole run. `tokensIn`/`tokensOut` on the record remain the run's combined totals and are not a segment.
+   *
+   * @minItems 1
+   */
+  usageSegments?: [RunnerUsageSegment, ...RunnerUsageSegment[]];
   workspace?: RunnerRunWorkspace;
   /**
    * Present when `state` is `failed` — a short description of the failure.
@@ -159,4 +170,52 @@ export interface RunnerRunRecord {
      */
     state?: "active" | "parked" | "releasable" | "orphan" | "released";
   };
+}
+/**
+ * OPTIONAL: the one automatic subscription-to-API transition this run took (D142 clause 3). Present ONLY on a run that actually fell back; ABSENT on every ordinary run — a clean subscription run, an explicitly chosen `claude-api` run, and every run recorded before this field existed. This field means "fell back", not "ran on the API".
+ *
+ * The transition is recorded so a fallback run is distinguishable from a clean subscription run rather than silently different. `sessionId` is evidence that the task CONTINUED in the same session; `continued: false` means the fallback was attempted and the API segment could not take over — such a run is `state: "failed"` (an explicit, visible outcome), never a silent restart of the task.
+ */
+export interface RunnerRunFallback {
+  /**
+   * The runtime profile the run started on — the subscription `claude` profile.
+   */
+  from: string;
+  /**
+   * The runtime profile the API segment ran on — the `claude-api` profile (same model, same effort).
+   */
+  to: string;
+  /**
+   * Which subscription limit triggered the fallback: the five-hour session window, or the seven-day (weekly) window. Those are the ONLY two reasons an automatic fallback exists (D142 clause 4); every other failure remains an explicit refusal.
+   */
+  reason: "session-limit" | "weekly-limit";
+  /**
+   * The CLI's own session id that the API segment resumed — the evidence that the task CONTINUED in the same session rather than being restarted with duplicated side effects.
+   */
+  sessionId: string;
+  /**
+   * `true` when the API segment took over and the run continued. `false` means the fallback was attempted and the API segment could not take over: the run is `state: "failed"` and `error` says why — a visible outcome, never a silent restart.
+   */
+  continued: boolean;
+}
+/**
+ * One provider segment of a run's token usage.
+ */
+export interface RunnerUsageSegment {
+  /**
+   * The `usage.event` provider token for this segment (e.g. `claude-code-session` for the subscription segment, `claude-api-session` for the API segment). Never the subscription token for API tokens: that would spend subscription credits on real-dollar inference.
+   */
+  provider: string;
+  /**
+   * The model this segment actually ran, when known. A fallback keeps the same model across both segments (D142 clause 3).
+   */
+  model?: string;
+  /**
+   * Tokens consumed by this segment only — not the run total.
+   */
+  tokensIn: number;
+  /**
+   * Tokens produced by this segment only — not the run total.
+   */
+  tokensOut: number;
 }

@@ -46,7 +46,7 @@ export type { DeliveryDefectTaskRequest } from "./delivery-defect-task-request";
 export type { DeliveryDefectTask } from "./delivery-defect-task";
 export type { AppDeploymentIdentity } from "./deployment-identity";
 export type { RunnerDispatchRequest } from "./runner-dispatch-request";
-export type { RunnerRunRecord, RunnerRunWorkspace } from "./runner-run-record";
+export type { RunnerRunRecord, RunnerRunWorkspace, RunnerRunFallback, RunnerUsageSegment } from "./runner-run-record";
 export type { RunnerDispatchReservation } from "./runner-dispatch-reservation";
 export type { ParkedWaitCondition, CiRunCondition, PullRequestCondition, RepositoryCreatedCondition, OwnerDecisionCondition, DemandsCondition, } from "./parked-wait-condition";
 export type { ParkedRunResult } from "./parked-run-result";
