@@ -10,7 +10,7 @@ acceptance-criteria:
   - "agent-runner's wire run record serves fallback {from,to,reason,sessionId,continued} only on a run that fell back and usageSegments only on a fallback run, with the record-level usageProvider left as the starting dimension and never billed for the whole run."
   - "agent-runner validates both ends against the published schema - a pre-D142 run record still validates unchanged, and a fallback run with two usage segments validates - and reports any mismatch rather than loosening the schema locally."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # contracts v0.62.0: close the consuming leg
