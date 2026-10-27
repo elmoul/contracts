@@ -16,6 +16,29 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.63.0 - 2026-10-27
+
+**Additive** (tag `v0.63.0`). Java, TypeScript and Python versions at 0.63.0; TypeScript and Python bindings added for eleven new schemas under `schemas/agent-runner/`. Fulfils demand `brain-toolkit-20261027-contracts-brain-v1-schemas` (D143, `spec-agent-memory-system.md` v1.0). Nothing existing changed: no schema, `required` list or binding of an earlier release is touched.
+
+New schemas, all closed (`additionalProperties: false`), all `brain.*`:
+
+- **`brain.run-record`** - one `.brain/runs.jsonl` line (spec section 2.4): `oneOf` a RUN line (`kind` `dispatched|interactive`; required `runId`, `kind`, `at`, `task` (max 200), `outcome` `done|partial|failed|stopped`, `triage` `lesson|none|deferred|skipped`; optional `model`, `effort`, `runtime`, `harvested`, `candidates`, `brainTokens`) and the `kind: brain-job` follow-up line a retried deferred job appends (`runId`, `job` `triage|harvest`, `result` = `brain.cli-result`).
+- **`brain.run-bundle`** - the triage input `agent-runner` writes at run exit (section 4.1): `runId`, `repo`, `kind`, `task`, `outcome`, `finalAnswer`, `errorLines`, `diffStat`, `transcriptPath` (`null` when there is none), optional `model`/`effort`/`runtime`.
+- **`brain.change`** - one `.brain/changes.jsonl` line (section 2.5): `at`, `actor` `curate|seed|owner`, `op` `create|update|merge|retire|pin|unpin|brief`, `slug` (`null` for `brief`), `fromRuns`, `diff` (`null` when none).
+- **`brain.note`** - a parsed note (section 2.2): `slug`, `title`, `type` `gotcha|procedure|fact`, `status` `active|pinned|retired`, `created`, `updated` (dates), `provenance` `{runs, files?, decisions?}`, `body`, optional `raw`.
+- **`brain.candidate`** - an inbox candidate (section 2.3): the note members plus `id` (file stem), `source` `harvest|session-close|seed` and `repeat_of` (slug or `null`, the spec's snake_case spelling); `status` optional.
+- **`brain.functions`** - `config/ai-functions.json` (section 3): `version` and the four functions `triage|harvest|curate|seed`, each `{model, effort low|medium|high|xhigh, reason}`.
+- **`brain.cli-result`** - what every toolkit command prints with `--json`: `ok`, `deferred`, `uncertain`, `error`, `model`, `effort`, `tokens`, `writes` (repo-relative paths), `details`. `if/then` rules: `ok` excludes `deferred`/`uncertain`/`error`; `deferred` excludes `ok`; a plain failure needs a non-empty `error`.
+- **`brain.repo-summary`** - an element of `GET /brain/repos` (section 9): `repo`, `migrated` (boolean), `briefUpdatedAt`, `briefTokens`, `notes`, `inbox`, `lastRun`, `deferredJobs`, `lastJob` (`brain.job` or `null`).
+- **`brain.usage`** - `GET /brain/usage`: `ceiling` (or `null`) and `days: [{date, tokens}]`.
+- **`brain.job`** and **`brain.job-request`** - the queue entry (`id`, `repo`, `command`, `runId`, `state` `queued|running|done|deferred|failed`, `attempts`, `nextAttemptAt`, `model`, `effort`, `result` = `brain.cli-result`, `createdAt`, `updatedAt`) and the optional `{model?, effort?}` body of the owner's curate/seed/migrate presses.
+
+Where the spec won over the demand text: `brain.functions` uses `reason` (not `why`); `brain.cli-result` has the owner-session member list (`tokens`, no `command`/`deferredReason`/`tokensIn`/`tokensOut`); `brain.repo-summary.migrated` is a boolean (not `v0.6|v1`); `brain.run-record` is the spec's `runs.jsonl` line (`runId`, `at`, `triage`, `brainTokens`...), not the demand's `run-entry`; `brain.job-request` carries no `command` (the route names it). `brain.note-action` is NOT published: spec section 9 puts pin/unpin/retire in the URL and they take no body.
+
+- Tests: `tests/validate_brain.py` (new, added to `run_all.py`), 192 cases: a known-good document per shape (the spec's own examples), every required member removed in turn, closed-object and enum rejections, the `cli-result` couplings and write-path rules, and the demand-text spellings that must NOT validate.
+- Binding note: TypeScript generated with `json-schema-to-typescript` (`dist/` rebuilt, types exported from `index.ts`). `brain-run-record.ts`, `brain-job.ts` and `brain-repo-summary.ts` each INLINE a copy of the `$ref`'d `BrainCliResult`/`BrainJob`, the same duplication as `runner-dispatch-reservation.ts`; the canonical exports are the owning modules. Python generated with `datamodel-codegen` 0.68.1 in directory mode over the `brain.*` files only (cross-module `from . import` kept, no duplicate classes); it emitted plain `Enum`, rewritten to `StrEnum` by hand per this repo's convention. The `oneOf` of `brain.run-record` is `BrainRunRecord(RootModel[BrainRunRecord1 | BrainRunRecord2])` in Python (run line, job line) and `BrainRunLine | BrainJobLine` in TypeScript. Neither generator implements `if/then`: the `brain.cli-result` couplings are enforced by the schema only. Java has no model for `agent-runner` run shapes (only the parked schemas), so only its version moved.
+- Rollout: the shapes are closed, so a consumer pins v0.63.0 BEFORE a producer serves or writes them. No consumer is re-pinned (D031); the origin (`brain-toolkit`) gets the re-pin demand per D043.
+
 ## v0.62.0 - 2026-10-26
 
 **Additive** (tag `v0.62.0`). Java, TypeScript and Python versions at 0.62.0; TypeScript and Python bindings regenerated for `runner.run-record`. Fulfils demand `agent-runner-20261026-contracts-runner-run-record-fallback-segments` (D142 clauses 3 and 5).
