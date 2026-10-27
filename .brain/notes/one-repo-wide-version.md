@@ -9,5 +9,5 @@ provenance:
   runs: []
   files: ["gen/java/pom.xml", "gen/ts/package.json", "gen/python/pyproject.toml", "README.md"]
 ---
-The repo has one version across all schemas, kept in three version files.
-gen/java/pom.xml, gen/ts/package.json and gen/python/pyproject.toml must agree (0.62.0 on 2026-10-26). HEXAGON.md and spec-contracts.md claim per-contract versioning; the files win. An additive change is a minor bump. A removal, a rename or a new required field is a major bump (README.md).
+One version covers every schema; it lives in three files that must agree.
+gen/java/pom.xml, gen/ts/package.json and gen/python/pyproject.toml must always agree; read them and git tag for the current value. HEXAGON.md and spec-contracts.md claim per-contract versioning; the files win. An additive change is a minor bump. A removal, a rename or a new required field is a major bump (README.md).
