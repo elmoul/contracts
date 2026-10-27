@@ -16,6 +16,21 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.65.0 - 2026-10-27
+
+**Additive** (tag `v0.65.0`). Java, TypeScript and Python versions at 0.65.0. Fulfils demand `brain-toolkit-20261027-contracts-brain-settings-stats` (D143 addendum 2026-10-27, console settings and statistics).
+
+- **New `brain.settings`**: the fleet-wide settings record served at `GET /brain/settings`. Per function (`triage`, `harvest`, `curate`, `seed`) the effective `model` and `effort` with the shipped `default` beside them; the switches `triageOnRunExit` and `autoCurate`; `updatedAt`/`updatedBy` (`null` while never saved); optional `audit` (newest first).
+- **New `brain.settings-update`**: the `PUT /brain/settings` body, the editable members only, each optional, at least one present; `null` resets a function member to the shipped default.
+- **New `brain.settings-audit-entry`**: `at`, `actor`, `field` (dotted member path), `from`, `to`.
+- **New `brain.stats`**: `GET /brain/stats`. Fleet `totals` (repos, migrated, notes, pinned, inbox, briefsOverBudget, briefsStale, and over `windowDays`: runsTriaged, lessonsFound, repeatIncidents, curations), `jobs.byState` (queued/running/done/deferred/failed), `tokens` (the `brain.usage` shape: tokens per day against the ceiling) and a per-repo `repos` row.
+- **New `brain.job-page`**: a page of `brain.job` `items` with `total`, `page` (1-based), `pageSize` and the applied `filters` (`repo`, `command`, `state`, `from`, `to`, each `null` when unused).
+- Existing schemas are unchanged (`brain.functions` and `brain.job` included). TypeScript (source, dist, index exports) and Python (modules, `__init__`) bindings added for all five.
+- Rollout: no consumer is re-pinned (D031); `agent-runner` and `dashboard` re-pin from the fulfilment report.
+- Tests: 5 schemas added to `tests/validate_brain.py` (known-good and rejection cases).
+
+---
+
 ## v0.64.0 - 2026-10-27
 
 **Additive** (tag `v0.64.0`). Java, TypeScript and Python versions at 0.64.0. Fulfils demand `agent-runner-20261027-repo-summary-v06-leftovers`.
