@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.job-page",
+  "title": "BrainJobPage",
+  "description": "One page of the brain job list (`GET /brain/jobs` with filters and paging; D143 addendum 2026-10-27). `items` are `brain.job`, newest first; `total` is the number of jobs matching the filters across all pages; `page` is 1-based; `pageSize` is the page size the server applied. `filters` echoes the filters the server applied, each `null` when not filtered on: `repo`, `command`, `state`, and `from`/`to` (inclusive bounds on the job's `createdAt`).",
+  "type": "object",
+  "required": [
+    "items",
+    "total",
+    "page",
+    "pageSize",
+    "filters"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "brain.job.json"
+      }
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "page": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "pageSize": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "filters": {
+      "title": "BrainJobFilters",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "command",
+        "state",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "repo": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "command": {
+          "oneOf": [
+            {
+              "enum": [
+                "triage",
+                "harvest",
+                "curate",
+                "seed",
+                "migrate",
+                "note-action"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "oneOf": [
+            {
+              "enum": [
+                "queued",
+                "running",
+                "done",
+                "deferred",
+                "failed"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "to": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

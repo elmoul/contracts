@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.stats",
+  "title": "BrainStats",
+  "description": "Fleet-wide state of the brains (D143 addendum 2026-10-27; spec-agent-memory-system.md sections 9, 11 and A.1). Served at `GET /brain/stats`.\n\n`totals` sums the per-repo `repos` rows (every repo carrying `.brain/`). Counts of runs triaged, lessons found, repeat incidents (harvest candidates with `repeat_of` set) and curations cover the last `windowDays` days ending at `generatedAt`. `briefsOverBudget` is the number of briefs above the ~3,000-token budget and `briefsStale` the number past the freshness line; the producer applies the thresholds and flags each repo row. `jobs.byState` counts the queue by `brain.job` state, so the deferred and failed counts are `byState.deferred` and `byState.failed`. `tokens` is the `brain.usage` shape: tokens per day against the ceiling. An unmigrated repo's row has `briefTokens` and `briefUpdatedAt` `null`, zero counts and both brief flags `false`.",
+  "type": "object",
+  "required": [
+    "generatedAt",
+    "windowDays",
+    "totals",
+    "jobs",
+    "tokens",
+    "repos"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "windowDays": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "totals": {
+      "title": "BrainStatsTotals",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repos",
+        "migrated",
+        "notes",
+        "pinned",
+        "inbox",
+        "briefsOverBudget",
+        "briefsStale",
+        "runsTriaged",
+        "lessonsFound",
+        "repeatIncidents",
+        "curations"
+      ],
+      "properties": {
+        "repos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "migrated": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "notes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pinned": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inbox": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "briefsOverBudget": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "briefsStale": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "runsTriaged": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lessonsFound": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repeatIncidents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "curations": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "jobs": {
+      "title": "BrainStatsJobs",
+      "type": "object",
+      "required": [
+        "byState"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "byState": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "queued",
+            "running",
+            "done",
+            "deferred",
+            "failed"
+          ],
+          "properties": {
+            "queued": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "running": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "done": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "deferred": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "failed": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "tokens": {
+      "$ref": "brain.usage.json"
+    },
+    "repos": {
+      "type": "array",
+      "items": {
+        "title": "BrainStatsRepo",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "repo",
+          "migrated",
+          "notes",
+          "pinned",
+          "inbox",
+          "briefTokens",
+          "briefUpdatedAt",
+          "briefOverBudget",
+          "briefStale",
+          "runsTriaged",
+          "lessonsFound",
+          "repeatIncidents",
+          "curations",
+          "deferredJobs",
+          "failedJobs"
+        ],
+        "properties": {
+          "repo": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]+$"
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Active and pinned notes."
+          },
+          "pinned": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "inbox": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Candidates waiting in `.brain/inbox/`."
+          },
+          "briefTokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "chars / 4; `null` for an unmigrated repo."
+          },
+          "briefUpdatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "briefOverBudget": {
+            "type": "boolean"
+          },
+          "briefStale": {
+            "type": "boolean"
+          },
+          "runsTriaged": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lessonsFound": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "repeatIncidents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "curations": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "deferredJobs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failedJobs": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

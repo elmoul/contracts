@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.settings-update",
+  "title": "BrainSettingsUpdate",
+  "description": "Request body of `PUT /brain/settings`: only the editable members of `brain.settings`, each optional, at least one present. A function entry may carry `model`, `effort` or both; `null` resets that member to the shipped default. The actor and time are taken by the server (they land in `updatedBy`, `updatedAt` and the audit trail), never sent. Members omitted are left unchanged.",
+  "type": "object",
+  "minProperties": 1,
+  "additionalProperties": false,
+  "properties": {
+    "functions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "triage": {
+          "$ref": "#/$defs/function"
+        },
+        "harvest": {
+          "$ref": "#/$defs/function"
+        },
+        "curate": {
+          "$ref": "#/$defs/function"
+        },
+        "seed": {
+          "$ref": "#/$defs/function"
+        }
+      }
+    },
+    "triageOnRunExit": {
+      "type": "boolean"
+    },
+    "autoCurate": {
+      "type": "boolean"
+    }
+  },
+  "$defs": {
+    "function": {
+      "title": "BrainSettingsFunctionUpdate",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A model id the gateway catalogue contains (an uncatalogued model is refused); `null` resets to the shipped default."
+        },
+        "effort": {
+          "oneOf": [
+            {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "xhigh"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`null` resets to the shipped default."
+        }
+      }
+    }
+  }
+}

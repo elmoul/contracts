@@ -17,6 +17,7 @@ SCHEMAS = ROOT / "schemas" / "agent-runner"
 NAMES = [
     "run-record", "run-bundle", "change", "note", "candidate", "functions",
     "cli-result", "repo-summary", "usage", "job", "job-request",
+    "settings", "settings-update", "settings-audit-entry", "stats", "job-page",
 ]
 
 
@@ -126,6 +127,34 @@ SUMMARY_UNMIGRATED = {
 }
 
 
+# --- settings, stats, job page (D143 addendum 2026-10-27) -----------------------------
+AUDIT = {"at": "2026-10-27T11:00:00Z", "actor": "owner", "field": "functions.curate.model", "from": None, "to": "claude-opus-5-5"}
+FN = {"model": "claude-haiku-5-5", "effort": "low", "default": {"model": "claude-haiku-5-5", "effort": "low"}}
+SETTINGS = {
+    "functions": {"triage": FN, "harvest": FN, "curate": FN, "seed": FN},
+    "triageOnRunExit": True, "autoCurate": False,
+    "updatedAt": "2026-10-27T11:00:00Z", "updatedBy": "owner",
+}
+SETTINGS_NEVER_SAVED = {**SETTINGS, "updatedAt": None, "updatedBy": None}
+ROW = {
+    "repo": "contracts", "migrated": True, "notes": 12, "pinned": 2, "inbox": 1, "briefTokens": 2400,
+    "briefUpdatedAt": "2026-10-27T09:00:00Z", "briefOverBudget": False, "briefStale": False,
+    "runsTriaged": 5, "lessonsFound": 2, "repeatIncidents": 0, "curations": 1, "deferredJobs": 0, "failedJobs": 0,
+}
+ROW_UNMIGRATED = {**ROW, "repo": "ai-gateway", "migrated": False, "notes": 0, "pinned": 0, "inbox": 0, "briefTokens": None,
+                  "briefUpdatedAt": None, "runsTriaged": 0, "lessonsFound": 0, "curations": 0}
+STATS = {
+    "generatedAt": "2026-10-27T12:00:00Z", "windowDays": 7,
+    "totals": {"repos": 2, "migrated": 1, "notes": 12, "pinned": 2, "inbox": 1, "briefsOverBudget": 0, "briefsStale": 0,
+               "runsTriaged": 5, "lessonsFound": 2, "repeatIncidents": 0, "curations": 1},
+    "jobs": {"byState": {"queued": 0, "running": 1, "done": 9, "deferred": 2, "failed": 1}},
+    "tokens": {"ceiling": 1000000, "days": [{"date": "2026-10-27", "tokens": 41200}]},
+    "repos": [ROW, ROW_UNMIGRATED],
+}
+FILTERS = {"repo": None, "command": None, "state": None, "from": None, "to": None}
+PAGE = {"items": [JOB, JOB_DEFERRED], "total": 2, "page": 1, "pageSize": 25, "filters": FILTERS}
+
+
 def main() -> int:
     # every schema is itself a valid 2020-12 schema and a closed object (or a oneOf of closed objects)
     for n, s in SCHEMA.items():
@@ -134,7 +163,7 @@ def main() -> int:
         for b in branches:
             if b.get("additionalProperties") is not False:
                 raise AssertionError(f"brain.{n}: top-level object is not closed")
-    print("PASS  all 11 brain.* schemas are valid and closed")
+    print("PASS  all 16 brain.* schemas are valid and closed")
 
     # brain.cli-result
     ok("cli-result", CLI_OK, "ok result (known-good)")
@@ -295,6 +324,72 @@ def main() -> int:
     bad("usage", {"ceiling": 1000000, "days": [{"date": "26-10-2026", "tokens": 1}]}, "bad day")
     bad("usage", {"ceiling": 1000000, "days": [{"date": "2026-10-26", "tokens": -1}]}, "negative tokens")
     bad("usage", {"ceiling": 1000000, "days": [{"date": "2026-10-26", "tokens": 1, "calls": 2}]}, "unmodelled day member")
+    # brain.settings
+    ok("settings", SETTINGS, "saved record (known-good)")
+    ok("settings", SETTINGS_NEVER_SAVED, "never-saved record, updatedAt/updatedBy null")
+    ok("settings", {**SETTINGS, "audit": [AUDIT]}, "with audit trail")
+    bad("settings", without(SETTINGS, "autoCurate"), "autoCurate missing")
+    bad("settings", without(SETTINGS, "triageOnRunExit"), "triageOnRunExit missing")
+    bad("settings", {**SETTINGS, "functions": without(SETTINGS["functions"], "seed")}, "a function missing")
+    bad("settings", {**SETTINGS, "functions": {**SETTINGS["functions"], "triage": without(FN, "default")}}, "shipped default missing")
+    bad("settings", {**SETTINGS, "functions": {**SETTINGS["functions"], "triage": {**FN, "effort": "max"}}}, "effort outside the vocabulary")
+    bad("settings", {**SETTINGS, "functions": {**SETTINGS["functions"], "triage": {**FN, "model": ""}}}, "empty model")
+    bad("settings", {**SETTINGS, "functions": {**SETTINGS["functions"], "repoX": FN}}, "a per-repo or extra function row")
+    bad("settings", {**SETTINGS, "autoCurate": "yes"}, "switch not boolean")
+    bad("settings", {**SETTINGS, "audit": [{"at": "x"}]}, "audit entry incomplete")
+    bad("settings", {**SETTINGS, "extra": 1}, "unmodelled member")
+
+    # brain.settings-update
+    ok("settings-update", {"autoCurate": True}, "one switch")
+    ok("settings-update", {"functions": {"curate": {"model": "claude-opus-5-5"}}}, "one function member")
+    ok("settings-update", {"functions": {"triage": {"model": None, "effort": None}}, "triageOnRunExit": False}, "reset to default with null")
+    bad("settings-update", {}, "empty update")
+    bad("settings-update", {"functions": {}}, "empty functions")
+    bad("settings-update", {"functions": {"triage": {}}}, "empty function entry")
+    bad("settings-update", {"functions": {"triage": {"effort": "max"}}}, "effort outside the vocabulary")
+    bad("settings-update", {"functions": {"triage": {"model": ""}}}, "empty model")
+    bad("settings-update", {"updatedBy": "owner"}, "server-owned member sent")
+    bad("settings-update", {"autoCurate": None}, "switch cannot be null")
+
+    # brain.settings-audit-entry
+    ok("settings-audit-entry", AUDIT, "model change (known-good)")
+    ok("settings-audit-entry", {**AUDIT, "field": "autoCurate", "from": True, "to": False}, "switch change")
+    bad("settings-audit-entry", {**AUDIT, "field": "functions.curate.reason"}, "field outside the editable members")
+    bad("settings-audit-entry", {**AUDIT, "field": "functions.other.model"}, "unknown function")
+    bad("settings-audit-entry", without(AUDIT, "actor"), "actor missing")
+    bad("settings-audit-entry", {**AUDIT, "to": 3}, "to not string/boolean/null")
+    bad("settings-audit-entry", {**AUDIT, "extra": 1}, "unmodelled member")
+
+    # brain.stats
+    ok("stats", STATS, "two repos, one unmigrated (known-good)")
+    ok("stats", {**STATS, "repos": [], "tokens": {"ceiling": None, "days": []}}, "empty fleet, unknown ceiling")
+    bad("stats", without(STATS, "tokens"), "tokens missing")
+    bad("stats", without(STATS, "jobs"), "jobs missing")
+    bad("stats", {**STATS, "windowDays": 0}, "windowDays 0")
+    bad("stats", {**STATS, "totals": without(STATS["totals"], "repeatIncidents")}, "a total missing")
+    bad("stats", {**STATS, "totals": {**STATS["totals"], "notes": -1}}, "negative total")
+    bad("stats", {**STATS, "jobs": {"byState": without(STATS["jobs"]["byState"], "failed")}}, "failed count missing")
+    bad("stats", {**STATS, "jobs": {"byState": {**STATS["jobs"]["byState"], "paused": 1}}}, "unknown job state")
+    bad("stats", {**STATS, "tokens": {"ceiling": 0, "days": []}}, "tokens is a brain.usage (ceiling 0)")
+    bad("stats", {**STATS, "repos": [without(ROW, "briefStale")]}, "repo row incomplete")
+    bad("stats", {**STATS, "repos": [{**ROW, "briefOverBudget": "no"}]}, "repo flag not boolean")
+    bad("stats", {**STATS, "extra": 1}, "unmodelled member")
+
+    # brain.job-page
+    ok("job-page", PAGE, "unfiltered page (known-good)")
+    ok("job-page", {**PAGE, "items": [], "total": 0}, "empty page")
+    ok("job-page", {**PAGE, "filters": {"repo": "contracts", "command": "triage", "state": "deferred",
+                                        "from": "2026-10-26T00:00:00Z", "to": "2026-10-27T00:00:00Z"}}, "all filters applied")
+    bad("job-page", {**PAGE, "items": [{"id": "j"}]}, "item is not a brain.job")
+    bad("job-page", {**PAGE, "page": 0}, "page 0")
+    bad("job-page", {**PAGE, "pageSize": 0}, "pageSize 0")
+    bad("job-page", {**PAGE, "total": -1}, "negative total")
+    bad("job-page", without(PAGE, "filters"), "filters missing")
+    bad("job-page", {**PAGE, "filters": without(FILTERS, "to")}, "a filter missing")
+    bad("job-page", {**PAGE, "filters": {**FILTERS, "state": "paused"}}, "unknown state filter")
+    bad("job-page", {**PAGE, "filters": {**FILTERS, "command": "build"}}, "unknown command filter")
+    bad("job-page", {**PAGE, "extra": 1}, "unmodelled member")
+
     return 0
 
 

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.settings-audit-entry",
+  "title": "BrainSettingsAuditEntry",
+  "description": "One change in the settings audit trail (who, when, from, to). One entry per changed member of a save. `field` is the dotted member path: `functions.<triage|harvest|curate|seed>.<model|effort>`, `triageOnRunExit` or `autoCurate`. `from`/`to` are the value before and after (a string for model and effort, a boolean for the switches); `null` means the member was unset, that is, the shipped default applied.",
+  "type": "object",
+  "required": [
+    "at",
+    "actor",
+    "field",
+    "from",
+    "to"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "field": {
+      "type": "string",
+      "pattern": "^(functions\\.(triage|harvest|curate|seed)\\.(model|effort)|triageOnRunExit|autoCurate)$"
+    },
+    "from": {
+      "type": [
+        "string",
+        "boolean",
+        "null"
+      ]
+    },
+    "to": {
+      "type": [
+        "string",
+        "boolean",
+        "null"
+      ]
+    }
+  }
+}
