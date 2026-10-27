@@ -8,7 +8,7 @@ acceptance-criteria:
   - "brain-toolkit reviews contracts v0.65.0 (schemas/agent-runner/brain.settings, brain.settings-update, brain.settings-audit-entry, brain.stats, brain.job-page) against the demand and the D143 addendum / spec-agent-memory-system.md A.1 and either accepts it or raises the specific interface gaps back to contracts."
   - "brain-toolkit passes the pin to agent-runner and dashboard, which re-pin to v0.65.0 (../contracts-worktrees/v0.65.0/gen/ts). The tag is on origin; a fresh clone can check out v0.65.0."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # contracts v0.65.0: close the consuming leg
