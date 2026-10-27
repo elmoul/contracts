@@ -76,6 +76,22 @@ export type { RunnerRunRecord, RunnerRunWorkspace, RunnerRunFallback, RunnerUsag
 // so they cannot drift.
 export type { RunnerDispatchReservation } from "./runner-dispatch-reservation";
 
+// D143 brain v1 wire shapes (spec-agent-memory-system.md v1.0). brain-run-record.ts, brain-job.ts and
+// brain-repo-summary.ts each INLINE a copy of the types they $ref (BrainCliResult, BrainJob), the same
+// json-schema-to-typescript duplication as above, so BrainCliResult is exported from its own module and
+// BrainJob from brain-job.ts only.
+export type { BrainCliResult } from "./brain-cli-result";
+export type { BrainRunRecord, BrainRunLine, BrainJobLine } from "./brain-run-record";
+export type { BrainRunBundle } from "./brain-run-bundle";
+export type { BrainChange } from "./brain-change";
+export type { BrainNote } from "./brain-note";
+export type { BrainCandidate } from "./brain-candidate";
+export type { BrainFunctions, BrainFunction } from "./brain-functions";
+export type { BrainJob } from "./brain-job";
+export type { BrainJobRequest } from "./brain-job-request";
+export type { BrainRepoSummary, BrainLastRun } from "./brain-repo-summary";
+export type { BrainUsage, BrainUsageDay } from "./brain-usage";
+
 // D115 parked work. parked-run-result.ts and parked-resume-request.ts each INLINE a copy of the
 // types they $ref (json-schema-to-typescript), so only each schema's own top-level type is
 // exported from them; the condition and outcome types come from their defining modules.
