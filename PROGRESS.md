@@ -2083,3 +2083,16 @@ worker agent itself).
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-26_1743_close-the-loop-on-demand-contracts-20261
+
+## Session 151 (2026-10-27)
+
+Full narrative, decisions, and context trail: `.brain/sessions/2026-10-27_0349_fulfill-demand-brain-toolkit-20261027-co.md`
+(the session file is the source of truth in this D052-piloted repo -- the block
+below is a **generated projection** of it, produced mechanically by
+`brain session close`, not a second hand-written account).
+
+- State: Fulfill demand brain-toolkit-20261027-contracts-brain-v1-schemas (capability: contracts carries the brain v1 wire shapes: the toolkit's command result, a repo's memory summary, a note, a run entry, a brain job and its request, and the function table, released with bindings, from: brain-toolkit, targ... -- status: done.
+- Next step: brain-toolkit closes its consuming leg of contracts v0.63.0; agent-runner and dashboard re-pin through brain-toolkit's open demands
+- Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
+- Vault-sync: none
+- Session: 2026-10-27_0349_fulfill-demand-brain-toolkit-20261027-co
