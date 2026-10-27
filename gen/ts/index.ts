@@ -91,6 +91,13 @@ export type { BrainJob } from "./brain-job";
 export type { BrainJobRequest } from "./brain-job-request";
 export type { BrainRepoSummary, BrainLastRun } from "./brain-repo-summary";
 export type { BrainUsage, BrainUsageDay } from "./brain-usage";
+// D143 addendum 2026-10-27: settings, statistics and the job page. brain-stats.ts and brain-job-page.ts inline copies of
+// BrainUsage / BrainJob / BrainCliResult (same $ref duplication as above), so only the canonical copies are re-exported.
+export type { BrainSettings, BrainSettingsFunction, BrainShippedDefault } from "./brain-settings";
+export type { BrainSettingsUpdate, BrainSettingsFunctionUpdate } from "./brain-settings-update";
+export type { BrainSettingsAuditEntry } from "./brain-settings-audit-entry";
+export type { BrainStats, BrainStatsTotals, BrainStatsJobs, BrainStatsRepo } from "./brain-stats";
+export type { BrainJobPage, BrainJobFilters } from "./brain-job-page";
 
 // D115 parked work. parked-run-result.ts and parked-resume-request.ts each INLINE a copy of the
 // types they $ref (json-schema-to-typescript), so only each schema's own top-level type is

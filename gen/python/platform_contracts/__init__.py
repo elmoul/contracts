@@ -47,6 +47,11 @@ from platform_contracts.agent_runner import (
     brain_job_request,
     brain_repo_summary,
     brain_usage,
+    brain_settings,
+    brain_settings_update,
+    brain_settings_audit_entry,
+    brain_stats,
+    brain_job_page,
 )
 from platform_contracts.launcher import (
     command_request,
@@ -135,6 +140,11 @@ __all__ = [
     "brain_job_request",
     "brain_repo_summary",
     "brain_usage",
+    "brain_settings",
+    "brain_settings_update",
+    "brain_settings_audit_entry",
+    "brain_stats",
+    "brain_job_page",
     "command_request",
     "command_result",
     "command_error",
