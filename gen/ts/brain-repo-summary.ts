@@ -61,6 +61,10 @@ export interface BrainRepoSummary {
   lastRun: BrainLastRun | null;
   deferredJobs: number;
   lastJob: BrainJob | null;
+  /**
+   * Directory names (not paths) of ignored or untracked v0.6 leftovers still present under `.brain/` (for example `derived`, `events`). Optional: absent means the producer does not report leftovers, which is not the same as none; an empty array means none.
+   */
+  v06Leftovers?: string[];
 }
 export interface BrainLastRun {
   runId: string;

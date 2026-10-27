@@ -279,6 +279,12 @@ def main() -> int:
     bad("repo-summary", {**SUMMARY, "notes": -1}, "negative notes")
     bad("repo-summary", {**SUMMARY, "lastRun": {"runId": "r"}}, "lastRun incomplete")
     bad("repo-summary", {**SUMMARY, "lastJob": {"id": "j"}}, "lastJob is not a brain.job")
+    ok("repo-summary", {**SUMMARY, "v06Leftovers": ["derived", "events"]}, "v06Leftovers list")
+    ok("repo-summary", {**SUMMARY, "v06Leftovers": []}, "v06Leftovers empty")
+    bad("repo-summary", {**SUMMARY, "v06Leftovers": "derived"}, "v06Leftovers not an array")
+    bad("repo-summary", {**SUMMARY, "v06Leftovers": [1]}, "v06Leftovers non-string element")
+    bad("repo-summary", {**SUMMARY, "v06Leftovers": [""]}, "v06Leftovers empty name")
+    bad("repo-summary", {**SUMMARY, "v06Leftovers": None}, "v06Leftovers null")
     bad("repo-summary", {**SUMMARY, "extra": 1}, "unmodelled member")
 
     # brain.usage

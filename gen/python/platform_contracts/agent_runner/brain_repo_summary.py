@@ -50,3 +50,7 @@ class BrainRepoSummary(BaseModel):
     lastRun: LastRun | None
     deferredJobs: conint(ge=0)
     lastJob: brain_job.BrainJob | None
+    v06Leftovers: list[constr(min_length=1)] | None = Field(
+        None,
+        description='Directory names (not paths) of ignored or untracked v0.6 leftovers still present under `.brain/` (for example `derived`, `events`). Optional: absent means the producer does not report leftovers, which is not the same as none; an empty array means none.',
+    )

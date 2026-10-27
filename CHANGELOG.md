@@ -16,6 +16,16 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.64.0 - 2026-10-27
+
+**Additive** (tag `v0.64.0`). Java, TypeScript and Python versions at 0.64.0. Fulfils demand `agent-runner-20261027-repo-summary-v06-leftovers`.
+
+- **`brain.repo-summary`** gains an optional `v06Leftovers: string[]` (non-empty directory names such as `derived`, `events`; ignored or untracked v0.6 leftovers). Absent = the producer does not report leftovers; `[]` = none. Summaries without it stay valid. TypeScript (source and dist) and Python bindings updated.
+- Rollout: the schema is closed, so a consumer must pin v0.64.0 BEFORE a producer sends `v06Leftovers`; an older strict validator rejects it. No consumer is re-pinned (D031); the origin (`agent-runner`) re-pins from the fulfilment report.
+- Tests: 6 new cases in `tests/validate_brain.py`.
+
+---
+
 ## v0.63.0 - 2026-10-27
 
 **Additive** (tag `v0.63.0`). Java, TypeScript and Python versions at 0.63.0; TypeScript and Python bindings added for eleven new schemas under `schemas/agent-runner/`. Fulfils demand `brain-toolkit-20261027-contracts-brain-v1-schemas` (D143, `spec-agent-memory-system.md` v1.0). Nothing existing changed: no schema, `required` list or binding of an earlier release is touched.

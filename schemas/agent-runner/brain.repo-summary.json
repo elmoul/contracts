@@ -104,6 +104,14 @@
           "type": "null"
         }
       ]
+    },
+    "v06Leftovers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Directory names (not paths) of ignored or untracked v0.6 leftovers still present under `.brain/` (for example `derived`, `events`). Optional: absent means the producer does not report leftovers, which is not the same as none; an empty array means none."
     }
   }
 }
