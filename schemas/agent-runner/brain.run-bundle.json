@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.run-bundle",
+  "title": "BrainRunBundle",
+  "description": "The triage input bundle (spec-agent-memory-system.md v1.0 section 4.1): written by `agent-runner` at run exit (or by an interactive close) and handed to `brain triage|harvest <bundle.json>` by path. The toolkit builds its ~3k-token triage prompt from `finalAnswer`, `errorLines` and `diffStat`, and condenses the transcript at `transcriptPath` for harvest.\n\n`transcriptPath` is `null` when no transcript exists (an interactive close); `model`, `effort` and `runtime` are ABSENT when the run did not report them, never guessed.",
+  "type": "object",
+  "required": [
+    "runId",
+    "repo",
+    "kind",
+    "task",
+    "outcome",
+    "finalAnswer",
+    "errorLines",
+    "diffStat",
+    "transcriptPath"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+$",
+      "description": "Functional repo name."
+    },
+    "kind": {
+      "enum": [
+        "dispatched",
+        "interactive"
+      ]
+    },
+    "task": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effort": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outcome": {
+      "enum": [
+        "done",
+        "partial",
+        "failed",
+        "stopped"
+      ]
+    },
+    "finalAnswer": {
+      "type": "string",
+      "description": "The run's final answer (may be empty)."
+    },
+    "errorLines": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Error lines from the run (may be empty)."
+    },
+    "diffStat": {
+      "type": "string",
+      "description": "`git diff --stat` of what the run changed (empty string when nothing)."
+    },
+    "transcriptPath": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "description": "Path of the run transcript, or null when there is none."
+    }
+  }
+}

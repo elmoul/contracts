@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.change",
+  "title": "BrainChange",
+  "description": "One line of a repo's `.brain/changes.jsonl` (spec-agent-memory-system.md v1.0 section 2.5): one per curator or owner change to the notes or the brief. The console's 'curator changes' view (`GET /brain/{repo}/changes`) reads it.\n\n`slug` is `null` for `op: brief` (the brief has no slug). `diff` is a unified diff, or `null` when there is none (pin, unpin). `fromRuns` is empty for an owner action.",
+  "type": "object",
+  "required": [
+    "at",
+    "actor",
+    "op",
+    "slug",
+    "fromRuns",
+    "diff"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "enum": [
+        "curate",
+        "seed",
+        "owner"
+      ]
+    },
+    "op": {
+      "enum": [
+        "create",
+        "update",
+        "merge",
+        "retire",
+        "pin",
+        "unpin",
+        "brief"
+      ]
+    },
+    "slug": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fromRuns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "diff": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

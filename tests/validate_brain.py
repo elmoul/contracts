@@ -1,0 +1,296 @@
+"""
+Schema-level validation for schemas/agent-runner/brain.*.json (the brain v1 wire shapes,
+D143 / spec-agent-memory-system.md v1.0). Same pattern as validate_runner.py: validates the
+JSON Schemas directly against example documents, independent of any language binding.
+Run: python tests/validate_brain.py
+"""
+import json
+import sys
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
+
+ROOT = Path(__file__).resolve().parent.parent
+SCHEMAS = ROOT / "schemas" / "agent-runner"
+
+NAMES = [
+    "run-record", "run-bundle", "change", "note", "candidate", "functions",
+    "cli-result", "repo-summary", "usage", "job", "job-request",
+]
+
+
+def load(name: str) -> dict:
+    return json.loads((SCHEMAS / f"brain.{name}.json").read_text(encoding="utf-8"))
+
+
+def registry() -> Registry:
+    resources = []
+    for path in SCHEMAS.glob("*.json"):
+        schema = json.loads(path.read_text(encoding="utf-8"))
+        resource = Resource.from_contents(schema)
+        resources.append((schema["$id"], resource))
+        resources.append((schema["$id"] + ".json", resource))
+    return Registry().with_resources(resources)
+
+
+REG = registry()
+SCHEMA = {n: load(n) for n in NAMES}
+
+
+def errors_of(name: str, doc) -> list:
+    return list(Draft202012Validator(SCHEMA[name], registry=REG).iter_errors(doc))
+
+
+def ok(name: str, doc, label: str) -> None:
+    errs = errors_of(name, doc)
+    if errs:
+        raise AssertionError(f"brain.{name}: {label}: expected valid, got {errs[0].message}")
+    print(f"PASS  brain.{name}: {label}")
+
+
+def bad(name: str, doc, label: str) -> None:
+    errs = errors_of(name, doc)
+    if not errs:
+        raise AssertionError(f"brain.{name}: {label}: expected invalid, but document passed")
+    print(f"PASS  brain.{name}: {label} (rejected: {errs[0].message[:90]})")
+
+
+def without(doc: dict, *keys: str) -> dict:
+    return {k: v for k, v in doc.items() if k not in keys}
+
+
+# --- brain.cli-result ----------------------------------------------------------------
+CLI_OK = {
+    "ok": True, "deferred": False, "uncertain": False, "error": None,
+    "model": "claude-haiku-5-5", "effort": "low", "tokens": 3120,
+    "writes": [".brain/runs.jsonl", ".brain/inbox/c1.md"], "details": {"verdict": "lesson"},
+}
+CLI_NO_AI = {**CLI_OK, "model": None, "effort": None, "tokens": 0, "writes": [".brain/notes/a.md", ".brain/changes.jsonl", "AGENT.md"], "details": {}}
+CLI_DEFERRED = {**CLI_OK, "ok": False, "deferred": True, "tokens": 0, "writes": [], "details": {"resetAt": "2026-10-27T09:00:00Z"}}
+CLI_FAILED = {**CLI_OK, "ok": False, "error": "model claude-x is not in the gateway catalogue", "writes": []}
+CLI_UNCERTAIN = {**CLI_OK, "ok": False, "uncertain": True, "error": "gateway timed out after the response may have been produced"}
+
+# --- brain.run-record ----------------------------------------------------------------
+RUN_LINE = {
+    "runId": "run-9f0e2b1a", "kind": "dispatched", "at": "2026-10-27T09:14:00Z",
+    "model": "claude-sonnet-5-5", "effort": "medium", "runtime": "claude",
+    "task": "Fulfil demand x", "outcome": "done", "triage": "lesson",
+    "harvested": True, "candidates": 2, "brainTokens": 3120,
+}
+RUN_LINE_MIN = {"runId": "sess-1", "kind": "interactive", "at": "2026-10-27T09:14:00Z", "task": "t", "outcome": "partial", "triage": "deferred"}
+JOB_LINE = {"runId": "run-9f0e2b1a", "kind": "brain-job", "job": "triage", "result": CLI_OK}
+
+# --- brain.note / brain.candidate ----------------------------------------------------
+NOTE = {
+    "slug": "windows-maven-child-jvm-holds-port",
+    "title": "Stopping a Maven task on Windows can leave a child JVM holding the port",
+    "type": "gotcha", "status": "active", "created": "2026-10-27", "updated": "2026-10-27",
+    "provenance": {"runs": ["run-1"], "files": ["pom.xml"], "decisions": ["D131"]},
+    "body": "Kill the child JVM directly.",
+}
+CANDIDATE = {
+    "id": "2026-10-27-0001", "slug": "x-fact", "title": "A fact", "type": "fact",
+    "created": "2026-10-27", "updated": "2026-10-27", "provenance": {"runs": ["run-1"]},
+    "source": "harvest", "repeat_of": None, "body": "Body.",
+}
+
+# --- brain.job -----------------------------------------------------------------------
+JOB = {
+    "id": "job-1", "repo": "agent-runner", "command": "triage", "runId": "run-9f0e2b1a",
+    "state": "done", "attempts": 1, "nextAttemptAt": None, "model": None, "effort": None,
+    "result": CLI_OK, "createdAt": "2026-10-27T09:15:00Z", "updatedAt": "2026-10-27T09:15:20Z",
+}
+JOB_DEFERRED = {**JOB, "state": "deferred", "attempts": 3, "nextAttemptAt": "2026-10-27T10:15:00Z", "result": CLI_DEFERRED}
+JOB_QUEUED = {**JOB, "command": "curate", "runId": None, "state": "queued", "attempts": 0, "model": "claude-opus-5-5", "effort": "high", "result": None}
+
+FUNCTIONS = {
+    "version": 1,
+    "functions": {
+        "triage": {"model": "claude-haiku-5-5", "effort": "low", "reason": "many calls; yes/no plus a category on ~3k tokens"},
+        "harvest": {"model": "claude-sonnet-5-5", "effort": "medium", "reason": "extraction quality at moderate volume on ~20k tokens"},
+        "curate": {"model": "claude-opus-5-5", "effort": "high", "reason": "judgment: merge, contradict, retire, write the brief; few calls"},
+        "seed": {"model": "claude-opus-5-5", "effort": "high", "reason": "one time per repo"},
+    },
+}
+
+SUMMARY = {
+    "repo": "contracts", "migrated": True, "briefUpdatedAt": "2026-10-27T09:00:00Z", "briefTokens": 2400,
+    "notes": 12, "inbox": 2,
+    "lastRun": {"runId": "run-1", "at": "2026-10-27T09:14:00Z", "outcome": "done", "triage": "none"},
+    "deferredJobs": 1, "lastJob": JOB_DEFERRED,
+}
+SUMMARY_UNMIGRATED = {
+    "repo": "ai-gateway", "migrated": False, "briefUpdatedAt": None, "briefTokens": None,
+    "notes": 0, "inbox": 0, "lastRun": None, "deferredJobs": 0, "lastJob": None,
+}
+
+
+def main() -> int:
+    # every schema is itself a valid 2020-12 schema and a closed object (or a oneOf of closed objects)
+    for n, s in SCHEMA.items():
+        Draft202012Validator.check_schema(s)
+        branches = s["oneOf"] if "oneOf" in s else [s]
+        for b in branches:
+            if b.get("additionalProperties") is not False:
+                raise AssertionError(f"brain.{n}: top-level object is not closed")
+    print("PASS  all 11 brain.* schemas are valid and closed")
+
+    # brain.cli-result
+    ok("cli-result", CLI_OK, "ok result (known-good)")
+    ok("cli-result", CLI_NO_AI, "no AI call: model/effort null, tokens 0 (known-good)")
+    ok("cli-result", CLI_DEFERRED, "deferred (known-good)")
+    ok("cli-result", CLI_FAILED, "failed with error (known-good)")
+    ok("cli-result", CLI_UNCERTAIN, "uncertain (known-good)")
+    for k in CLI_OK:
+        bad("cli-result", without(CLI_OK, k), f"missing {k}")
+    bad("cli-result", {**CLI_OK, "extra": 1}, "unmodelled member")
+    bad("cli-result", {**CLI_OK, "deferred": True}, "ok and deferred together")
+    bad("cli-result", {**CLI_OK, "uncertain": True}, "ok and uncertain together")
+    bad("cli-result", {**CLI_OK, "error": "boom"}, "ok with an error")
+    bad("cli-result", {**CLI_DEFERRED, "ok": True}, "deferred but ok")
+    bad("cli-result", {**CLI_FAILED, "error": None}, "failure without an error")
+    bad("cli-result", {**CLI_FAILED, "error": ""}, "failure with an empty error")
+    bad("cli-result", {**CLI_OK, "effort": "max"}, "effort outside the CLI vocabulary")
+    bad("cli-result", {**CLI_OK, "tokens": -1}, "negative tokens")
+    bad("cli-result", {**CLI_OK, "tokens": 1.5}, "fractional tokens")
+    bad("cli-result", {**CLI_OK, "writes": "AGENT.md"}, "writes not a list")
+    for p in ["/etc/passwd", "C:/x", "C:\\x", "..\\x", "a/../b", "../a", "a\\b", ""]:
+        bad("cli-result", {**CLI_OK, "writes": [p]}, f"write path {p!r}")
+    bad("cli-result", {**CLI_OK, "details": None}, "details null")
+    bad("cli-result", {**CLI_OK, "tokensIn": 1}, "demand-text member tokensIn is not in the closed shape")
+
+    # brain.run-record
+    ok("run-record", RUN_LINE, "dispatched run line (spec section 2.4 example)")
+    ok("run-record", RUN_LINE_MIN, "minimal interactive line, model/effort/runtime absent")
+    ok("run-record", JOB_LINE, "brain-job follow-up line")
+    for k in ["runId", "kind", "at", "task", "outcome", "triage"]:
+        bad("run-record", without(RUN_LINE, k), f"run line missing {k}")
+    for k in ["runId", "kind", "job", "result"]:
+        bad("run-record", without(JOB_LINE, k), f"job line missing {k}")
+    bad("run-record", {**RUN_LINE, "kind": "brain-job"}, "run line claiming kind brain-job")
+    bad("run-record", {**JOB_LINE, "kind": "dispatched"}, "job line claiming kind dispatched")
+    bad("run-record", {**RUN_LINE, "outcome": "queued"}, "outcome outside the enum")
+    bad("run-record", {**RUN_LINE, "triage": "yes"}, "triage outside the enum")
+    bad("run-record", {**RUN_LINE, "task": "x" * 201}, "task over 200 chars")
+    ok("run-record", {**RUN_LINE, "task": "x" * 200}, "task of exactly 200 chars")
+    bad("run-record", {**RUN_LINE, "model": None}, "model null rather than absent")
+    bad("run-record", {**RUN_LINE, "model": ""}, "model empty")
+    bad("run-record", {**RUN_LINE, "brainTokens": -5}, "negative brainTokens")
+    bad("run-record", {**RUN_LINE, "candidates": "2"}, "candidates not an integer")
+    bad("run-record", {**RUN_LINE, "extra": 1}, "run line with an unmodelled member")
+    bad("run-record", {**JOB_LINE, "job": "curate"}, "job line for a job that is not retried per run")
+    bad("run-record", {**JOB_LINE, "result": {"ok": True}}, "job line result is not a cli-result")
+    bad("run-record", {**JOB_LINE, "extra": 1}, "job line with an unmodelled member")
+    bad("run-record", {**RUN_LINE, **{"job": "triage", "result": CLI_OK}}, "run line mixed with job-line members")
+
+    # brain.run-bundle
+    BUNDLE = {
+        "runId": "run-1", "repo": "contracts", "kind": "dispatched", "task": "t", "model": "claude-sonnet-5-5",
+        "effort": "medium", "runtime": "claude", "outcome": "done", "finalAnswer": "Done.",
+        "errorLines": ["E: boom"], "diffStat": " 1 file changed", "transcriptPath": "/var/agent-runner/transcripts/1.jsonl",
+    }
+    ok("run-bundle", BUNDLE, "dispatched bundle (known-good)")
+    ok("run-bundle", {**without(BUNDLE, "model", "effort", "runtime"), "kind": "interactive", "errorLines": [], "diffStat": "", "transcriptPath": None}, "interactive: no transcript, no model (known-good)")
+    for k in ["runId", "repo", "kind", "task", "outcome", "finalAnswer", "errorLines", "diffStat", "transcriptPath"]:
+        bad("run-bundle", without(BUNDLE, k), f"missing {k}")
+    bad("run-bundle", {**BUNDLE, "repo": "Not A Repo"}, "bad repo name")
+    bad("run-bundle", {**BUNDLE, "kind": "brain-job"}, "kind brain-job")
+    bad("run-bundle", {**BUNDLE, "errorLines": "E: boom"}, "errorLines not a list")
+    bad("run-bundle", {**BUNDLE, "transcriptPath": ""}, "empty transcriptPath")
+    bad("run-bundle", {**BUNDLE, "extra": 1}, "unmodelled member")
+
+    # brain.change
+    CHANGE = {"at": "2026-10-27T09:20:00Z", "actor": "curate", "op": "merge", "slug": "a-note", "fromRuns": ["run-1", "run-2"], "diff": "--- a\n+++ b\n"}
+    ok("change", CHANGE, "curate merge with diff (known-good)")
+    ok("change", {**CHANGE, "actor": "owner", "op": "pin", "fromRuns": [], "diff": None}, "owner pin, no diff (known-good)")
+    ok("change", {**CHANGE, "op": "brief", "slug": None}, "brief change, no slug (known-good)")
+    for k in CHANGE:
+        bad("change", without(CHANGE, k), f"missing {k}")
+    bad("change", {**CHANGE, "actor": "agent"}, "actor outside the enum")
+    bad("change", {**CHANGE, "op": "delete"}, "op outside the enum")
+    bad("change", {**CHANGE, "slug": "Bad Slug"}, "slug not a slug")
+    bad("change", {**CHANGE, "fromRuns": None}, "fromRuns null")
+    bad("change", {**CHANGE, "extra": 1}, "unmodelled member")
+
+    # brain.note
+    ok("note", NOTE, "active note (spec section 2.2 example, known-good)")
+    ok("note", {**NOTE, "status": "pinned", "provenance": {"runs": []}, "raw": "---\nslug: x\n---\nBody"}, "pinned, empty provenance, raw (known-good)")
+    ok("note", {**NOTE, "status": "retired", "type": "procedure"}, "retired procedure (known-good)")
+    for k in ["slug", "title", "type", "status", "created", "updated", "provenance", "body"]:
+        bad("note", without(NOTE, k), f"missing {k}")
+    bad("note", {**NOTE, "status": "archived"}, "status outside the enum")
+    bad("note", {**NOTE, "type": "lesson"}, "type outside the enum")
+    bad("note", {**NOTE, "slug": "Not_A_Slug"}, "slug not kebab-case")
+    bad("note", {**NOTE, "slug": "-lead"}, "slug with a leading hyphen")
+    bad("note", {**NOTE, "created": "27/10/2026"}, "created not a date")
+    bad("note", {**NOTE, "provenance": {"files": ["a"]}}, "provenance without runs")
+    bad("note", {**NOTE, "provenance": {"runs": [], "extra": 1}}, "provenance with an unmodelled member")
+    bad("note", {**NOTE, "provenance": {"runs": [], "decisions": ["131"]}}, "decision not a D-number")
+    bad("note", {**NOTE, "body": ""}, "empty body")
+    bad("note", {**NOTE, "pinned": True}, "demand-text member pinned (status carries it)")
+
+    # brain.candidate
+    ok("candidate", CANDIDATE, "harvest candidate (known-good)")
+    ok("candidate", {**CANDIDATE, "source": "session-close", "repeat_of": "windows-maven-child-jvm-holds-port", "status": "active"}, "repeat of a note, with status (known-good)")
+    for k in ["id", "slug", "title", "type", "created", "updated", "provenance", "source", "repeat_of", "body"]:
+        bad("candidate", without(CANDIDATE, k), f"missing {k}")
+    bad("candidate", {**CANDIDATE, "source": "curate"}, "source outside the enum")
+    bad("candidate", {**CANDIDATE, "repeat_of": "Not A Slug"}, "repeat_of not a slug")
+    bad("candidate", {**CANDIDATE, "id": "../x"}, "id with a path separator")
+    bad("candidate", {**CANDIDATE, "repeatOf": None}, "camelCase repeatOf is not the spec spelling")
+
+    # brain.functions
+    ok("functions", FUNCTIONS, "spec section 3 table (known-good)")
+    for k in ["triage", "harvest", "curate", "seed"]:
+        bad("functions", {**FUNCTIONS, "functions": without(FUNCTIONS["functions"], k)}, f"function {k} missing")
+    bad("functions", without(FUNCTIONS, "version"), "version missing")
+    bad("functions", {**FUNCTIONS, "functions": {**FUNCTIONS["functions"], "extra": FUNCTIONS["functions"]["seed"]}}, "unknown function")
+    bad("functions", {**FUNCTIONS, "functions": {**FUNCTIONS["functions"], "seed": {"model": "m", "effort": "high", "why": "x"}}}, "demand-text `why` instead of `reason`")
+    bad("functions", {**FUNCTIONS, "functions": {**FUNCTIONS["functions"], "seed": {"model": "m", "effort": "max", "reason": "x"}}}, "effort outside the vocabulary")
+    bad("functions", {**FUNCTIONS, "functions": {**FUNCTIONS["functions"], "seed": {"model": "", "effort": "high", "reason": "x"}}}, "empty model")
+    bad("functions", {**FUNCTIONS, "version": 0}, "version 0")
+
+    # brain.job / brain.job-request
+    ok("job", JOB, "done job with result (known-good)")
+    ok("job", JOB_DEFERRED, "deferred job with nextAttemptAt (known-good)")
+    ok("job", JOB_QUEUED, "queued owner curate with override, no run (known-good)")
+    for k in JOB:
+        bad("job", without(JOB, k), f"missing {k}")
+    bad("job", {**JOB, "command": "record-run"}, "command outside the enum")
+    bad("job", {**JOB, "state": "failed-permanently"}, "state outside the enum")
+    bad("job", {**JOB, "attempts": -1}, "negative attempts")
+    bad("job", {**JOB, "result": {"ok": True}}, "result is not a cli-result")
+    bad("job", {**JOB, "repo": "Bad Repo"}, "bad repo")
+    bad("job", {**JOB, "extra": 1}, "unmodelled member")
+    ok("job-request", {}, "empty body (known-good)")
+    ok("job-request", {"model": "claude-opus-5-5", "effort": "xhigh"}, "override (known-good)")
+    bad("job-request", {"command": "curate"}, "command in the body (the route carries it)")
+    bad("job-request", {"effort": "extreme"}, "effort outside the vocabulary")
+    bad("job-request", {"model": ""}, "empty model")
+    bad("job-request", {"model": None}, "model null")
+
+    # brain.repo-summary
+    ok("repo-summary", SUMMARY, "migrated repo (known-good)")
+    ok("repo-summary", SUMMARY_UNMIGRATED, "unmigrated repo, nulls (known-good)")
+    for k in SUMMARY:
+        bad("repo-summary", without(SUMMARY, k), f"missing {k}")
+    bad("repo-summary", {**SUMMARY, "migrated": "v1"}, "migrated as the demand-text enum rather than a boolean")
+    bad("repo-summary", {**SUMMARY, "notes": -1}, "negative notes")
+    bad("repo-summary", {**SUMMARY, "lastRun": {"runId": "r"}}, "lastRun incomplete")
+    bad("repo-summary", {**SUMMARY, "lastJob": {"id": "j"}}, "lastJob is not a brain.job")
+    bad("repo-summary", {**SUMMARY, "extra": 1}, "unmodelled member")
+
+    # brain.usage
+    ok("usage", {"ceiling": 1000000, "days": [{"date": "2026-10-26", "tokens": 0}, {"date": "2026-10-27", "tokens": 41200}]}, "two days (known-good)")
+    ok("usage", {"ceiling": None, "days": []}, "unknown ceiling, no days (known-good)")
+    bad("usage", {"days": []}, "ceiling missing")
+    bad("usage", {"ceiling": 0, "days": []}, "ceiling 0")
+    bad("usage", {"ceiling": 1000000, "days": [{"date": "26-10-2026", "tokens": 1}]}, "bad day")
+    bad("usage", {"ceiling": 1000000, "days": [{"date": "2026-10-26", "tokens": -1}]}, "negative tokens")
+    bad("usage", {"ceiling": 1000000, "days": [{"date": "2026-10-26", "tokens": 1, "calls": 2}]}, "unmodelled day member")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

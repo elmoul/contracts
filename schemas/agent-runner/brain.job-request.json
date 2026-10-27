@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.job-request",
+  "title": "BrainJobRequest",
+  "description": "The optional body of the owner's `POST /brain/{repo}/curate`, `/seed` and `/migrate` (spec-agent-memory-system.md v1.0 section 9). The command is the route, not a body member (spec wins over the demand text, which put `command` in the body). Both members are a per-run experiment override, never stored (B2); an empty body `{}` (or no body) is valid. The note routes (`pin`, `unpin`, `retire`) take no body.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effort": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    }
+  }
+}

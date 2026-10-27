@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.functions",
+  "title": "BrainFunctions",
+  "description": "The brain's function table (spec-agent-memory-system.md v1.0 section 3, D143 rulings B1/B2): the toolkit's `config/ai-functions.json` at the pinned tag, one model and effort per function, no per-repo rows. Served read-only at `GET /brain/functions`; changing it is a `brain-toolkit` commit.\n\nThe set of functions is closed: a new function is a contracts release. The explanatory member is `reason` (the demand text said `why`; the spec file uses `reason`).",
+  "type": "object",
+  "required": [
+    "version",
+    "functions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "functions": {
+      "type": "object",
+      "required": [
+        "triage",
+        "harvest",
+        "curate",
+        "seed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "triage": {
+          "$ref": "#/$defs/function"
+        },
+        "harvest": {
+          "$ref": "#/$defs/function"
+        },
+        "curate": {
+          "$ref": "#/$defs/function"
+        },
+        "seed": {
+          "$ref": "#/$defs/function"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "function": {
+      "title": "BrainFunction",
+      "type": "object",
+      "required": [
+        "model",
+        "effort",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A model id the gateway's `GET /ai/models` catalogue must contain; the toolkit refuses loudly if it does not, and never substitutes."
+        },
+        "effort": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "description": "The Claude Code CLI vocabulary (D084)."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this model and effort for this function."
+        }
+      }
+    }
+  }
+}

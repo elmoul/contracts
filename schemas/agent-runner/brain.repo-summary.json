@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.repo-summary",
+  "title": "BrainRepoSummary",
+  "description": "One repo's memory summary, an element of `GET /brain/repos` (spec-agent-memory-system.md v1.0 section 9): brief age, note and candidate counts, last run, deferred jobs, migrated yes/no. Every repo carrying `.brain/` is listed (directory-presence discovery).\n\n`migrated` is a boolean (spec: 'migrated yes/no'; the demand text said `v0.6 | v1`): `false` is a repo still on the v0.6 layout. For an unmigrated repo `briefUpdatedAt` and `briefTokens` are `null`, `notes`/`inbox` are 0 and `lastRun` is `null`. `briefTokens` is chars / 4. `notes` counts active and pinned notes. `lastRun` is the newest run line (`dispatched`|`interactive`) summarised; `lastJob` is the repo's most recently updated job.",
+  "type": "object",
+  "required": [
+    "repo",
+    "migrated",
+    "briefUpdatedAt",
+    "briefTokens",
+    "notes",
+    "inbox",
+    "lastRun",
+    "deferredJobs",
+    "lastJob"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "repo": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+$"
+    },
+    "migrated": {
+      "type": "boolean"
+    },
+    "briefUpdatedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "briefTokens": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "notes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "inbox": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Candidates waiting in `.brain/inbox/`."
+    },
+    "lastRun": {
+      "oneOf": [
+        {
+          "title": "BrainLastRun",
+          "type": "object",
+          "required": [
+            "runId",
+            "at",
+            "outcome",
+            "triage"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "runId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "outcome": {
+              "enum": [
+                "done",
+                "partial",
+                "failed",
+                "stopped"
+              ]
+            },
+            "triage": {
+              "enum": [
+                "lesson",
+                "none",
+                "deferred",
+                "skipped"
+              ]
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "deferredJobs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lastJob": {
+      "oneOf": [
+        {
+          "$ref": "brain.job.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

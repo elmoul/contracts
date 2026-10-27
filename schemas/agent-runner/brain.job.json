@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.job",
+  "title": "BrainJob",
+  "description": "One brain job in `agent-runner`'s queue (demand `brain-toolkit-20261027-agent-runner-brain-v1-jobs`; spec section 7 deferral). Read at `GET /brain/jobs`, returned by the enqueueing write routes, and referenced by `brain.repo-summary.lastJob`.\n\n`deferred` jobs carry `nextAttemptAt` and are retried without a limit on attempts; `failed` jobs carry `result` (never auto-retried); `result` is the command's `brain.cli-result` once it has run, else `null`. `runId` is the run the job belongs to (triage, harvest) and `null` for owner-triggered jobs. `model`/`effort` are the optional per-run override the job was enqueued with, `null` when none (never stored as policy).",
+  "type": "object",
+  "required": [
+    "id",
+    "repo",
+    "command",
+    "runId",
+    "state",
+    "attempts",
+    "nextAttemptAt",
+    "model",
+    "effort",
+    "result",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+$"
+    },
+    "command": {
+      "enum": [
+        "triage",
+        "harvest",
+        "curate",
+        "seed",
+        "migrate",
+        "note-action"
+      ]
+    },
+    "runId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "running",
+        "done",
+        "deferred",
+        "failed"
+      ]
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "nextAttemptAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "model": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "effort": {
+      "oneOf": [
+        {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "result": {
+      "oneOf": [
+        {
+          "$ref": "brain.cli-result.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

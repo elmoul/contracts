@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/brain.run-record",
+  "title": "BrainRunRecord",
+  "description": "One line of a repo's `.brain/runs.jsonl` (spec-agent-memory-system.md v1.0 section 2.4, D143): append-only, one per dispatched run or interactive session. Read typed by `agent-runner` (`GET /brain/{repo}/runs`) and `dashboard`. Not to be confused with `runner.run-record`, the dispatch record agent-runner keeps for the run itself.\n\nTwo line shapes, told apart by `kind`: a RUN line (`dispatched` | `interactive`) and the follow-up line a retried deferred job appends (`brain-job`, with `job` and `result`). A deferred job never rewrites the original line.\n\n`model`, `effort` and `runtime` are what actually ran, taken from the run record; when the run did not report one it is ABSENT (never guessed, never a placeholder). `at` is a date-time; `task` is at most 200 characters.",
+  "oneOf": [
+    {
+      "title": "BrainRunLine",
+      "type": "object",
+      "required": [
+        "runId",
+        "kind",
+        "at",
+        "task",
+        "outcome",
+        "triage"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "runId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The agent-runner run id (dispatched) or the interactive session id."
+        },
+        "kind": {
+          "enum": [
+            "dispatched",
+            "interactive"
+          ]
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO end time of the run or session."
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The model that ACTUALLY ran, taken from the run record, never hard-coded. Absent when the run did not report one."
+        },
+        "effort": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The effort that actually ran. A free string (what ran, not what the brain accepts). Absent when not reported."
+        },
+        "runtime": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The runtime profile that ran it (`claude`, `claude-api`, `codex`, ...). Absent when not reported."
+        },
+        "task": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line: what the run was for."
+        },
+        "outcome": {
+          "enum": [
+            "done",
+            "partial",
+            "failed",
+            "stopped"
+          ]
+        },
+        "triage": {
+          "enum": [
+            "lesson",
+            "none",
+            "deferred",
+            "skipped"
+          ],
+          "description": "The triage verdict. `deferred` marks a job waiting on a usage limit or the daily ceiling: the retry rewrites nothing and appends a `kind: brain-job` line instead."
+        },
+        "harvested": {
+          "type": "boolean",
+          "description": "Whether harvest has run for this run."
+        },
+        "candidates": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Candidates harvest wrote to `.brain/inbox/` for this run."
+        },
+        "brainTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tokens the brain spent on this run (triage + harvest), for the budget metric."
+        }
+      }
+    },
+    {
+      "title": "BrainJobLine",
+      "type": "object",
+      "required": [
+        "runId",
+        "kind",
+        "job",
+        "result"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "runId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The run the retried job belongs to."
+        },
+        "kind": {
+          "const": "brain-job"
+        },
+        "job": {
+          "enum": [
+            "triage",
+            "harvest"
+          ]
+        },
+        "result": {
+          "$ref": "brain.cli-result.json",
+          "description": "What the retried toolkit command printed."
+        }
+      }
+    }
+  ]
+}
