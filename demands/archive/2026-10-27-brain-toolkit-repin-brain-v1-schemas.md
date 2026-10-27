@@ -9,7 +9,7 @@ acceptance-criteria:
   - "brain-toolkit's commands emit exactly the published shapes: every --json result validates against brain.cli-result, every runs.jsonl line against brain.run-record, changes.jsonl against brain.change, notes against brain.note, inbox candidates against brain.candidate, and config/ai-functions.json against brain.functions; the bundle it reads validates against brain.run-bundle. Any mismatch is reported to contracts rather than loosened locally."
   - "brain-toolkit passes the pin to the two consumers it has demands open with: agent-runner (brain-toolkit-20261027-agent-runner-brain-v1-jobs) and dashboard (brain-toolkit-20261027-dashboard-brain-v1-page) re-pin to v0.63.0 (../contracts-worktrees/v0.63.0/gen/ts). The tag is on origin; a fresh clone can check out v0.63.0."
 needs-owner: false
-status: open
+status: archived
 ---
 
 # contracts v0.63.0: close the consuming leg
