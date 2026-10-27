@@ -1,4 +1,5 @@
+# brain v1: local state, never committed (the legacy v0.6 index.db stays ignored)
+.current_session
 index.db
 derived/embeddings/
-.current_session
 .structurer.lock

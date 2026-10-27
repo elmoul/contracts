@@ -1,3 +1,6 @@
+> **FROZEN 2026-10-27 (D143).** This file is no longer written. The record is `.brain/runs.jsonl`
+> and the generated `AGENT.md`. Kept in place for history — do not move, delete or append.
+
 # Progress
 
 > Entries before 2026-07-14 (Sessions 1-23, 2026-07-02 → 2026-07-14) archived
