@@ -8,7 +8,7 @@ acceptance-criteria:
   - "Found by the state-feed v2 spec review (../docs/spec-v2-review/state-feed.md finding 2, read-only): app-studio was removed (D140); contracts v0.68.0 marked the app-studio schemas retired and removes them in its next minor release (vault D146 ruling 3). Nothing emits app.mission, yet EventIngestService.java:121-132 ingests it and StateService.java:86-89 projects it; both stop compiling after the re-pin"
   - "Do: (a) remove the app.mission ingest branch, its snapshot key and projection, and their tests; an incoming app.mission event is then handled like any unknown type (say how in the report); (b) update the docs that list the types (HEXAGON.md, README, DEPLOYMENT); (c) do not re-pin contracts here: the change must compile on the current pin and on the next; (d) CHANGELOG; full test suite green; commit locally; push nothing; do not rebuild or restart the running container"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand - state-feed: drop the app.mission ingest
