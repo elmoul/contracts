@@ -6,13 +6,5 @@
     "file": "HEXAGON.md",
     "line": null,
     "contractSection": "front matter"
-  },
-  {
-    "id": "fact-mismatch-139f636b",
-    "kind": "fact-mismatch",
-    "summary": "The only `contracts` pin the reader found is 0.9.0, in the repo's own Java pom. That differs from the repo's own version 0.68.0. The contract says `contracts` depends on nothing and imports nothing, so a pin here needs an explanation or removal.",
-    "file": "gen/java/pom.xml",
-    "line": 219,
-    "contractSection": "3. Boundaries"
   }
 ]
