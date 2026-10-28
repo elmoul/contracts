@@ -6,7 +6,7 @@ to: [brain-toolkit]
 capability: Close the consuming leg of brain-toolkit-20261028-brain-functions-spec-rows - brain.functions admits spec-sync and spec-seed in contracts v0.67.0
 acceptance-criteria:
   - "brain-toolkit re-pins contracts v0.67.0 (../contracts-worktrees/v0.67.0) in its test and validates the full six-row config/ai-functions.json against schemas/agent-runner/brain.functions, or raises the specific gap back to contracts."
-status: open
+status: archived
 needs-owner: false
 ---
 
