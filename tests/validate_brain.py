@@ -273,6 +273,10 @@ def main() -> int:
     ok("functions", FUNCTIONS, "spec section 3 table (known-good)")
     for k in ["triage", "harvest", "curate", "seed"]:
         bad("functions", {**FUNCTIONS, "functions": without(FUNCTIONS["functions"], k)}, f"function {k} missing")
+    SPEC_FN = {"model": "claude-sonnet-5-5", "effort": "medium", "reason": "spec-sync"}
+    ok("functions", {**FUNCTIONS, "functions": {**FUNCTIONS["functions"], "spec-sync": SPEC_FN, "spec-seed": {**SPEC_FN, "model": "claude-opus-5-5", "effort": "high"}}}, "six-row table (D144)")
+    bad("functions", {**FUNCTIONS, "functions": {**FUNCTIONS["functions"], "spec-sync": {"model": "m", "effort": "max", "reason": "x"}}}, "spec-sync effort outside the vocabulary")
+    bad("functions", {**FUNCTIONS, "functions": {**FUNCTIONS["functions"], "spec-seed": {"model": "m", "effort": "high"}}}, "spec-seed without reason")
     bad("functions", without(FUNCTIONS, "version"), "version missing")
     bad("functions", {**FUNCTIONS, "functions": {**FUNCTIONS["functions"], "extra": FUNCTIONS["functions"]["seed"]}}, "unknown function")
     bad("functions", {**FUNCTIONS, "functions": {**FUNCTIONS["functions"], "seed": {"model": "m", "effort": "high", "why": "x"}}}, "demand-text `why` instead of `reason`")

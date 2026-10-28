@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://platform/contracts/agent-runner/brain.functions",
   "title": "BrainFunctions",
-  "description": "The brain's function table (spec-agent-memory-system.md v1.0 section 3, D143 rulings B1/B2): the toolkit's `config/ai-functions.json` at the pinned tag, one model and effort per function, no per-repo rows. Served read-only at `GET /brain/functions`; changing it is a `brain-toolkit` commit.\n\nThe set of functions is closed: a new function is a contracts release. The explanatory member is `reason` (the demand text said `why`; the spec file uses `reason`).",
+  "description": "The brain's function table (spec-agent-memory-system.md v1.0 section 3, D143 rulings B1/B2): the toolkit's `config/ai-functions.json` at the pinned tag, one model and effort per function, no per-repo rows. Served read-only at `GET /brain/functions`; changing it is a `brain-toolkit` commit.\n\nThe set of functions is closed: a new function is a contracts release. `spec-sync` and `spec-seed` (D144) are optional members, so a table from before them still validates; the original four stay required. The explanatory member is `reason` (the demand text said `why`; the spec file uses `reason`).",
   "type": "object",
   "required": [
     "version",
@@ -34,6 +34,12 @@
           "$ref": "#/$defs/function"
         },
         "seed": {
+          "$ref": "#/$defs/function"
+        },
+        "spec-sync": {
+          "$ref": "#/$defs/function"
+        },
+        "spec-seed": {
           "$ref": "#/$defs/function"
         }
       }

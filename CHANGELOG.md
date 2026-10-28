@@ -16,6 +16,17 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.67.0 - 2026-10-28
+
+**Additive** (tag `v0.67.0`). Java, TypeScript and Python versions at 0.67.0. Fulfils demand `brain-toolkit-20261028-brain-functions-spec-rows` (D144 Q8).
+
+- **`brain.functions`**: `functions` gains two optional members, `spec-sync` and `spec-seed`, each the same `BrainFunction` row (`model`, `effort`, `reason`). `required` stays `triage`, `harvest`, `curate`, `seed`, so a table from before them still validates; the object stays closed.
+- Bindings: TypeScript (source and dist `brain-functions`), Python (`BrainFunctions.functions.spec_sync`/`spec_seed`, aliases `spec-sync`/`spec-seed`). Java has no `brain.functions` binding, so it only moves the version.
+- Not changed: `brain.settings` still lists the original four functions (outside this demand).
+- Tests: `tests/validate_brain.py` covers the six-row table and bad rows.
+
+---
+
 ## v0.66.0 - 2026-10-28
 
 **Additive** (tag `v0.66.0`). Java, TypeScript and Python versions at 0.66.0. Fulfils demand `control-plane-20261028-contracts-specs-conventions-shapes` (D144, fleet conventions compliance and living-spec status).

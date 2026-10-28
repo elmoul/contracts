@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, conint, constr
 
@@ -33,11 +34,14 @@ class Function(BaseModel):
 class Functions(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
+        populate_by_name=True,
     )
     triage: Function
     harvest: Function
     curate: Function
     seed: Function
+    spec_sync: Optional[Function] = Field(None, alias='spec-sync')
+    spec_seed: Optional[Function] = Field(None, alias='spec-seed')
 
 
 class BrainFunctions(BaseModel):
