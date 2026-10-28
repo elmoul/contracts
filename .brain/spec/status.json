@@ -1,0 +1,16 @@
+{
+  "hexagon": "contracts",
+  "kind": "buildtime",
+  "specPath": "../platform-vault/spec-contracts.md",
+  "specVersion": null,
+  "contractAsOf": null,
+  "stateAsOf": null,
+  "verifiedAgainst": null,
+  "commitsSince": null,
+  "driftCount": 0,
+  "openQuestions": 0,
+  "reviewWindowDays": 90,
+  "due": false,
+  "lastJob": null,
+  "v2": false
+}
