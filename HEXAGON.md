@@ -58,7 +58,7 @@ All cross-hexagon contract schemas (versioned source of truth in `schemas/`).
 - [[D010]] — app risk classes (low-stakes/health-class/kids-class); `class` field on `app.manifest`/`hexagon.descriptor`/`registry.entry`
 - [[D015]] — dependency root; built first, pinned by all
 - [[D022]] — AI gateway contracts (ai.request/response, ai.preflight.*)
-- [[D029]] — state-feed contracts (state.event, state.projection.guest)
+- [[D029]] — state-feed contracts (state.event; the `state.projection.guest` stub was removed in v0.68.0)
 
 ## Open Questions
 

@@ -562,8 +562,7 @@ of the top-level key `deployment`. The route is public and proxied by the dev ng
 
 `runtime` reads it to verify that `http://planotell.platform.localhost` serves the
 merged revision. Factory reads it through the receipt's `observed` and may also
-re-read it live. It is a different shape from `app/identity.json` (the tenant
-attribution stub sent with AI calls) and from `app.health`, which has no revision.
+re-read it live. It is a different shape from `app.health`, which has no revision.
 
 ### Lookup transports for `plantpal:deployments/<id>`
 

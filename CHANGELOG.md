@@ -16,6 +16,16 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.68.0 - 2026-10-28
+
+**Removal of two unused stubs + retirement notice** (tag `v0.68.0`). Java, TypeScript and Python versions at 0.68.0. Fulfils demand `conventions-20261028-contracts-retire-dead-schemas` (owner ruling 2026-10-28).
+
+- **Removed** `schemas/state-feed/state.projection.guest.json` and `schemas/app/identity.json`: both were STUBs with no binding, test or consumer (grep across the platform root found no user outside contracts). Docs updated (`HEXAGON.md`, `docs/task-delivery.md`, the `app/deployment-identity.json` description).
+- **Retired** (to be removed in the next minor): every `schemas/app-studio/*` schema (`app.mission.json`, `app.task-plan.json`). app-studio was removed (D140) and the family has no owner. Their descriptions now start with a RETIRED note. Shapes are unchanged; bindings are not regenerated, so TS/Python/Java keep carrying them until the next minor.
+- No consumer used the removed stubs; no re-pin is required.
+
+---
+
 ## v0.67.0 - 2026-10-28
 
 **Additive** (tag `v0.67.0`). Java, TypeScript and Python versions at 0.67.0. Fulfils demand `brain-toolkit-20261028-brain-functions-spec-rows` (D144 Q8).
