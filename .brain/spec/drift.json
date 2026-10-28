@@ -1,0 +1,18 @@
+[
+  {
+    "id": "fact-mismatch-b4a6b6b2",
+    "kind": "fact-mismatch",
+    "summary": "spec decisions ['D002', 'D007', 'D009', 'D010', 'D014', 'D015', 'D022', 'D023', 'D029', 'D031', 'D042', 'D043', 'D054', 'D115', 'D140', 'D143', 'D144', 'D145', 'D146'] differ from HEXAGON.md's ['D002', 'D007', 'D009', 'D010', 'D015', 'D022', 'D029']",
+    "file": "HEXAGON.md",
+    "line": null,
+    "contractSection": "front matter"
+  },
+  {
+    "id": "code-vs-contract-78f2b043",
+    "kind": "code-vs-contract",
+    "summary": "`gen/java/pom.xml` carries a `contracts` pin at version 0.9.0. The contract says contracts depends on nothing, and nothing is imported into it. The pin is also far behind the repo's own version, 0.68.0.",
+    "file": "gen/java/pom.xml",
+    "line": 219,
+    "contractSection": "3. Boundaries"
+  }
+]
