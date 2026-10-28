@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/conventions/conventions.rule",
+  "title": "ConventionsRule",
+  "description": "One entry of the fleet conventions catalog (D144; SPECS_CONVENTIONS_PROPOSAL section 5.1). Produced by `conventions` (validator `--json`), served by `control-plane` at `/conventions/*`, read by `dashboard`.\n\n`rule` is the sentence an agent reads (at most 300 characters); the rationale lives in the decision named by `source`, never inline. `applies_to`, `amended_by` and `enforced_by` keep the catalog's snake_case spelling. `applies_to` selects by `all`, `kind`, `side`, `lang`, `lite` or `has_file`; at least one member is present. `enforced_by` is `check:<id>`, `hook`, `external` or `none`. `exceptions` lists `{path, reason}` pairs where the rule does not bind. `as_of` is the date the entry was last confirmed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "category",
+    "rule",
+    "applies_to",
+    "source",
+    "amended_by",
+    "enforced_by",
+    "severity",
+    "exceptions",
+    "status",
+    "as_of"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "applies_to": {
+      "title": "ConventionsRuleScope",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "all": {
+          "const": true
+        },
+        "kind": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "side": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "lang": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "lite": {
+          "type": "boolean"
+        },
+        "has_file": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "amended_by": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "enforced_by": {
+      "type": "string",
+      "pattern": "^(check:[a-z0-9][a-z0-9-]*|hook|external|none)$"
+    },
+    "severity": {
+      "enum": [
+        "fail",
+        "warn"
+      ]
+    },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "title": "ConventionsRuleException",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "reason"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "active",
+        "retired"
+      ]
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

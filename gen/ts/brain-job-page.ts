@@ -61,7 +61,7 @@ export interface BrainJobPage {
 export interface BrainJob {
   id: string;
   repo: string;
-  command: "triage" | "harvest" | "curate" | "seed" | "migrate" | "note-action";
+  command: "triage" | "harvest" | "curate" | "seed" | "migrate" | "note-action" | "spec-sync" | "spec-seed";
   runId: string | null;
   state: "queued" | "running" | "done" | "deferred" | "failed";
   attempts: number;
@@ -74,7 +74,7 @@ export interface BrainJob {
 }
 export interface BrainJobFilters {
   repo: string | null;
-  command: ("triage" | "harvest" | "curate" | "seed" | "migrate" | "note-action") | null;
+  command: ("triage" | "harvest" | "curate" | "seed" | "migrate" | "note-action" | "spec-sync" | "spec-seed") | null;
   state: ("queued" | "running" | "done" | "deferred" | "failed") | null;
   from: string | null;
   to: string | null;

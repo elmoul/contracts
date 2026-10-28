@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/spec/spec.status",
+  "title": "SpecStatus",
+  "description": "One hexagon's living-spec freshness row (D144; SPEC_TEMPLATE.md v2), served by `agent-runner`'s `/specs/*` routes and read by `dashboard`. `specVersion` is the spec's version as written (v2 `spec-version: 7` is \"7\"; a v1 spec keeps its own spelling), `null` when none. `contractAsOf`/`stateAsOf` are dates, `verifiedAgainst` the commit (and contracts version) the state zone was verified against, `commitsSince` the real commits since then; each is `null` when the spec has no such field (a v1 spec, `v2: false`). `driftCount` is the open drift items, `openQuestions` the open owner questions, `reviewWindowDays` the review window and `due` whether the spec is past it. `lastJob` is the latest spec-sync or spec-seed job, `null` when none ran.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "hexagon",
+    "kind",
+    "specPath",
+    "specVersion",
+    "contractAsOf",
+    "stateAsOf",
+    "verifiedAgainst",
+    "commitsSince",
+    "driftCount",
+    "openQuestions",
+    "reviewWindowDays",
+    "due",
+    "lastJob",
+    "v2"
+  ],
+  "properties": {
+    "hexagon": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+$"
+    },
+    "kind": {
+      "enum": [
+        "runtime",
+        "buildtime",
+        "app",
+        "capability"
+      ]
+    },
+    "specPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "specVersion": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "contractAsOf": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "stateAsOf": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "verifiedAgainst": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "commitsSince": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "driftCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "openQuestions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reviewWindowDays": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "due": {
+      "type": "boolean"
+    },
+    "lastJob": {
+      "oneOf": [
+        {
+          "$ref": "../agent-runner/brain.job.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "v2": {
+      "type": "boolean"
+    }
+  }
+}

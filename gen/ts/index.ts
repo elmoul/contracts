@@ -128,3 +128,13 @@ export type { PlannerSetupProgressResponse } from "./planner-setup-progress-resp
 export type { PlannerSetupGate } from "./planner-setup-gate";
 export type { PlannerSetupError } from "./planner-setup-error";
 export type { FactoryHandoverSetup } from "./factory-handover-setup";
+// D144 conventions compliance and living-spec status. conventions-run.ts and spec-status.ts inline copies of the types they $ref
+// (ConventionsRepoResult/Finding, BrainJob); export those from their own files only.
+export type { ConventionsRule } from "./conventions-rule";
+export type { ConventionsFinding } from "./conventions-finding";
+export type { ConventionsRepoResult } from "./conventions-repo-result";
+export type { ConventionsRun } from "./conventions-run";
+export type { ConventionsCandidate } from "./conventions-candidate";
+export type { ConventionsConflict } from "./conventions-conflict";
+export type { SpecStatus } from "./spec-status";
+export type { SpecDriftItem } from "./spec-drift-item";

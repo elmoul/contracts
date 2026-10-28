@@ -18,6 +18,8 @@ class Command(StrEnum):
     seed = 'seed'
     migrate = 'migrate'
     note_action = 'note-action'
+    spec_sync = 'spec-sync'
+    spec_seed = 'spec-seed'
 
 
 class State(StrEnum):

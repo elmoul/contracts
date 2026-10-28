@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/conventions/conventions.repo-result",
+  "title": "ConventionsRepoResult",
+  "description": "One repo's result inside a conventions run (D144). `result` is the roll-up: pass, fail, or skipped (the repo was not checked). `sha` is the commit checked, `null` when the repo was skipped before it could be read. `checks` are the findings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repo",
+    "sha",
+    "result",
+    "checks"
+  ],
+  "properties": {
+    "repo": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+$"
+    },
+    "sha": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "result": {
+      "enum": [
+        "pass",
+        "fail",
+        "skipped"
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "conventions.finding.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/conventions/conventions.candidate",
+  "title": "ConventionsCandidate",
+  "description": "A proposed convention waiting for the owner (D144): mined from history or promoted by brain curation. `rule` is the proposed sentence, `evidence` the repos, notes and incidents behind it. `decidedAt` and `reason` are `null` while `status` is proposed; a rejection records its `reason` so the candidate is not proposed again.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "rule",
+    "evidence",
+    "status",
+    "decidedAt",
+    "reason"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "status": {
+      "enum": [
+        "proposed",
+        "accepted",
+        "rejected"
+      ]
+    },
+    "decidedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    }
+  }
+}

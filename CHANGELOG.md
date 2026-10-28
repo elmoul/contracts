@@ -16,6 +16,20 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.66.0 - 2026-10-28
+
+**Additive** (tag `v0.66.0`). Java, TypeScript and Python versions at 0.66.0. Fulfils demand `control-plane-20261028-contracts-specs-conventions-shapes` (D144, fleet conventions compliance and living-spec status).
+
+- **New `schemas/conventions/`**: `conventions.rule` (catalog entry; `applies_to`, `amended_by`, `enforced_by` keep the catalog snake_case), `conventions.finding` (`checkId`, `ruleId` or null, status pass|warn|fail|unverified|skipped, `file`/`line`), `conventions.repo-result`, `conventions.run` (`validatorSource`, `catalogHash`, trigger nightly|landing|manual), `conventions.candidate`, `conventions.conflict`.
+- **New `schemas/spec/`**: `spec.status` (one hexagon's freshness row; `lastJob` refs `brain.job`) and `spec.drift-item` (kind code-vs-contract|planned-now-built|fact-mismatch).
+- **`brain.job` and `brain.job-page`**: the `command` enum gains `spec-sync` and `spec-seed` (the page `filters.command` too). Nothing else about them changes.
+- Open choices the demand did not fix, recorded in the schema descriptions: rule `status` is `active|retired`; `specVersion` is a string (`null` for a v1 spec); a skipped repo has `sha: null`; an in-progress run has `finishedAt: null`.
+- Rollout: no consumer is re-pinned (D031). The two enum values are a widening of a closed enum: a consumer that pinned an earlier tag and validates `brain.job` strictly rejects a `spec-sync`/`spec-seed` job until it re-pins v0.66.0, so `agent-runner` must pin before it enqueues one. `control-plane`, `agent-runner`, `brain-toolkit` and `dashboard` re-pin in their own demands.
+- Bindings: TypeScript (source, dist, index exports; `brain-job`, `brain-job-page`, `brain-repo-summary` enum literals), Python (`platform_contracts.conventions`, `platform_contracts.spec`, enums in `brain_job`/`brain_job_page`) and Java (`io.platform.contracts.conventions`, `io.platform.contracts.spec`; `lastJob` is `Object` there, the oneOf-with-null limit; `brain.job` itself has no Java binding).
+- Tests: `tests/validate_conventions.py` (added to `run_all.py`) and `ConventionsContractsRoundTripTest` (Java).
+
+---
+
 ## v0.65.0 - 2026-10-27
 
 **Additive** (tag `v0.65.0`). Java, TypeScript and Python versions at 0.65.0. Fulfils demand `brain-toolkit-20261027-contracts-brain-settings-stats` (D143 addendum 2026-10-27, console settings and statistics).

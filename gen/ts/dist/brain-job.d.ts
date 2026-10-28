@@ -48,7 +48,7 @@ export type BrainCliResult = {
 export interface BrainJob {
     id: string;
     repo: string;
-    command: "triage" | "harvest" | "curate" | "seed" | "migrate" | "note-action";
+    command: "triage" | "harvest" | "curate" | "seed" | "migrate" | "note-action" | "spec-sync" | "spec-seed";
     runId: string | null;
     state: "queued" | "running" | "done" | "deferred" | "failed";
     attempts: number;

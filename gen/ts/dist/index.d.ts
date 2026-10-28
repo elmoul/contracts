@@ -80,3 +80,11 @@ export type { PlannerSetupProgressResponse } from "./planner-setup-progress-resp
 export type { PlannerSetupGate } from "./planner-setup-gate";
 export type { PlannerSetupError } from "./planner-setup-error";
 export type { FactoryHandoverSetup } from "./factory-handover-setup";
+export type { ConventionsRule } from "./conventions-rule";
+export type { ConventionsFinding } from "./conventions-finding";
+export type { ConventionsRepoResult } from "./conventions-repo-result";
+export type { ConventionsRun } from "./conventions-run";
+export type { ConventionsCandidate } from "./conventions-candidate";
+export type { ConventionsConflict } from "./conventions-conflict";
+export type { SpecStatus } from "./spec-status";
+export type { SpecDriftItem } from "./spec-drift-item";

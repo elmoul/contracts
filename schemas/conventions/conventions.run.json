@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/conventions/conventions.run",
+  "title": "ConventionsRun",
+  "description": "One validator run over the fleet (D144). `validatorSource` is the commit of `conventions` the validator was built from and `catalogHash` the hash of the catalog it bundled, so a stale jar is visible. `finishedAt` is `null` while the run is in progress. `trigger` is nightly, landing (after a records landing) or manual (Run now).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "startedAt",
+    "finishedAt",
+    "validatorSource",
+    "catalogHash",
+    "trigger",
+    "repos"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finishedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "validatorSource": {
+      "type": "string",
+      "minLength": 1
+    },
+    "catalogHash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trigger": {
+      "enum": [
+        "nightly",
+        "landing",
+        "manual"
+      ]
+    },
+    "repos": {
+      "type": "array",
+      "items": {
+        "$ref": "conventions.repo-result.json"
+      }
+    }
+  }
+}

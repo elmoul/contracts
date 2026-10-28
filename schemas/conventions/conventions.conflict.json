@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/conventions/conventions.conflict",
+  "title": "ConventionsConflict",
+  "description": "A contradiction between two sources of the conventions (D144) that needs an owner ruling. `status` is open until ruled. `source` names where it was found (a document or decision pair).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "summary",
+    "status",
+    "source"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "open",
+        "ruled"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

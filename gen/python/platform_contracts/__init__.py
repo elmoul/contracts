@@ -1,4 +1,4 @@
-# Generated Python bindings for platform-contracts v0.36.0
+# Generated Python bindings for platform-contracts v0.66.0
 # Do not edit by hand — regenerate from schemas/ using datamodel-code-generator.
 
 from platform_contracts.app import (
@@ -92,6 +92,16 @@ from platform_contracts.delivery import (
     delivery_defect_task,
 )
 
+from platform_contracts.conventions import (
+    conventions_rule,
+    conventions_finding,
+    conventions_repo_result,
+    conventions_run,
+    conventions_candidate,
+    conventions_conflict,
+)
+from platform_contracts.spec import spec_status, spec_drift_item
+
 __all__ = [
     "manifest",
     "health",
@@ -177,4 +187,12 @@ __all__ = [
     "delivery_deployment_receipt",
     "delivery_defect_task_request",
     "delivery_defect_task",
+    "conventions_rule",
+    "conventions_finding",
+    "conventions_repo_result",
+    "conventions_run",
+    "conventions_candidate",
+    "conventions_conflict",
+    "spec_status",
+    "spec_drift_item",
 ]

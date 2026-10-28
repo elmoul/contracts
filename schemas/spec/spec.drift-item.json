@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/spec/spec.drift-item",
+  "title": "SpecDriftItem",
+  "description": "One place where a hexagon's code and its spec disagree, found by spec sync (D144). `kind`: code-vs-contract (code does something the contract zone forbids), planned-now-built (a planned item the code now contains) or fact-mismatch (a hard fact such as a version or pin differs). `file`/`line` locate the code and `contractSection` the spec section; each is `null` when not applicable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "kind",
+    "summary",
+    "file",
+    "line",
+    "contractSection"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "enum": [
+        "code-vs-contract",
+        "planned-now-built",
+        "fact-mismatch"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "file": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "line": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "contractSection": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    }
+  }
+}

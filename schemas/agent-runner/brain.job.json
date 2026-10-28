@@ -35,7 +35,9 @@
         "curate",
         "seed",
         "migrate",
-        "note-action"
+        "note-action",
+        "spec-sync",
+        "spec-seed"
       ]
     },
     "runId": {
