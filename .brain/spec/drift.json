@@ -6,5 +6,45 @@
     "file": "HEXAGON.md",
     "line": null,
     "contractSection": "front matter"
+  },
+  {
+    "id": "code-vs-contract-37573021",
+    "kind": "code-vs-contract",
+    "summary": "The contract (section 2) says the Java bindings cover only families with a Java producer or consumer. The Java tree also carries `stage` (CompanionMessageRequest, CompanionMessageResponse, StageContext), but the contract lists the stage family as having no producer and no consumer. The Java `gen/` tree also has no `conventions` or `spec` package in the visible file list, although the CHANGELOG v0.66.0 says it added them.",
+    "file": "gen/java/src/main/java/io/platform/contracts/stage/StageContext.java",
+    "line": null,
+    "contractSection": "2. Responsibilities"
+  },
+  {
+    "id": "code-vs-contract-8e51e5fa",
+    "kind": "code-vs-contract",
+    "summary": "Section 8 and section 10 say the app-studio family is retired or removed from `contracts`. The generated bindings (Python app_studio, TS app-mission/app-task-plan, Java AppStudioContractsTest) are still committed, which matches the 'next minor' plan but is the live state.",
+    "file": "gen/python/platform_contracts/app_studio/app_mission.py",
+    "line": null,
+    "contractSection": "8. Planned, not built"
+  },
+  {
+    "id": "code-vs-contract-85bef6d5",
+    "kind": "code-vs-contract",
+    "summary": "HEXAGON.md still says contracts versions each contract independently and publishes a Maven artifact, npm package and pip package. This contradicts the contract's single repo-wide semver (D031, no registry). HEXAGON.md also has a theme-reference line under Boundaries (D002) that the contract has retired (D145).",
+    "file": "HEXAGON.md",
+    "line": null,
+    "contractSection": "2. Responsibilities"
+  },
+  {
+    "id": "code-vs-contract-b9b77679",
+    "kind": "code-vs-contract",
+    "summary": "HEXAGON.md says 'Open Questions: See spec-contracts.md §8', but the contract zone keeps open owner questions in section 9.",
+    "file": "HEXAGON.md",
+    "line": null,
+    "contractSection": "9. Open owner questions"
+  },
+  {
+    "id": "code-vs-contract-b2d66226",
+    "kind": "code-vs-contract",
+    "summary": "CHANGELOG.md header says each release bumps only the language version files whose output changed and gives the format `## vX.Y.Z — date`. The actual entries use `## vX.Y.Z - date` with a hyphen, and recent entries move all three version files. This bears on open questions Q2 and Q12.",
+    "file": "CHANGELOG.md",
+    "line": 13,
+    "contractSection": "9. Open owner questions"
   }
 ]

@@ -1,10 +1,15 @@
 # Proposed spec delta: contracts
 
-Spec `../platform-vault/spec-contracts.md`, drafted 2026-10-28 against `36df41e5a450` from 1 drift item(s) in `.brain/spec/drift.json`.
+Spec `../platform-vault/spec-contracts.md`, drafted 2026-10-28 against `495a2ab15d2b` from 6 drift item(s) in `.brain/spec/drift.json`.
 Contract-zone edits only; the vault session (or the app's next Factory task) applies them, the owner approves.
 
-## 1. front matter: replace
-Drift: fact-mismatch-b4a6b6b2
-- ['D002', 'D007', 'D009', 'D010', 'D015', 'D022', 'D029']
-+ ['D002', 'D007', 'D009', 'D010', 'D014', 'D015', 'D022', 'D023', 'D029', 'D031', 'D042', 'D043', 'D054', 'D115', 'D140', 'D143', 'D144', 'D145', 'D146']
-Reason: The front-matter decisions list must match the spec's decision set, which the contract body already cites. The front matter is outside the zone supplied, so `before` is the list as the drift item reports it, not copied text. Apply this to the decisions field.
+## 1. 2. Responsibilities: replace
+Drift: code-vs-contract-37573021
+- | Generate Java, TypeScript and Python bindings from the same schemas | partial: Java covers only families that have a Java producer or consumer; TS and Python emit if/then and exactly-one-of rules as optional fields | D015 |
++ | Generate Java, TypeScript and Python bindings from the same schemas | partial: Java covers the families that have a Java producer or consumer, plus the stage family, which has neither; TS and Python emit if/then and exactly-one-of rules as optional fields | D015 |
+Reason: The Java tree carries the stage bindings (CompanionMessageRequest, CompanionMessageResponse, StageContext), so the Java coverage statement must name that exception.
+
+## 2. 10. Retired: delete
+Drift: code-vs-contract-8e51e5fa
+- | The app-studio schema family (`app.mission`, `app.task-plan`) | 2026-10-28 | D140, D146 | none |
+Reason: The app-studio bindings are still committed and are removed only in the next minor release, which section 8 already records as planned, so listing the family as retired is false today.
