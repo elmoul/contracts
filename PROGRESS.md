@@ -2112,9 +2112,3 @@ below is a **generated projection** of it, produced mechanically by
 - Standing: TODO -- no repo convention recorded yet (seeded 2026-08-02 by brain-toolkit bin/adopt v0.6.2)
 - Vault-sync: none
 - Session: 2026-10-27_1455_close-the-loop-on-demand-contracts-20261
-
-## 2026-10-27 - brain settings, stats, job page (v0.65.0)
-- State: Fulfilled brain-toolkit-20261027-contracts-brain-settings-stats. v0.65.0 tagged and pushed with main (release 04664e0): brain.settings, settings-update, settings-audit-entry, stats, job-page; TS and Python bindings; D031 acceptance passed in all three languages; worktree contracts-worktrees/v0.65.0; origin demand contracts-20261027-brain-toolkit-repin-brain-settings-stats pushed (36b3eca); report d2f774e, board clean.
-- Next step: Owner approves the report in the coordinator; once the origin demand is satisfied, move it to demands/archive/. The v0.64.0 tag is still local-only (never pushed).
-- Standing: Additive release, so no consumer is obliged to move (D031). brain.stats thresholds (over budget, stale) are producer-defined.
-- Vault-sync: none
