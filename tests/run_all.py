@@ -36,6 +36,7 @@ VALIDATORS = [
     "validate_planner_brief.py",
     "validate_setup_gate.py",
     "validate_brain.py",
+    "validate_questions.py",
     "validate_conventions.py",
     "check_state_event_sync.py",
 ]

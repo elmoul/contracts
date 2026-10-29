@@ -16,6 +16,16 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.69.0 - 2026-10-29
+
+**Owner-questions inbox shapes** (tag `v0.69.0`). Java, TypeScript and Python versions at 0.69.0. Fulfils demand `agent-runner-20261029-contracts-owner-questions-schema`. Additive: three new schemas, nothing existing changed.
+
+- **Added** `schemas/agent-runner/questions.question.json` (`OwnerQuestion`, the `GET /questions` row), `questions.draft.json` (`OwnerQuestionDraft`, the `PUT /questions/{source}/{ref}/{qid}/draft` body) and `questions.send-result.json` (`OwnerQuestionsSendResult`, the `POST /questions/send` 201 body). All closed; every row member is required (nullable where the runner sends null), matching `src/domain/ownerQuestions.ts` and `questionRoutes.ts`.
+- Python (`questions_question`, `questions_draft`, `questions_send_result`) and TypeScript (`OwnerQuestion`, `OwnerQuestionDraft`, `OwnerQuestionsSendResult`, incl. dist) bindings; no Java binding (brain/runner shapes have none).
+- New `tests/validate_questions.py`, registered in `tests/run_all.py`.
+
+---
+
 ## v0.68.0 - 2026-10-28
 
 **Removal of two unused stubs + retirement notice** (tag `v0.68.0`). Java, TypeScript and Python versions at 0.68.0. Fulfils demand `conventions-20261028-contracts-retire-dead-schemas` (owner ruling 2026-10-28).

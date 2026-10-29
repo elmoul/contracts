@@ -63,6 +63,9 @@ export type { BrainSettings, BrainSettingsFunction, BrainShippedDefault } from "
 export type { BrainSettingsUpdate, BrainSettingsFunctionUpdate } from "./brain-settings-update";
 export type { BrainSettingsAuditEntry } from "./brain-settings-audit-entry";
 export type { BrainStats, BrainStatsTotals, BrainStatsJobs, BrainStatsRepo } from "./brain-stats";
+export type { OwnerQuestion } from "./questions-question";
+export type { OwnerQuestionDraft } from "./questions-draft";
+export type { OwnerQuestionsSendResult } from "./questions-send-result";
 export type { BrainJobPage, BrainJobFilters } from "./brain-job-page";
 export type { ParkedWaitCondition, CiRunCondition, PullRequestCondition, RepositoryCreatedCondition, OwnerDecisionCondition, DemandsCondition, } from "./parked-wait-condition";
 export type { ParkedRunResult } from "./parked-run-result";

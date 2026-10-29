@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/questions.draft",
+  "title": "OwnerQuestionDraft",
+  "description": "Request body of `PUT /questions/{source}/{ref}/{qid}/draft`: the owner's draft answer to one open question. `acceptedRecommendation: true` is refused when the question has no recommendation. Closed: any other member is refused with 400.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["answer", "acceptedRecommendation"],
+  "properties": {
+    "answer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000
+    },
+    "acceptedRecommendation": {
+      "type": "boolean"
+    }
+  }
+}

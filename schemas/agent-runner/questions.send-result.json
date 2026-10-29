@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/questions.send-result",
+  "title": "OwnerQuestionsSendResult",
+  "description": "201 body of `POST /questions/send`: ONE demand to the vault carrying every unsent, non-stale draft, landed and committed. `count` is the number of drafts carried; `skippedStale` the unsent drafts left out because their question is gone.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "path", "commit", "count", "skippedStale"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The demand id."
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The demand file path, relative to its repo."
+    },
+    "commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "skippedStale": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

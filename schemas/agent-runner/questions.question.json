@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform/contracts/agent-runner/questions.question",
+  "title": "OwnerQuestion",
+  "description": "One row of `GET /questions` (the owner-questions inbox): an open question read from a v2 spec's \"Open owner questions\" table (`source: spec`, `ref` = the hexagon, `qid` = `Q<n>`) or an open conventions conflict (`source: conflict`, `ref` = the conflict id, `qid` = `conflict`), joined with the owner's saved draft answer. `draft`, `acceptedRecommendation` and `draftUpdatedAt` are null until the owner saves a draft; `draftSentDemandId` is null while the draft is unsent. `stale` is true for a draft whose question is gone from the files.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source",
+    "ref",
+    "qid",
+    "question",
+    "context",
+    "recommendation",
+    "date",
+    "produces",
+    "draft",
+    "acceptedRecommendation",
+    "draftUpdatedAt",
+    "draftSentDemandId",
+    "stale"
+  ],
+  "properties": {
+    "source": {
+      "enum": ["spec", "conflict"]
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The hexagon name (spec) or the conflict id (conflict)."
+    },
+    "qid": {
+      "type": "string",
+      "minLength": 1,
+      "description": "`Q<n>` for a spec question; the word `conflict` for a conflict."
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1
+    },
+    "context": {
+      "type": ["string", "null"],
+      "description": "The context the question was asked in: a conflict's note; null for spec questions."
+    },
+    "recommendation": {
+      "type": ["string", "null"]
+    },
+    "date": {
+      "type": ["string", "null"],
+      "description": "The spec table's \"Date opened\" cell, as written; null when absent."
+    },
+    "produces": {
+      "type": ["string", "null"],
+      "description": "The spec table's \"Decision it would produce\" cell, as written; null when absent."
+    },
+    "draft": {
+      "type": ["string", "null"],
+      "description": "The owner's saved answer."
+    },
+    "acceptedRecommendation": {
+      "type": ["boolean", "null"]
+    },
+    "draftUpdatedAt": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "draftSentDemandId": {
+      "type": ["string", "null"],
+      "description": "The id of the demand that carried this draft to the vault; null while unsent."
+    },
+    "stale": {
+      "type": "boolean"
+    }
+  }
+}

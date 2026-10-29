@@ -97,6 +97,10 @@ export type { BrainSettings, BrainSettingsFunction, BrainShippedDefault } from "
 export type { BrainSettingsUpdate, BrainSettingsFunctionUpdate } from "./brain-settings-update";
 export type { BrainSettingsAuditEntry } from "./brain-settings-audit-entry";
 export type { BrainStats, BrainStatsTotals, BrainStatsJobs, BrainStatsRepo } from "./brain-stats";
+// Owner-questions inbox (demand agent-runner-20261029-contracts-owner-questions-schema).
+export type { OwnerQuestion } from "./questions-question";
+export type { OwnerQuestionDraft } from "./questions-draft";
+export type { OwnerQuestionsSendResult } from "./questions-send-result";
 export type { BrainJobPage, BrainJobFilters } from "./brain-job-page";
 
 // D115 parked work. parked-run-result.ts and parked-resume-request.ts each INLINE a copy of the
