@@ -37,8 +37,17 @@ EXPECTED_VALID = {
     "valid-wrapped-third-party-hold.yaml",
     "valid-wrapped-third-party-push-draft.yaml",
     "valid-wrapped-third-party-push-fork-null.yaml",
+    "valid-in-repo-design-minimal.yaml",
+    "valid-wrapped-design-full.yaml",
 }
 EXPECTED_INVALID = {
+    "invalid-design-pack-parent.yaml",
+    "invalid-design-surface-absolute.yaml",
+    "invalid-design-version-v-prefix.yaml",
+    "invalid-design-system-uppercase.yaml",
+    "invalid-design-missing-version.yaml",
+    "invalid-design-check-shell-string.yaml",
+    "invalid-design-extra-property.yaml",
     "invalid-third-party-no-fork.yaml",
     "invalid-third-party-empty-fork.yaml",
     "invalid-third-party-full.yaml",

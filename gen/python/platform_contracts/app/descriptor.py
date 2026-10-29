@@ -209,6 +209,44 @@ class Commands(BaseModel):
     cleanup: Argv | None = None
 
 
+class RelativePath(RootModel[constr(pattern=r'^\.?[A-Za-z0-9_-][A-Za-z0-9._-]*(/\.?[A-Za-z0-9_-][A-Za-z0-9._-]*)*$', max_length=200)]):
+    root: constr(
+        pattern=r'^\.?[A-Za-z0-9_-][A-Za-z0-9._-]*(/\.?[A-Za-z0-9_-][A-Za-z0-9._-]*)*$',
+        max_length=200,
+    ) = Field(
+        ...,
+        description='A relative path from the hexagon root, forward slashes only: no leading `/`, no drive letter, no trailing `/`, no `.` or `..` segment, no spaces.',
+    )
+
+
+class Design(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    system: constr(pattern=r'^[a-z][a-z0-9-]+$') = Field(
+        ...,
+        description='Registry slug of the design system, functional name only (D002).',
+    )
+    version: constr(
+        pattern=r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
+    ) = Field(
+        ...,
+        description='Semver of the design system the app is on (`MAJOR.MINOR.PATCH`, no `v` prefix).',
+    )
+    pack: RelativePath | None = Field(
+        'design',
+        description='Path from the hexagon root to the pack folder. Relative, no `..`. Defaults to `design` when absent.',
+    )
+    surfaces: list[RelativePath] | None = Field(
+        None,
+        description='Paths from the hexagon root that hold the UI code the design rules apply to. Relative, no `..`; for a wrapped app these sit under `app/`. Optional.',
+    )
+    check: Argv | None = Field(
+        None,
+        description='The design check as an argv array, run from the hexagon root (not affected by `commands.workingDirectory`). Optional.',
+    )
+
+
 class AppDescriptor(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -226,6 +264,10 @@ class AppDescriptor(BaseModel):
     delivery: Delivery
     policy: Policy | None = Field(
         None, description='Owner policy switches for the app. Optional.'
+    )
+    design: Design | None = Field(
+        None,
+        description="The design system this app is built on, and where its pack lives. Optional. Factory reads it to hand the pack to the app's agent. Fulfils demand `conventions-20261029-contracts-app-descriptor-design-block`.",
     )
     urls: Urls | None = None
     commands: Commands | None = None

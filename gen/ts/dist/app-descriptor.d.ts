@@ -107,6 +107,31 @@ export type AppDescriptor = {
          */
         ai?: "allowed" | "forbidden";
     };
+    /**
+     * The design system this app is built on, and where its pack lives. Optional. Factory reads it to hand the pack to the app's agent. Fulfils demand `conventions-20261029-contracts-app-descriptor-design-block`.
+     */
+    design?: {
+        /**
+         * Registry slug of the design system, functional name only (D002).
+         */
+        system: string;
+        /**
+         * Semver of the design system the app is on (`MAJOR.MINOR.PATCH`, no `v` prefix).
+         */
+        version: string;
+        /**
+         * Path from the hexagon root to the pack folder. Relative, no `..`. Defaults to `design` when absent.
+         */
+        pack?: RelativePath;
+        /**
+         * Paths from the hexagon root that hold the UI code the design rules apply to. Relative, no `..`; for a wrapped app these sit under `app/`. Optional.
+         */
+        surfaces?: RelativePath[];
+        /**
+         * The design check as an argv array, run from the hexagon root (not affected by `commands.workingDirectory`). Optional.
+         */
+        check?: Argv;
+    };
     urls?: {
         /**
          * A single lowercase DNS label: the `<hostname>.platform.localhost` name used for dev and review routes. Defaults to `name` when absent.
@@ -132,6 +157,10 @@ export type AppDescriptor = {
         cleanup?: Argv;
     };
 };
+/**
+ * A relative path from the hexagon root, forward slashes only: no leading `/`, no drive letter, no trailing `/`, no `.` or `..` segment, no spaces.
+ */
+export type RelativePath = string;
 /**
  * A command as an argv array: program first, then arguments. Never a single shell string.
  *

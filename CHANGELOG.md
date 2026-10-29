@@ -16,6 +16,17 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.70.0 - 2026-10-29
+
+**Optional `design` block on the app descriptor** (tag `v0.70.0`). Java, TypeScript and Python versions at 0.70.0. Fulfils demand `conventions-20261029-contracts-app-descriptor-design-block`. Additive: one new optional top-level property, nothing existing changed.
+
+- **Added** `design` to `schemas/app/descriptor.json` (`app.descriptor/1`): closed object naming the app's design system. `system` (registry slug `^[a-z][a-z0-9-]+$`) and `version` (semver, no `v` prefix) are required inside it; `pack` (relative path to the pack folder, default `design`), `surfaces` (relative UI-code paths, under `app/` for a wrapped app) and `check` (argv array, run from the hexagon root) are optional. Paths use a new `$defs/relativePath` (no leading `/`, no drive letter, no `.`/`..` segment).
+- An `app.yaml` carrying `design` is refused by every copy of this schema older than v0.70.0 (`additionalProperties: false`), so consumers must re-pin before any `app.yaml` uses it.
+- TypeScript (`AppDescriptor.design`, `RelativePath`, incl. dist) and Python (`Design`, `RelativePath`) bindings; the Java POJO is generated at build.
+- Tests: 2 valid and 7 invalid fixtures in `tests/fixtures/app-descriptor/`, registered in `tests/validate_app_descriptor.py`.
+
+---
+
 ## v0.69.0 - 2026-10-29
 
 **Owner-questions inbox shapes** (tag `v0.69.0`). Java, TypeScript and Python versions at 0.69.0. Fulfils demand `agent-runner-20261029-contracts-owner-questions-schema`. Additive: three new schemas, nothing existing changed.
