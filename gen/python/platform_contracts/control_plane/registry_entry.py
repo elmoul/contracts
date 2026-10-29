@@ -100,6 +100,49 @@ class AiPolicy(StrEnum):
     forbidden = 'forbidden'
 
 
+class Design(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    system: constr(pattern=r'^[a-z][a-z0-9-]+$') = Field(
+        ...,
+        description='Registry slug of the design system, functional name only (D002).',
+    )
+    version: constr(
+        pattern=r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
+    ) = Field(
+        ...,
+        description='Semver of the design system the app is on (`MAJOR.MINOR.PATCH`, no `v` prefix).',
+    )
+    pack: (
+        constr(
+            pattern=r'^\.?[A-Za-z0-9_-][A-Za-z0-9._-]*(/\.?[A-Za-z0-9_-][A-Za-z0-9._-]*)*$',
+            max_length=200,
+        )
+        | None
+    ) = Field(
+        'design',
+        description='Path from the hexagon root to the pack folder. Relative, no `..`. Defaults to `design` when absent.',
+    )
+    surfaces: (
+        list[
+            constr(
+                pattern=r'^\.?[A-Za-z0-9_-][A-Za-z0-9._-]*(/\.?[A-Za-z0-9_-][A-Za-z0-9._-]*)*$',
+                max_length=200,
+            )
+        ]
+        | None
+    ) = Field(
+        None,
+        description='Paths from the hexagon root that hold the UI code the design rules apply to. Relative, no `..`; for a wrapped app these sit under `app/`. Optional.',
+    )
+    check: list[constr(min_length=1)] | None = Field(
+        None,
+        description='The design check as an argv array, run from the hexagon root. Optional.',
+        min_length=1,
+    )
+
+
 class App(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -168,6 +211,10 @@ class App(BaseModel):
     aiPolicy: AiPolicy | None = Field(
         None,
         description="Descriptor policy.ai. The descriptor's code.credential is deliberately NOT mirrored: the name is read from app.yaml by the component that supplies it and is not published.",
+    )
+    design: Design | None = Field(
+        None,
+        description='Descriptor design block mirrored (schemas/app/descriptor.json `design`): the design system the app is built on and where its pack lives. Optional; absent when the descriptor declares none.',
     )
 
 

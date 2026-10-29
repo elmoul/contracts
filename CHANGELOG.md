@@ -16,6 +16,17 @@ Fixes/clarifications bump patch.
 
 ---
 
+## v0.71.0 - 2026-10-29
+
+**Optional `design` on the registry app summary** (tag `v0.71.0`). Java, TypeScript and Python versions at 0.71.0. Fulfils demand `factory-20261029-contracts-registry-app-design`. Additive: one new optional property on `registry.entry` `app`, nothing existing changed.
+
+- **Added** `app.design` to `schemas/control-plane/registry.entry.json`: the descriptor's `design` block mirrored, same closed shape (`system` and `version` required; `pack`, `surfaces`, `check` optional; same patterns and relative-path rule as `schemas/app/descriptor.json`). Entries without it stay valid.
+- A registry row carrying `app.design` is refused by every older copy of `RegistryEntry` (closed `app`), so consumers that validate rows with the pinned binding (Factory) must re-pin before control-plane serves it.
+- TypeScript (`RegistryEntry.app.design`, incl. dist) and Python (`Design` in `control_plane/registry_entry.py`) bindings; the Java POJO is generated at build.
+- Tests: valid and invalid `app.design` cases in `tests/validate_control_plane.py`.
+
+---
+
 ## v0.70.0 - 2026-10-29
 
 **Optional `design` block on the app descriptor** (tag `v0.70.0`). Java, TypeScript and Python versions at 0.70.0. Fulfils demand `conventions-20261029-contracts-app-descriptor-design-block`. Additive: one new optional top-level property, nothing existing changed.

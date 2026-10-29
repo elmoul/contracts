@@ -75,6 +75,26 @@ BAD_REGISTRY_ENTRY = {
 }
 
 
+APP_SUMMARY = {
+    "name": "plantpal", "trackerKey": "PP", "layout": "in-repo",
+    "ownership": "owned", "deliveryMode": "full",
+}
+GOOD_DESIGNS = [
+    {"system": "paper-ui", "version": "1.2.0"},
+    {"system": "paper-ui", "version": "1.2.0-rc.1", "pack": "design", "surfaces": ["app/src", "app/ui"], "check": ["npm", "run", "design:check"]},
+]
+BAD_DESIGNS = [
+    {"version": "1.2.0"},
+    {"system": "paper-ui"},
+    {"system": "Paper", "version": "1.2.0"},
+    {"system": "paper-ui", "version": "v1.2.0"},
+    {"system": "paper-ui", "version": "1.2.0", "pack": "../design"},
+    {"system": "paper-ui", "version": "1.2.0", "surfaces": ["/abs"]},
+    {"system": "paper-ui", "version": "1.2.0", "check": "npm run x"},
+    {"system": "paper-ui", "version": "1.2.0", "extra": 1},
+]
+
+
 def load(name: str) -> dict:
     return json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
 
@@ -109,6 +129,13 @@ def main() -> int:
     for contract_id in BAD_USED_CONTRACT_IDS:
         doc = {**GOOD_DESCRIPTOR, "contracts": {**GOOD_DESCRIPTOR["contracts"], "used": [contract_id]}}
         expect_invalid(descriptor_schema, doc, f"hexagon.descriptor: contracts.used free-text {contract_id!r} (known-bad)")
+
+    reg_base = {**GOOD_REGISTRY_ENTRY, "kind": "app"}
+    expect_valid(registry_schema, {**reg_base, "app": APP_SUMMARY}, "registry.entry: app summary without design (known-good)")
+    for i, d in enumerate(GOOD_DESIGNS):
+        expect_valid(registry_schema, {**reg_base, "app": {**APP_SUMMARY, "design": d}}, f"registry.entry: app.design #{i} (known-good)")
+    for i, d in enumerate(BAD_DESIGNS):
+        expect_invalid(registry_schema, {**reg_base, "app": {**APP_SUMMARY, "design": d}}, f"registry.entry: app.design bad #{i} (known-bad)")
 
     return 0
 

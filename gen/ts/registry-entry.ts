@@ -114,5 +114,32 @@ export interface RegistryEntry {
      * Descriptor policy.ai. The descriptor's code.credential is deliberately NOT mirrored: the name is read from app.yaml by the component that supplies it and is not published.
      */
     aiPolicy?: "allowed" | "forbidden";
+    /**
+     * Descriptor design block mirrored (schemas/app/descriptor.json `design`): the design system the app is built on and where its pack lives. Optional; absent when the descriptor declares none.
+     */
+    design?: {
+      /**
+       * Registry slug of the design system, functional name only (D002).
+       */
+      system: string;
+      /**
+       * Semver of the design system the app is on (`MAJOR.MINOR.PATCH`, no `v` prefix).
+       */
+      version: string;
+      /**
+       * Path from the hexagon root to the pack folder. Relative, no `..`. Defaults to `design` when absent.
+       */
+      pack?: string;
+      /**
+       * Paths from the hexagon root that hold the UI code the design rules apply to. Relative, no `..`; for a wrapped app these sit under `app/`. Optional.
+       */
+      surfaces?: string[];
+      /**
+       * The design check as an argv array, run from the hexagon root. Optional.
+       *
+       * @minItems 1
+       */
+      check?: [string, ...string[]];
+    };
   };
 }

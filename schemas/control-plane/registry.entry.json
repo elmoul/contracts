@@ -96,7 +96,30 @@
         "slug": { "type": "string", "pattern": "^[^/\\s]+(/[^/\\s]+)+$", "description": "Descriptor code.slug: host-neutral repository path of two or more segments." },
         "host": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$", "maxLength": 253, "description": "Descriptor code.host: lowercase DNS host name of the forge." },
         "pr": { "type": "string", "enum": ["open", "draft", "hold"], "description": "Descriptor delivery.pr: when the pull request opens (`open` when the descriptor omits it)." },
-        "aiPolicy": { "type": "string", "enum": ["allowed", "forbidden"], "description": "Descriptor policy.ai. The descriptor's code.credential is deliberately NOT mirrored: the name is read from app.yaml by the component that supplies it and is not published." }
+        "aiPolicy": { "type": "string", "enum": ["allowed", "forbidden"], "description": "Descriptor policy.ai. The descriptor's code.credential is deliberately NOT mirrored: the name is read from app.yaml by the component that supplies it and is not published." },
+        "design": {
+          "type": "object",
+          "required": ["system", "version"],
+          "additionalProperties": false,
+          "description": "Descriptor design block mirrored (schemas/app/descriptor.json `design`): the design system the app is built on and where its pack lives. Optional; absent when the descriptor declares none.",
+          "properties": {
+            "system": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$", "description": "Registry slug of the design system, functional name only (D002)." },
+            "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$", "description": "Semver of the design system the app is on (`MAJOR.MINOR.PATCH`, no `v` prefix)." },
+            "pack": { "type": "string", "pattern": "^\\.?[A-Za-z0-9_-][A-Za-z0-9._-]*(/\\.?[A-Za-z0-9_-][A-Za-z0-9._-]*)*$", "maxLength": 200, "default": "design", "description": "Path from the hexagon root to the pack folder. Relative, no `..`. Defaults to `design` when absent." },
+            "surfaces": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^\\.?[A-Za-z0-9_-][A-Za-z0-9._-]*(/\\.?[A-Za-z0-9_-][A-Za-z0-9._-]*)*$", "maxLength": 200 },
+              "uniqueItems": true,
+              "description": "Paths from the hexagon root that hold the UI code the design rules apply to. Relative, no `..`; for a wrapped app these sit under `app/`. Optional."
+            },
+            "check": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "The design check as an argv array, run from the hexagon root. Optional."
+            }
+          }
+        }
       }
     }
   },
