@@ -8,7 +8,7 @@ acceptance-criteria:
   - "Closes your consuming leg of factory-20261029-contracts-registry-app-design: contracts v0.71.0 adds an optional design object to the app summary in schemas/control-plane/registry.entry.json (system, version required; pack, surfaces, check optional; same closed shape as design in schemas/app/descriptor.json). Additive: no consumer is obliged to move"
   - "Do: re-pin to v0.71.0 (D031) in the three places so the pinned RegistryEntry binding accepts a row whose app carries design. Control-plane needs its own follow-up demand to serve design in the summary; that one is yours to raise, now that the shape exists"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand - factory: adopt design on the registry app summary
