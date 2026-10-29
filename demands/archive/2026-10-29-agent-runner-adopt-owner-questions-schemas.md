@@ -8,7 +8,7 @@ acceptance-criteria:
   - "Closes your consuming leg of agent-runner-20261029-contracts-owner-questions-schema: contracts v0.69.0 (pushed) adds schemas/agent-runner/questions.question.json (OwnerQuestion), questions.draft.json (OwnerQuestionDraft) and questions.send-result.json (OwnerQuestionsSendResult), with TypeScript and Python bindings"
   - "Do: re-pin contracts to v0.69.0 (D031), replace the local row, draft-body and send-result types in src/domain/ownerQuestions.ts and the route bodies in src/api/questionRoutes.ts with the generated ones; the 201 body of POST /questions/send is the send-result, the PUT draft body is the draft, GET /questions rows are the question. Additive release: no other consumer is obliged to move"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand - agent-runner: adopt the owner-questions schemas
