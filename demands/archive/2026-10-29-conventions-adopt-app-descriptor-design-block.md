@@ -8,7 +8,7 @@ acceptance-criteria:
   - "Closes your consuming leg of conventions-20261029-contracts-app-descriptor-design-block: contracts v0.70.0 adds an optional top-level design object to schemas/app/descriptor.json (system, version required; pack default design, surfaces, check optional). Additive: no consumer is obliged to move"
   - "Do: re-pin to v0.70.0 (D031) wherever you validate app.yaml; tell the repos that hold their own copy to re-pin before any app.yaml uses the field: factory (vendored src/factory/contract_schemas/app/descriptor.json), control-plane (generated AppDescriptor binding), launcher (hand-written validator in descriptors.js), and conventions itself (validator reads ../contracts-worktrees/<contracts.pin>/schemas/app/descriptor.json, so an app pinned below v0.70.0 will refuse design)"
 needs-owner: false
-status: open
+status: archived
 ---
 
 # Demand - conventions: adopt the app descriptor design block
