@@ -6,5 +6,37 @@
     "file": "HEXAGON.md",
     "line": null,
     "contractSection": "front matter"
+  },
+  {
+    "id": "code-vs-contract-6f90fa1e",
+    "kind": "code-vs-contract",
+    "summary": "HEXAGON.md lists the responsibility 'Generate and publish language bindings (Maven artifact, npm package, pip package)'. The contract (§3, D031) says there is no registry and no publish step.",
+    "file": "HEXAGON.md",
+    "line": null,
+    "contractSection": "3. Boundaries"
+  },
+  {
+    "id": "code-vs-contract-3efaaf6f",
+    "kind": "code-vs-contract",
+    "summary": "HEXAGON.md says 'Version each contract independently (semver)'. The contract (§2) says there is one repo-wide semver per tag, not per contract.",
+    "file": "HEXAGON.md",
+    "line": null,
+    "contractSection": "2. Responsibilities"
+  },
+  {
+    "id": "code-vs-contract-3c1cb20d",
+    "kind": "code-vs-contract",
+    "summary": "The CHANGELOG.md header says version files are bumped only for the languages whose output changed. It also says per-contract versioning was only an original intent. The contract (§2) says all three binding version files move at every tag.",
+    "file": "CHANGELOG.md",
+    "line": 3,
+    "contractSection": "2. Responsibilities"
+  },
+  {
+    "id": "code-vs-contract-8130bc1d",
+    "kind": "code-vs-contract",
+    "summary": "HEXAGON.md points open questions to spec-contracts.md §8. In the contract, §8 is 'Planned, not built' and open questions are in §9.",
+    "file": "HEXAGON.md",
+    "line": null,
+    "contractSection": "9. Open owner questions"
   }
 ]
